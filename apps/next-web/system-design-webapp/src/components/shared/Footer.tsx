@@ -9,7 +9,7 @@ export function Footer() {
                     <div className="col-span-1 md:col-span-1">
                         <Link href="/" className="flex items-center gap-2 mb-4">
                             <Cpu className="text-primary w-6 h-6" />
-                            <span className="font-bold text-xl tracking-tight">ContextRec</span>
+                            <span className="font-bold text-xl tracking-tight">Context Aware</span>
                         </Link>
                         <p className="text-muted-foreground text-sm leading-relaxed max-w-xs">
                             Personalized system design recommendations based on your application needs and team context.
@@ -48,7 +48,7 @@ export function Footer() {
                 </div>
 
                 <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
-                    <p>© 2026 ContextRec Inc. All rights reserved.</p>
+                    <p>© 2026 Context Aware Inc. All rights reserved.</p>
                     <div className="flex gap-8">
                         <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
                         <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>

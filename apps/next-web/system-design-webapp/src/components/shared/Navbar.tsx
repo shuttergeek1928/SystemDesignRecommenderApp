@@ -7,10 +7,11 @@ import { Menu, X, Cpu, Github, LayoutDashboard, BrainCircuit, Users } from "luci
 import { cn } from "@/lib/utils";
 
 const navItems = [
-    { name: "Features", href: "#features", icon: Cpu },
-    { name: "Recommendations", href: "/recommendations", icon: BrainCircuit },
-    { name: "Teams", href: "#teams", icon: Users },
+    { name: "Home", href: "/", icon: Cpu },
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "Recommendations", href: "/recommendations", icon: BrainCircuit },
+    { name: "Teams", href: "/teams", icon: Users },
+    { name: "Features", href: "/features", icon: Cpu },
 ];
 
 export function Navbar() {
@@ -40,7 +41,7 @@ export function Navbar() {
                         <Cpu className="w-6 h-6 text-primary" />
                     </div>
                     <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-                        Context<span className="text-primary">Rec</span>
+                        Context<span className="text-primary">Aware</span>
                     </span>
                 </Link>
 

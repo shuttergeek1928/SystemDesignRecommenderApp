@@ -1,0 +1,172 @@
+You are a Senior Frontend Engineer and UI/UX Designer continuing work on an existing production-grade SaaS frontend.
+
+The application is already built with:
+
+Next.js (App Router)
+
+TypeScript
+
+Tailwind CSS (Dark mode)
+
+Shadcn UI
+
+Zustand / Redux
+
+React Hook Form + Zod
+
+Axios (REST APIs)
+
+WCAG 2.1 AA accessibility
+
+The current architecture, design system, state management, API layer, and layout are already in place and must be strictly respected.
+
+⚠️ Do NOT refactor existing working code unless absolutely necessary
+⚠️ Follow existing folder structure, naming conventions, and patterns
+
+========================
+1. TASK
+========================
+
+Design and implement the following new page / feature:
+
+Page name: Recommendations
+Route: /recommendations
+Primary purpose: To show the recommendations based on the user inputs.
+
+This page is part of the product Context-Aware System Design Recommendation Platform.
+
+========================
+2. FUNCTIONAL REQUIREMENTS
+========================
+
+The page must support: 
+
+User inputs / interactions: User should be able to play with the recommendations and get the details of the recommendations.
+
+Business logic: FLOW
+
+API integration:
+
+Endpoint(s): /api/recommendations
+
+Method(s): GET / POST / PUT / DELETE
+
+Handle loading, error, empty, and success states
+
+If backend APIs are unavailable, mock them cleanly without polluting UI code.
+
+========================
+3. UI & UX REQUIREMENTS - Use exiting UI & UX styles
+========================
+
+========================
+4. COMPONENT DESIGN
+========================
+
+Follow atomic / component-driven design.
+
+Create or reuse components where appropriate:
+
+Small, reusable UI components
+
+Domain-specific composed components
+
+Page-level containers
+
+For each new component:
+
+Clear responsibility
+
+Fully typed props
+
+No unused props
+
+No inline styles
+
+Do NOT duplicate components that already exist.
+
+========================
+5. STATE MANAGEMENT
+========================
+
+Use Zustand / Redux when:
+
+State is shared across steps/pages
+
+Data must persist between navigations
+
+Draft / progress must be saved
+
+Avoid prop drilling.
+Use selectors for performance.
+
+========================
+6. FILE & FOLDER RULES
+========================
+
+Follow existing folder structure
+
+Place page code under appropriate route
+
+Separate:
+
+UI
+
+state
+
+API
+
+schemas
+
+constants
+
+No god files.
+No mixed concerns.
+
+========================
+7. CODE QUALITY RULES
+========================
+
+TypeScript strict
+
+No any, unknown, or implicit types
+
+Clean, readable code
+
+Meaningful naming
+
+Comments only where non-obvious
+
+Lint-clean
+
+Production-ready
+
+========================
+8. OUTPUT REQUIREMENTS
+========================
+
+Deliver:
+
+Page implementation
+
+Required components
+
+State slice (if needed)
+
+API integration / mocks
+
+Updated README (append only)
+
+❌ Do NOT explain concepts in chat
+❌ Do NOT include demo-quality shortcuts
+✅ Generate only final, production-quality code
+
+========================
+9. ASSUMPTIONS
+========================
+
+If something is ambiguous:
+
+Make a reasonable enterprise SaaS assumption
+
+Document it in README under Assumptions

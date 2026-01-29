@@ -1,0 +1,113 @@
+You are a senior frontend engineer and UI/UX designer.
+
+Your task is to DESIGN and IMPLEMENT a production-ready frontend based on the specifications below.
+
+========================
+1. PROJECT OVERVIEW
+========================
+App name: Context-Aware System Design Recommendation Platform
+Short description of the product: A decision support system that recommends software architecture and design choices by jointly analyzing application requirements and developer productivity context.
+Primary goal of the frontend: To provide a user-friendly interface for users to put their inputs, requirements, tech stack, self learning path and pace, agility and get recommendations.
+Target users: Teams building the any scalable application. Mostly the users are from the companies like NIQ, BP, GfK, JP Morgan and Chase, TCS, Infosys, etc.
+
+========================
+2. TECH STACK (STRICT)
+========================
+Framework: Next.js
+Language: TypeScript
+Styling: Tailwind CSS
+State management: Zustand/Redux
+Routing: Next.js built-in routing
+UI libraries (if any): Shadcn UI
+Form handling: React Hook Form
+Validation: Zod
+API communication: axios
+Build tool / bundler: vite
+
+Follow this stack strictly. Do NOT introduce alternatives unless explicitly asked.
+
+========================
+3. DESIGN REQUIREMENTS
+========================
+Design style (e.g. modern, minimal, SaaS, playful, brutalist): Modern SaaS
+Color palette: Dark mode
+Typography: Poppins
+Spacing system: Tailwind CSS spacing scale
+Responsiveness: Mobile-first but majorly this app is gonna run on desktop, so desktop design is also required.
+Accessibility requirements (WCAG level if applicable): WCAG 2.1 AA
+Dark mode (yes/no): Yes
+
+Match real-world production UI quality (e.g. Stripe, Linear, Vercel level).
+
+========================
+4. PAGE / VIEW BREAKDOWN
+========================
+List ALL pages/screens with:
+- Purpose
+- Key components
+- User actions
+
+Example:
+- Landing Page
+  - Hero section
+  - Feature highlights
+  - Call to action
+
+========================
+5. COMPONENT ARCHITECTURE
+========================
+Define reusable components:
+- Name
+- Props
+- Responsibilities
+
+Use atomic/component-driven design principles.
+
+========================
+6. DATA & API INTEGRATION
+========================
+Data sources: - Will be connected to the backend API
+API endpoints (REST/GraphQL): REST
+Auth method (JWT, OAuth, session): JWT, OAuth
+Loading states: Yes
+Error handling: Yes
+Empty states: Yes
+
+Mock APIs if real endpoints are not provided.
+
+========================
+7. UX BEHAVIOR
+========================
+Navigation behavior: 
+Form validation behavior: Yes
+Success/error feedback: Yes
+Animations & transitions: Yes
+Keyboard interactions: Yes
+
+UX should feel fast, predictable, and polished.
+
+========================
+8. CODE QUALITY STANDARDS
+========================
+- Clean, readable, well-organized code
+- Meaningful variable and component names
+- No unused code
+- Follow best practices for the chosen framework
+- Comment only where necessary
+- Production-ready (not demo-quality)
+
+========================
+9. OUTPUT REQUIREMENTS
+========================
+Deliver:
+- Full folder structure
+- All relevant files
+- Clear separation of concerns
+- Setup and run instructions
+- Notes on architectural decisions
+
+DO NOT summarize.
+DO NOT explain concepts but generate a readme.md file with instructions on how to run the app and the explanation of the architecture and code.
+JUST BUILD THE FRONTEND.
+
+If something is ambiguous, make a reasonable assumption and continue.

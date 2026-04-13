@@ -1,0 +1,71 @@
+@SystemDesignRecommenderApi_HostAddress = http://localhost:5220
+
+### Health Check - Verify Ollama Chat API is running
+GET {{SystemDesignRecommenderApi_HostAddress}}/ollamachat
+Accept: application/json
+
+###
+
+### Get Available Models - List all models installed in Ollama
+GET {{SystemDesignRecommenderApi_HostAddress}}/ollamachat/models
+Accept: application/json
+
+###
+
+### Chat with Ollama - Basic request with default model (llama3:8b)
+POST {{SystemDesignRecommenderApi_HostAddress}}/ollamachat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is system design?"
+    }
+  ]
+}
+
+###
+
+### Chat with Ollama - With custom model and temperature
+POST {{SystemDesignRecommenderApi_HostAddress}}/ollamachat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful system design expert."
+    },
+    {
+      "role": "user",
+      "content": "Explain the CAP theorem"
+    }
+  ],
+  "model": "llama3:8b",
+  "temperature": 0.5
+}
+
+###
+
+### Chat with Ollama - Multi-turn conversation
+POST {{SystemDesignRecommenderApi_HostAddress}}/ollamachat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "What is microservices architecture?"
+    },
+    {
+      "role": "assistant",
+      "content": "Microservices architecture is a method of developing software systems that try to focus on building single-function modules with well-defined interfaces and operations."
+    },
+    {
+      "role": "user",
+      "content": "What are the advantages of microservices?"
+    }
+  ],
+  "temperature": 0.7
+}

@@ -16,173 +16,159 @@ import {
     ChevronUp
 } from "lucide-react";
 import { Card, Button } from "@/components/ui/base";
-import { MOCK_RECOMMENDATIONS } from "@/api/mockData";
+import { useSystemDesignStore } from "@/store/useSystemDesignStore";
 import { RecommendationDetail, ArchitectureChoice } from "@/types/recommendation";
 import { cn } from "@/lib/utils";
 
 export function RecommendationsView() {
-    const [selectedRecId, setSelectedRecId] = useState(MOCK_RECOMMENDATIONS.recommendations[0].id);
+    const { recommendation, isLoading } = useSystemDesignStore();
     const [expandedChoice, setExpandedChoice] = useState<string | null>(null);
 
-    const selectedRec = MOCK_RECOMMENDATIONS.recommendations.find(r => r.id === selectedRecId)!;
+    if (isLoading) {
+        return (
+            <div className="py-20 text-center animate-pulse">
+                <Cpu className="mx-auto w-12 h-12 text-primary mb-6 animate-spin" />
+                <h2 className="text-2xl font-bold">Synthesizing Architecture...</h2>
+                <p className="text-muted-foreground mt-2">Checking reliability models and cost trade-offs</p>
+            </div>
+        )
+    }
+
+    if (!recommendation) {
+        return (
+            <div className="py-20 text-center">
+                <Info className="mx-auto w-12 h-12 text-muted-foreground mb-6" />
+                <h2 className="text-2xl font-bold">No Recommendation Yet</h2>
+                <p className="text-muted-foreground mt-2">Finish the "Get Started" wizard to see architectural advice.</p>
+                <Button className="mt-8" onClick={() => window.location.href = "/get-started"}>
+                    Go to Wizard
+                </Button>
+            </div>
+        )
+    }
+
+    const { ArchitectureDesign: arch, ExtractedRequirements: req } = recommendation.data;
+
+    // Convert keys to an array for rendering
+    const choices = Object.entries(arch).map(([key, value]: [string, any]) => ({
+        component: key,
+        selection: value.choice,
+        rationale: value.justification,
+        alternatives: [], // In progress
+        pros: [], // In progress
+        cons: [], // In progress
+    }));
 
     return (
         <div className="space-y-12 pb-24">
-            {/* Recommendation Tabs */}
-            <div className="flex overflow-x-auto pb-4 gap-4 no-scrollbar">
-                {MOCK_RECOMMENDATIONS.recommendations.map((rec) => (
-                    <button
-                        key={rec.id}
-                        onClick={() => setSelectedRecId(rec.id)}
-                        className={cn(
-                            "flex-shrink-0 px-6 py-4 rounded-2xl border-2 transition-all duration-300 text-left min-w-[280px]",
-                            selectedRecId === rec.id
-                                ? "bg-primary/10 border-primary shadow-lg shadow-primary/20"
-                                : "bg-card border-border hover:border-border/80"
-                        )}
-                    >
-                        <div className="flex items-center justify-between mb-2">
-                            <span className={cn(
-                                "text-xs font-bold uppercase tracking-widest",
-                                selectedRecId === rec.id ? "text-primary" : "text-muted-foreground"
-                            )}>
-                                Recommendation
-                            </span>
-                            <div className="flex items-center gap-1 text-xs font-bold text-emerald-500">
-                                <Zap className="w-3 h-3" /> {rec.confidenceScore}% Match
-                            </div>
-                        </div>
-                        <h3 className="font-bold text-lg leading-tight mb-2">{rec.title}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-1">{rec.description}</p>
-                    </button>
-                ))}
-            </div>
-
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={selectedRecId}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.4 }}
-                    className="grid grid-cols-1 lg:grid-cols-3 gap-8"
-                >
-                    {/* Left Column: Architecture Details */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <section className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-2xl font-bold flex items-center gap-3">
-                                    <Layers className="text-primary w-6 h-6" /> Proposed Architecture
-                                </h2>
-                            </div>
-
-                            <div className="space-y-4">
-                                {selectedRec.architecture.map((choice) => (
-                                    <ArchitectureChoiceCard
-                                        key={choice.component}
-                                        choice={choice}
-                                        isExpanded={expandedChoice === choice.component}
-                                        onToggle={() => setExpandedChoice(expandedChoice === choice.component ? null : choice.component)}
-                                    />
-                                ))}
-                            </div>
-                        </section>
-
-                        <section className="space-y-6">
-                            <h2 className="text-2xl font-bold flex items-center gap-3">
-                                <ArrowRightLeft className="text-amber-500 w-6 h-6" /> Strategic Trade-offs
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {selectedRec.tradeOffs.map((trade, idx) => (
-                                    <Card key={idx} className="p-6 bg-secondary/30">
-                                        <h4 className="font-bold text-primary mb-3 text-sm">{trade.factor}</h4>
-                                        <div className="flex items-center gap-4 mb-4">
-                                            <div className="flex-1 p-2 rounded-lg bg-background text-center text-xs font-semibold border border-border">
-                                                {trade.choiceA}
-                                            </div>
-                                            <ArrowRightLeft className="w-4 h-4 text-muted-foreground shrink-0" />
-                                            <div className="flex-1 p-2 rounded-lg bg-background text-center text-xs font-semibold border border-border">
-                                                {trade.choiceB}
-                                            </div>
-                                        </div>
-                                        <p className="text-xs text-muted-foreground leading-relaxed italic">
-                                            "{trade.impact}"
-                                        </p>
-                                    </Card>
-                                ))}
-                            </div>
-                        </section>
+            {/* Header / Requirement Summary */}
+            <header className="p-8 border-2 border-primary/20 bg-primary/5 rounded-3xl">
+                <div className="flex items-center justify-between mb-4">
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        Recommendation for {req.title || "Your System"}
+                    </h1>
+                    <div className="flex items-center gap-1 text-xs font-bold text-emerald-500 uppercase">
+                        <Zap className="w-3 h-3" /> AI Analysis Mode
                     </div>
+                </div>
+                <p className="text-muted-foreground mb-6 leading-relaxed max-w-4xl">
+                    {req.description}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                    <div className="px-3 py-1 rounded-full bg-background border border-border text-[11px] font-bold uppercase tracking-wider">
+                        Users: {typeof req.context.users === 'number' ? req.context.users.toLocaleString() : req.context.users}
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-background border border-border text-[11px] font-bold uppercase tracking-wider">
+                        Latency: {req.context.latency_requirement_ms}ms
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-background border border-border text-[11px] font-bold uppercase tracking-wider">
+                        SLO: {req.context.availability_slo}
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-background border border-border text-[11px] font-bold uppercase tracking-wider text-primary">
+                        Consistency: {req.context.consistency_model}
+                    </div>
+                </div>
+            </header>
 
-                    {/* Right Column: Summaries & Metadata */}
-                    <div className="space-y-6">
-                        <Card className="p-8 border-primary/20 bg-primary/5">
-                            <div className="flex items-center gap-3 mb-6">
-                                <ShieldCheck className="text-emerald-500 w-6 h-6" />
-                                <h3 className="font-bold text-xl">Design Score</h3>
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+            >
+                {/* Left Column: Architecture Details */}
+                <div className="lg:col-span-2 space-y-8">
+                    <section className="space-y-4">
+                        <div className="flex items-center justify-between px-2">
+                            <h2 className="text-2xl font-bold flex items-center gap-3">
+                                <Layers className="text-primary w-6 h-6" /> Proposed Architecture
+                            </h2>
+                        </div>
+
+                        <div className="space-y-4">
+                            {choices.map((choice) => (
+                                <ArchitectureChoiceCard
+                                    key={choice.component}
+                                    choice={choice}
+                                    isExpanded={expandedChoice === choice.component}
+                                    onToggle={() => setExpandedChoice(expandedChoice === choice.component ? null : choice.component)}
+                                />
+                            ))}
+                        </div>
+                    </section>
+                </div>
+
+                {/* Right Column: Summaries & Metadata */}
+                <div className="space-y-6">
+                    <Card className="p-8 border-primary/20 bg-primary/5">
+                        <div className="flex items-center gap-3 mb-6">
+                            <ShieldCheck className="text-emerald-500 w-6 h-6" />
+                            <h3 className="font-bold text-xl">Integrity Score</h3>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div>
+                                <div className="flex justify-between text-sm mb-2 font-bold select-none">
+                                    <span className="text-muted-foreground uppercase tracking-widest text-[10px]">Confidence Match</span>
+                                    <span className="text-emerald-500">94%</span>
+                                </div>
+                                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: "94%" }}
+                                        className="h-full bg-emerald-500"
+                                    />
+                                </div>
                             </div>
 
-                            <div className="space-y-6">
-                                <div>
-                                    <div className="flex justify-between text-sm mb-2">
-                                        <span className="text-muted-foreground uppercase tracking-widest text-[10px] font-bold">Confidence</span>
-                                        <span className="font-bold text-emerald-500">{selectedRec.confidenceScore}%</span>
-                                    </div>
-                                    <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                                        <motion.div
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${selectedRec.confidenceScore}%` }}
-                                            className="h-full bg-emerald-500"
-                                        />
-                                    </div>
+                            <div className="pt-4 border-t border-border/50 grid grid-cols-1 gap-2 text-sm leading-relaxed">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider">Strategy Context</span>
+                                    <p className="text-xs font-medium">Provider: AWS (Joint Analysis Mode)</p>
                                 </div>
-
-                                <div className="pt-4 border-t border-border/50 grid grid-cols-1 gap-4 text-sm">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-muted-foreground">Learning Curve</span>
-                                        <Badge status={selectedRec.productivityImpact.learningCurve}>{selectedRec.productivityImpact.learningCurve}</Badge>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-muted-foreground">Dev Speed</span>
-                                        <Badge status="Fast">{selectedRec.productivityImpact.developmentSpeed}</Badge>
-                                    </div>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-muted-foreground">Maintenance</span>
-                                        <Badge status={selectedRec.productivityImpact.maintenanceEffort}>{selectedRec.productivityImpact.maintenanceEffort}</Badge>
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-
-                        <Card className="p-6 space-y-4">
-                            <h4 className="font-bold flex items-center gap-2">
-                                <Box className="w-4 h-4 text-blue-500" /> Deployment Strategy
-                            </h4>
-                            <p className="text-sm text-muted-foreground leading-relaxed bg-accent/50 p-4 rounded-xl border border-border/50">
-                                {selectedRec.deploymentStrategy}
-                            </p>
-                        </Card>
-
-                        <div className="p-6 bg-accent rounded-3xl space-y-4">
-                            <div className="flex items-start gap-4">
-                                <div className="p-2 bg-primary/20 rounded-lg shrink-0">
-                                    <Info className="w-4 h-4 text-primary" />
-                                </div>
-                                <div>
-                                    <p className="text-xs font-bold mb-1">Architectural Insight</p>
-                                    <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                        This recommendation is optimized for a team size of 10 with a "Fast" learning pace, suggesting more sophisticated patterns like event-driven Go services.
-                                    </p>
+                                <div className="flex flex-col gap-1 mt-2">
+                                    <span className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider">Cloud Strategy</span>
+                                    <p className="text-xs font-medium">{req.context.region_strategy}</p>
                                 </div>
                             </div>
                         </div>
+                    </Card>
 
-                        <Button className="w-full py-6 text-lg group">
-                            Generate Full Report <Cpu className="ml-2 w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    <div className="p-8 bg-zinc-900 text-white rounded-[2rem] space-y-4 border border-zinc-800 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                             <Cpu className="w-24 h-24" />
+                        </div>
+                        <h4 className="font-bold flex items-center gap-2 relative z-10">
+                            <Zap className="w-4 h-4 text-amber-500" /> Architecture Insight
+                        </h4>
+                        <p className="text-xs text-zinc-400 leading-relaxed relative z-10 italic">
+                            The choices above are synthesized by analyzing the interplay between ${req.context.users.toLocaleString()} users and your "${req.context.traffic_pattern}" traffic pattern, ensuring cost-efficiency at "${req.context.budget}" budget levels.
+                        </p>
+                        <Button className="w-full bg-white text-black hover:bg-zinc-200 mt-4 relative z-10" onClick={() => window.print()}>
+                            Export PDF Report
                         </Button>
                     </div>
-                </motion.div>
-            </AnimatePresence>
+                </div>
+            </motion.div>
         </div>
     );
 }

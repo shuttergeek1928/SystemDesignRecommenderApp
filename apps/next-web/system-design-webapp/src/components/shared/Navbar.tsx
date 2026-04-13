@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Cpu, Github, LayoutDashboard, BrainCircuit, Users } from "lucide-react";
+import { Menu, X, Cpu, Github, LayoutDashboard, BrainCircuit, Users, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Recommendations", href: "/recommendations", icon: BrainCircuit },
     { name: "Teams", href: "/teams", icon: Users },
+    { name: "Demo", href: "/demo", icon: Sparkles },
     { name: "Features", href: "/features", icon: Cpu },
 ];
 

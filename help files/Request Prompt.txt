@@ -1,0 +1,102 @@
+I am Technical Architect, I want to kick off a new project in the domain of banking and financial services (BFS) segment.
+
+========================
+PROJECT CONTEXT
+========================
+
+The project is to build a fully capable BFS software for a client called Barclays, Barclays wanted to measure the customers and their behavior of spending money by analyzing their bank account, credit cards, digital transactions. 
+Also this app should be available to all the existing users but if anyonle wanted to analyse they need to upload their data first.
+I want this to be secured project and do not wanted any data leak.
+
+========================
+1. TASK
+========================
+
+Your task is to suggest me few project Architectures, patterns, cloud provider, database and the tech stack which i should use for the best output of the app. 
+
+I want you to suggest me as follows:
+
+1. Frontend tech stack
+2. Backend tech stack
+3. Cloud provider
+4. Database
+5. Any third party integrations 
+
+Add the details of the app in a readme file.
+
+Task 1.1 Analyze the team and suggest me to hire/fire the member out of my team. 
+
+========================
+2. FUNCTIONAL REQUIREMENTS
+========================
+
+1. User should be able to login via various authentication methods
+2. Users should have limited access approach
+3. The app able to analyze and generate the reports and sub reports on the ask. (may generate in the background when idle) 
+4. User can activate their own account using the security questions regarding themselves.
+5. More functional requirements on the go. (yet to be decided) 
+
+========================
+2. NON - FUNCTIONAL REQUIREMENTS
+========================
+
+1. Scalability - High
+2. User load - Medium to High
+3. Reliability - High
+4. Availability - Medium to High
+5. Data Criticality - High 
+6. Security - High
+7. Real Time Updates - Yes
+8. On the go updates to the app - Yes
+9. LTS - Yes
+10. Regulations like HIPPA, GDPR - Yes
+
+========================
+4. UI & UX REQUIREMENTS
+========================
+
+1. The UI should be fluent and interactive.
+2. UI should be responsive and can run on any devices.
+3. UI must be in a light theme but there should be an option to change the theme and dark mode.
+4. UX should be minimal not too complex to find the things. 
+
+========================
+5. EXISTING TEAM CONTEXT
+========================
+
+1. Team Size - 8
+2. Members - 2 TA, 4 Dev, 1 QA, 1 BA, 0 DevOps, 0 AI&ML, 0 Python
+3. Developer exposure
+    - Java
+    - .NET
+    - Basic HTML & CSS
+    - NoSQL Database
+    - Little hands on Azure
+4. QA Exposure
+    - Selenium
+    - Java
+5. BA Exposure
+    Banking Domain Only - no exposure in analysis
+6. Capacity
+    - TA Capacity - 50% / 4 hours a day
+    - Developer Capacity - 80% / 6.4 hours a day
+    - QA Capacity - 80% / 6.4 hours a day
+
+========================
+6. OUTPUT REQUIREMENTS
+========================
+
+Deliver:
+- The roadmap of the best architecture, patters, styles, and other aspects of building an application 
+- All relevant tech stack in detailed manner
+- Clear separation of concerns
+- Setup instructions
+- Notes on architectural decisions
+- Resource I need to hire or fire
+- Technology I need to add in the project or the team
+- Licenses I need
+
+DO NOT summarize.
+DO NOT explain concepts but generate a readme.md file with instructions on how to run the app and the explanation of the architecture and code.
+
+If something is ambiguous, make a reasonable assumption and continue.

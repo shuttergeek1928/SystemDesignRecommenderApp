@@ -1,0 +1,106 @@
+{
+  "scenario_id": 1,
+  "title": "Ride Sharing Backend",
+  "description": "High-scale ride sharing platform backend for real-time matching, pricing, and trip management.",
+  "context": {
+    "users": 5000000,
+    "traffic_pattern": "burst",
+    "latency_requirement_ms": 100,
+    "availability_slo": "99.99%",
+    "consistency_model": "strong",
+    "budget": "medium",
+    "compliance": ["PII"],
+    "cloud_provider": "AWS",
+    "region_strategy": "multi-region active-active"
+  },
+  "non_functional_requirements": [
+    "Low latency matching within 100ms",
+    "High availability with minimal downtime",
+    "Strong data consistency for payments and trip state"
+  ],
+  "ground_truth_architecture": {
+    "baseline_A_expert": {
+      "database": {
+        "choice": "Amazon Aurora (PostgreSQL-compatible)",
+        "justification": "Managed relational DB with strong consistency and good scaling; suitable for transactional workloads."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Low-latency read cache for hot data like driver locations and surge pricing."
+      },
+      "messaging": {
+        "choice": "Apache Kafka (MSK)",
+        "justification": "High-throughput event streaming for trip events, logs, and analytics."
+      },
+      "deployment": {
+        "choice": "Amazon EKS (Kubernetes)",
+        "justification": "Container orchestration for microservices with burst traffic handling and autoscaling."
+      },
+      "observability": {
+        "choice": "Prometheus + Grafana + CloudWatch",
+        "justification": "Metrics, logs, and dashboards for reliability and performance monitoring."
+      },
+      "security": {
+        "choice": "OAuth2/OIDC with Cognito",
+        "justification": "Standards-based auth for mobile clients with managed identity provider."
+      }
+    },
+    "baseline_B_llm": {
+      "database": {
+        "choice": "Amazon Aurora (PostgreSQL-compatible)",
+        "justification": "Managed relational DB with strong consistency and good scaling; suitable for transactional workloads."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Low-latency read cache for hot data like driver locations and surge pricing."
+      },
+      "messaging": {
+        "choice": "Apache Kafka (MSK)",
+        "justification": "High-throughput event streaming for trip events, logs, and analytics."
+      },
+      "deployment": {
+        "choice": "Amazon EKS (Kubernetes)",
+        "justification": "Container orchestration for microservices with burst traffic handling and autoscaling."
+      },
+      "observability": {
+        "choice": "Prometheus + Grafana + CloudWatch",
+        "justification": "Metrics, logs, and dashboards for reliability and performance monitoring."
+      },
+      "security": {
+        "choice": "OAuth2/OIDC with Cognito",
+        "justification": "Standards-based auth for mobile clients with managed identity provider."
+      }
+    },
+    "baseline_C_llm_rag": {
+      "database": {
+        "choice": "Amazon Aurora (PostgreSQL-compatible)",
+        "justification": "Managed relational DB with strong consistency and good scaling; suitable for transactional workloads."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Low-latency read cache for hot data like driver locations and surge pricing."
+      },
+      "messaging": {
+        "choice": "Apache Kafka (MSK)",
+        "justification": "High-throughput event streaming for trip events, logs, and analytics."
+      },
+      "deployment": {
+        "choice": "Amazon EKS (Kubernetes)",
+        "justification": "Container orchestration for microservices with burst traffic handling and autoscaling."
+      },
+      "observability": {
+        "choice": "Prometheus + Grafana + CloudWatch",
+        "justification": "Metrics, logs, and dashboards for reliability and performance monitoring."
+      },
+      "security": {
+        "choice": "OAuth2/OIDC with Cognito",
+        "justification": "Standards-based auth for mobile clients with managed identity provider."
+      }
+    }
+  },
+  "acceptable_alternatives": {
+    "database": ["DynamoDB with careful design"],
+    "messaging": ["SQS + SNS for simpler workflows"]
+  },
+  "references": ["Link to ADR or reference architecture used as source"]
+}

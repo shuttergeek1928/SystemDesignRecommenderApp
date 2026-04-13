@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, ChevronLeft, CheckCircle2, Info, Lightbulb } from "lucide-react";
+import { ChevronRight, ChevronLeft, CheckCircle2, Info, Lightbulb, Zap } from "lucide-react";
 import { systemDesignSchema, type SystemDesignForm } from "@/types/form";
 import { Button, Card, Input, Label } from "@/components/ui/base";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ import { useSystemDesignStore } from "@/store/useSystemDesignStore";
 
 export function RequirementForm() {
     const [currentStep, setCurrentStep] = useState(0);
-    const { generateRecommendation, isLoading } = useSystemDesignStore();
+    const { generateRecommendation, isLoading, useRag, setUseRag } = useSystemDesignStore();
     const [success, setSuccess] = useState(false);
 
     const {
@@ -253,6 +253,34 @@ export function RequirementForm() {
                                             ))}
                                         </div>
                                     </div>
+                                </div>
+                            )}
+
+                            {/* RAG Toggle (Available on all steps or just the last) */}
+                            {currentStep === STEPS.length - 1 && (
+                                <div className="mt-10 p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-primary/20 rounded-lg">
+                                            <Zap className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-bold">RAG-Enhanced Analysis</p>
+                                            <p className="text-xs text-muted-foreground italic">Uses documentation from AWS/GCP architecture centers</p>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setUseRag(!useRag)}
+                                        className={cn(
+                                            "w-12 h-6 rounded-full p-1 transition-colors duration-200",
+                                            useRag ? "bg-primary" : "bg-secondary"
+                                        )}
+                                    >
+                                        <div className={cn(
+                                            "w-4 h-4 bg-white rounded-full transition-transform duration-200",
+                                            useRag ? "translate-x-6" : "translate-x-0"
+                                        )} />
+                                    </button>
                                 </div>
                             )}
                         </motion.div>

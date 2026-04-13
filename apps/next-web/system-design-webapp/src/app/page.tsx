@@ -76,7 +76,7 @@ export default function LandingPage() {
               Start Designing <ArrowRight className="w-5 h-5" />
             </Link>
             <Link
-              href="#demo"
+              href="/demo"
               className="bg-accent hover:bg-accent/80 text-foreground px-8 py-4 rounded-xl text-lg font-semibold border border-border w-full sm:w-auto transition-colors"
             >
               View Demo

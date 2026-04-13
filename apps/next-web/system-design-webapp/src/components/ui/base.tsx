@@ -61,3 +61,17 @@ Input.displayName = "Input";
 export const Label = ({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
     <label className={cn("text-sm font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 mb-2 inline-block text-foreground/80", className)} {...props} />
 );
+// --- Textarea ---
+export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(
+    ({ className, ...props }, ref) => (
+        <textarea
+            className={cn(
+                "flex min-h-[120px] w-full rounded-xl border border-input bg-background px-4 py-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+                className
+            )}
+            ref={ref}
+            {...props}
+        />
+    )
+);
+Textarea.displayName = "Textarea";

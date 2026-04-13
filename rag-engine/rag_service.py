@@ -21,7 +21,7 @@ async def root():
     return {"status": "online", "message": "System Design RAG Service is healthy"}
 
 # Configuration
-DB_DIR = os.path.join(os.path.dirname(__file__), "Scrapper", "chroma_db")
+DB_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
 MODEL_NAME = "phi3" # Or whatever model is available in Ollama
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 

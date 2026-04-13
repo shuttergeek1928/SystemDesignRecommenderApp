@@ -19,13 +19,14 @@ A sophisticated multi-agent system designed to assist software architects and en
 ## 🏗️ Project Structure
 
 ```text
-├── apps/
-│   ├── dotnet-api/          # ASP.NET Core 10 backend (Orchestrator)
-│   ├── next-web/            # Next.js 14 frontend (Next UI)
-│   ├── pyhton/              # Python RAG & Scraper Module
-│   │   ├── Scrapper/        # Web Scraper & Knowledge Indexer
-│   │   └── rag_service.py   # FastAPI RAG Service (Port 8001)
-│   └── baselines/           # Datasets (Expert vs LLM vs RAG)
+├── core-api/            # ASP.NET Core 10 backend (Orchestrator)
+├── web-dashboard/       # Next.js 14 frontend (Next UI)
+├── rag-engine/          # Python RAG Service & Knowledge Scraper (Port 8001)
+├── data/                # Benchmark results and raw scenarios
+├── docs/                # Project documentation, reference prompts, and guides
+├── apps/                # [Empty] (Planned for future microservices)
+├── libraries/           # Shared cross-project libraries
+└── tools/               # Internal utility tools
 ```
 
 ---

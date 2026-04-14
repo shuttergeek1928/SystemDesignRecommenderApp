@@ -10,10 +10,12 @@ namespace SystemDesignRecommenderApi.Controllers;
 public class SystemDesignController : ControllerBase
 {
     private readonly ISystemDesignService _systemDesignService;
+    private readonly IRuleEngineService _ruleEngineService;
 
-    public SystemDesignController(ISystemDesignService systemDesignService)
+    public SystemDesignController(ISystemDesignService systemDesignService, IRuleEngineService ruleEngineService)
     {
         _systemDesignService = systemDesignService;
+        _ruleEngineService = ruleEngineService;
     }
 
     [HttpPost("generate")]
@@ -35,7 +37,11 @@ public class SystemDesignController : ControllerBase
         // Step 2: Generate Architecture Design based on requirements
         ArchitectureDesign? architecture;
         
-        if (request.UseRag)
+        if (request.UseHybrid)
+        {
+            architecture = await _systemDesignService.GenerateHybridArchitectureAsync(request.ProblemStatement, requirements, request.UserId, request.TeamId);
+        }
+        else if (request.UseRag)
         {
             architecture = await _systemDesignService.GenerateArchitectureWithRagAsync(requirements);
         }
@@ -52,8 +58,16 @@ public class SystemDesignController : ControllerBase
         return Ok(new
         {
             ExtractedRequirements = requirements,
-            ArchitectureDesign = architecture
+            ArchitectureDesign = architecture,
+            TriggeredRules = request.UseHybrid ? _ruleEngineService.EvaluateRules(requirements) : null
         });
+    }
+
+    [HttpGet("history")]
+    public async Task<IActionResult> GetHistory([FromQuery] Guid? userId, [FromQuery] Guid? teamId)
+    {
+        var history = await _systemDesignService.GetSessionHistoryAsync(userId, teamId);
+        return Ok(history);
     }
 
     [HttpPost("extract-requirements")]

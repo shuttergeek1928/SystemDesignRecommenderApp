@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 const STEPS = [
     { id: "tech", title: "Technical Requirements", description: "Scale, Performance & Consistency" },
     { id: "team", title: "Team Context", description: "Size, Experience & Stack" },
+    { id: "scale", title: "Scale & Traffic", description: "Volumes, Rates & Complexity" },
     { id: "agile", title: "Agility & Pace", description: "Releases & Learning" },
 ];
 
@@ -19,7 +20,7 @@ import { useSystemDesignStore } from "@/store/useSystemDesignStore";
 
 export function RequirementForm() {
     const [currentStep, setCurrentStep] = useState(0);
-    const { generateRecommendation, isLoading, useRag, setUseRag } = useSystemDesignStore();
+    const { generateRecommendation, isLoading, useRag, setUseRag, useHybrid, setUseHybrid } = useSystemDesignStore();
     const [success, setSuccess] = useState(false);
 
     const {
@@ -27,6 +28,7 @@ export function RequirementForm() {
         handleSubmit,
         trigger,
         formState: { errors },
+        watch
     } = useForm<SystemDesignForm>({
         resolver: zodResolver(systemDesignSchema),
         defaultValues: {
@@ -38,15 +40,23 @@ export function RequirementForm() {
             releaseCycle: "weekly",
             learningPace: "moderate",
             automationLevel: "medium",
+            requestRate: 0,
+            dataVolume: 0,
+            searchComplexity: "simple",
+            deploymentFrequency: "medium",
         },
     });
+
+    const watchTeamSize = watch("teamSize");
 
     const nextStep = async () => {
         const fields = currentStep === 0
             ? ["appName", "targetUsers", "latency", "scalability", "consistency"]
             : currentStep === 1
                 ? ["teamSize", "experienceLevel"]
-                : [];
+                : currentStep === 2
+                    ? ["requestRate", "dataVolume", "searchComplexity", "deploymentFrequency"]
+                    : [];
 
         // @ts-ignore
         const isValid = await trigger(fields);
@@ -170,7 +180,7 @@ export function RequirementForm() {
                                 </div>
                             )}
 
-                            {/* Step 2: Team */}
+                             {/* Step 2: Team */}
                             {currentStep === 1 && (
                                 <div className="space-y-8">
                                     <div className="space-y-4">
@@ -183,7 +193,7 @@ export function RequirementForm() {
                                                 {...register("teamSize", { valueAsNumber: true })}
                                             />
                                             <span className="w-12 h-12 bg-primary/20 text-primary rounded-xl flex items-center justify-center font-bold">
-                                                10
+                                                {watchTeamSize}
                                             </span>
                                         </div>
                                     </div>
@@ -207,8 +217,54 @@ export function RequirementForm() {
                                 </div>
                             )}
 
-                            {/* Step 3: Agility */}
-                            {currentStep === 2 && (
+                             {/* Step 3: Scale & Traffic */}
+                             {currentStep === 2 && (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label>Avg. Request Rate (req/s)</Label>
+                                            <Input type="number" {...register("requestRate", { valueAsNumber: true })} />
+                                            {errors.requestRate && <p className="text-destructive text-xs mt-1">{errors.requestRate.message}</p>}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Data Volume (GB/month)</Label>
+                                            <Input type="number" {...register("dataVolume", { valueAsNumber: true })} />
+                                            {errors.dataVolume && <p className="text-destructive text-xs mt-1">{errors.dataVolume.message}</p>}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <Label>Search Complexity</Label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {["simple", "complex"].map((val) => (
+                                                <label key={val} className="cursor-pointer group">
+                                                    <input type="radio" value={val} className="peer hidden" {...register("searchComplexity")} />
+                                                    <div className="p-3 text-center border border-border rounded-xl text-sm font-medium transition-all group-hover:bg-accent peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary capitalize">
+                                                        {val}
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <Label>Deployment & Update Freq.</Label>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                            {["low", "medium", "high", "daily"].map((val) => (
+                                                <label key={val} className="cursor-pointer group">
+                                                    <input type="radio" value={val} className="peer hidden" {...register("deploymentFrequency")} />
+                                                    <div className="p-3 text-center border border-border rounded-xl text-sm font-medium transition-all group-hover:bg-accent peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary capitalize">
+                                                        {val}
+                                                    </div>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Step 4: Agility */}
+                            {currentStep === 3 && (
                                 <div className="space-y-8">
                                     <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20 flex gap-4">
                                         <Lightbulb className="text-primary w-6 h-6 shrink-0" />
@@ -256,31 +312,58 @@ export function RequirementForm() {
                                 </div>
                             )}
 
-                            {/* RAG Toggle (Available on all steps or just the last) */}
-                            {currentStep === STEPS.length - 1 && (
-                                <div className="mt-10 p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-primary/20 rounded-lg">
-                                            <Zap className="w-4 h-4 text-primary" />
+                             {/* Engine Toggles */}
+                             {currentStep === STEPS.length - 1 && (
+                                <div className="space-y-4 mt-10">
+                                    <div className="p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-primary/20 rounded-lg">
+                                                <CheckCircle2 className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold">Hybrid Reasoning Engine</p>
+                                                <p className="text-xs text-muted-foreground italic">Rules + LLM synthesis (Recommended)</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className="text-sm font-bold">RAG-Enhanced Analysis</p>
-                                            <p className="text-xs text-muted-foreground italic">Uses documentation from AWS/GCP architecture centers</p>
-                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setUseHybrid(!useHybrid)}
+                                            className={cn(
+                                                "w-12 h-6 rounded-full p-1 transition-colors duration-200",
+                                                useHybrid ? "bg-primary" : "bg-secondary"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "w-4 h-4 bg-white rounded-full transition-transform duration-200",
+                                                useHybrid ? "translate-x-6" : "translate-x-0"
+                                            )} />
+                                        </button>
                                     </div>
-                                    <button 
-                                        type="button"
-                                        onClick={() => setUseRag(!useRag)}
-                                        className={cn(
-                                            "w-12 h-6 rounded-full p-1 transition-colors duration-200",
-                                            useRag ? "bg-primary" : "bg-secondary"
-                                        )}
-                                    >
-                                        <div className={cn(
-                                            "w-4 h-4 bg-white rounded-full transition-transform duration-200",
-                                            useRag ? "translate-x-6" : "translate-x-0"
-                                        )} />
-                                    </button>
+
+                                    <div className="p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-primary/20 rounded-lg">
+                                                <Zap className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold">RAG-Enhanced Analysis</p>
+                                                <p className="text-xs text-muted-foreground italic">Tech-specific documentation insights</p>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            type="button"
+                                            onClick={() => setUseRag(!useRag)}
+                                            className={cn(
+                                                "w-12 h-6 rounded-full p-1 transition-colors duration-200",
+                                                useRag ? "bg-primary" : "bg-secondary"
+                                            )}
+                                        >
+                                            <div className={cn(
+                                                "w-4 h-4 bg-white rounded-full transition-transform duration-200",
+                                                useRag ? "translate-x-6" : "translate-x-0"
+                                            )} />
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </motion.div>

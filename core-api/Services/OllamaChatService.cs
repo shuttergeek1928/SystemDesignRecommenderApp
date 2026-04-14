@@ -12,25 +12,16 @@ namespace SystemDesignRecommenderApi.Services
     public class OllamaChatService : IOllamaChatService
     {
         private readonly OllamaApiClient _ollamaApiClient;
+        private readonly ISettingsService _settingsService;
         private readonly ILogger<OllamaChatService> _logger;
 
-        /// <summary>
-        /// Initializes a new instance of the OllamaChatService.
-        /// </summary>
-        /// <param name="ollamaApiClient">The Ollama API client.</param>
-        /// <param name="logger">The logger instance.</param>
-        public OllamaChatService(OllamaApiClient ollamaApiClient, ILogger<OllamaChatService> logger)
+        public OllamaChatService(OllamaApiClient ollamaApiClient, ISettingsService settingsService, ILogger<OllamaChatService> logger)
         {
             _ollamaApiClient = ollamaApiClient ?? throw new ArgumentNullException(nameof(ollamaApiClient));
+            _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        /// <summary>
-        /// Sends a chat request to the Ollama model and returns the response.
-        /// </summary>
-        /// <param name="request">The chat request containing messages and optional model/temperature settings.</param>
-        /// <param name="cancellationToken">Cancellation token for the async operation.</param>
-        /// <returns>The model's response text.</returns>
         public async Task<string> ChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
         {
             try
@@ -50,8 +41,8 @@ namespace SystemDesignRecommenderApi.Services
                     })
                     .ToList();
 
-                // Set default model if not provided
-                var model = request.Model ?? "phi3:latest";
+                // Get model from settings
+                var model = _settingsService.GetSettings().OllamaModel;
 
                 _logger.LogInformation("Sending chat request to Ollama model: {Model}", model);
 

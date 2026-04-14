@@ -104,6 +104,30 @@ export function RecommendationsView() {
                             </h2>
                         </div>
 
+                        {/* Reasoning Anchors (Triggered Rules) */}
+                        {(recommendation.data.TriggeredRules?.length ?? 0) > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                {recommendation.data.TriggeredRules?.map((rule: any, i: number) => (
+                                    <div key={i} className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
+                                            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-emerald-600 tracking-wider mb-1">
+                                                Anchor: {rule.dimension}
+                                            </p>
+                                            <p className="text-sm font-bold text-foreground mb-1">
+                                                {rule.recommendation}
+                                            </p>
+                                            <p className="text-[11px] text-muted-foreground leading-snug italic">
+                                                {rule.justification}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                         <div className="space-y-4">
                             {choices.map((choice) => (
                                 <ArchitectureChoiceCard

@@ -9,4 +9,13 @@ public class SystemDesignRequestDto
 
     [JsonPropertyName("use_rag")]
     public bool UseRag { get; set; } = false;
+
+    [JsonPropertyName("use_hybrid")]
+    public bool UseHybrid { get; set; } = true;
+
+    [JsonPropertyName("user_id")]
+    public Guid? UserId { get; set; }
+
+    [JsonPropertyName("team_id")]
+    public Guid? TeamId { get; set; }
 }

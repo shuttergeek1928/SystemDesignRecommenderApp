@@ -55,6 +55,7 @@ class DesignRequirements(BaseModel):
     description: str
     context: DesignContext
     non_functional_requirements: List[str]
+    model: Optional[str] = None
 
 # RAG Prompt Template
 prompt_template = """
@@ -91,7 +92,7 @@ def format_docs(docs):
 @app.post("/generate/rag")
 async def generate_rag_design(req: DesignRequirements):
     try:
-        logger.info(f"Received RAG request for: {req.title}")
+        logger.info(f"Received RAG request for: {req.title} with model: {req.model or MODEL_NAME}")
         
         # 1. Retrieval
         query = f"{req.title} {req.description} {req.context.traffic_pattern}"
@@ -100,6 +101,11 @@ async def generate_rag_design(req: DesignRequirements):
         
         # 2. Generation
         prompt = ChatPromptTemplate.from_template(prompt_template)
+        
+        # Use requested model if provided, otherwise default
+        current_llm = llm
+        if req.model and req.model != MODEL_NAME:
+            current_llm = ChatOllama(model=req.model, temperature=0, format="json", base_url=OLLAMA_BASE_URL)
         
         chain = (
             {"context": lambda x: context_text, 
@@ -114,7 +120,7 @@ async def generate_rag_design(req: DesignRequirements):
              "region_strategy": lambda x: req.context.region_strategy
             }
             | prompt
-            | llm
+            | current_llm
             | JsonOutputParser()
         )
         

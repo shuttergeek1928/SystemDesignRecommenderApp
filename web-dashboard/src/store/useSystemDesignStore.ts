@@ -10,13 +10,20 @@ interface SystemDesignStore {
         data: {
           ExtractedRequirements: any;
           ArchitectureDesign: any;
+          TriggeredRules?: any[];
         }
     } | null;
     isLoading: boolean;
     useRag: boolean;
+    useHybrid: boolean;
+    ollamaModel: string;
     setFormData: (data: Partial<SystemDesignForm>) => void;
     setUseRag: (value: boolean) => void;
+    setUseHybrid: (value: boolean) => void;
+    setOllamaModel: (value: string) => void;
     generateRecommendation: (data: SystemDesignForm) => Promise<void>;
+    fetchSettings: () => Promise<void>;
+    updateSettings: (model: string) => Promise<void>;
     reset: () => void;
 }
 
@@ -27,13 +34,44 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
             recommendation: null,
             isLoading: false,
             useRag: false,
+            useHybrid: true,
+            ollamaModel: "phi3:latest",
 
             setFormData: (data) => set((state) => ({ formData: { ...state.formData, ...data } })),
-            setUseRag: (value) => set({ useRag: value }),
+            setUseRag: (value) => set({ useRag: value, useHybrid: !value && get().useHybrid }),
+            setUseHybrid: (value) => set({ useHybrid: value, useRag: !value && get().useRag }),
+            setOllamaModel: (value) => set({ ollamaModel: value }),
+
+            fetchSettings: async () => {
+                try {
+                    const response = await fetch("http://localhost:5000/api/Settings");
+                    if (response.ok) {
+                        const settings = await response.json();
+                        set({ ollamaModel: settings.ollamaModel });
+                    }
+                } catch (error) {
+                    console.error("Error fetching settings:", error);
+                }
+            },
+
+            updateSettings: async (model) => {
+                try {
+                    const response = await fetch("http://localhost:5000/api/Settings", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ ollamaModel: model }),
+                    });
+                    if (response.ok) {
+                        set({ ollamaModel: model });
+                    }
+                } catch (error) {
+                    console.error("Error updating settings:", error);
+                }
+            },
 
             generateRecommendation: async (data) => {
                 set({ isLoading: true, formData: data });
-                const { useRag } = get();
+                const { useRag, useHybrid } = get();
 
                 const prompt = `Design a system for an application named "${data.appName}" targeting ${data.targetUsers}. 
                 Key Requirements: 
@@ -43,7 +81,11 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                 - Team Size: ${data.teamSize} developers with ${data.experienceLevel} experience level.
                 - Release Cycle: ${data.releaseCycle}
                 - Learning Pace: ${data.learningPace}
-                - Automation Level: ${data.automationLevel}`;
+                - Automation Level: ${data.automationLevel}
+                - Request Rate: ${data.requestRate} requests/sec
+                - Data Volume: ${data.dataVolume} GB/month
+                - Search Complexity: ${data.searchComplexity}
+                - Deployment Frequency: ${data.deploymentFrequency}`;
 
                 try {
                     const response = await fetch("http://localhost:5000/api/SystemDesign/generate", {
@@ -53,7 +95,8 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                         },
                         body: JSON.stringify({
                             problem_statement: prompt,
-                            use_rag: useRag
+                            use_rag: useRag,
+                            use_hybrid: useHybrid
                         }),
                     });
 
@@ -74,7 +117,6 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                 } catch (error) {
                     console.error("Error generating system design:", error);
                     set({ isLoading: false });
-                    // Fallback or error handled by the UI
                 }
             },
 

@@ -5,31 +5,49 @@ namespace SystemDesignRecommenderApi.Domain.Models;
 public class DesignContext
 {
     [JsonPropertyName("users")]
-    public int Users { get; set; }
+    public int? Users { get; set; }
 
     [JsonPropertyName("traffic_pattern")]
-    public string TrafficPattern { get; set; } = string.Empty;
+    public string? TrafficPattern { get; set; }
 
     [JsonPropertyName("latency_requirement_ms")]
-    public int LatencyRequirementMs { get; set; }
+    public int? LatencyRequirementMs { get; set; }
 
     [JsonPropertyName("availability_slo")]
-    public string AvailabilitySlo { get; set; } = string.Empty;
+    public string? AvailabilitySlo { get; set; }
 
     [JsonPropertyName("consistency_model")]
-    public string ConsistencyModel { get; set; } = string.Empty;
+    public string? ConsistencyModel { get; set; }
 
     [JsonPropertyName("budget")]
-    public string Budget { get; set; } = string.Empty;
+    public string? Budget { get; set; }
 
     [JsonPropertyName("compliance")]
     public List<string> Compliance { get; set; } = new();
 
     [JsonPropertyName("cloud_provider")]
-    public string CloudProvider { get; set; } = string.Empty;
+    public string? CloudProvider { get; set; }
 
     [JsonPropertyName("region_strategy")]
-    public string RegionStrategy { get; set; } = string.Empty;
+    public string? RegionStrategy { get; set; }
+
+    [JsonPropertyName("request_rate")]
+    public double? RequestRate { get; set; }
+
+    [JsonPropertyName("data_volume_gb")]
+    public double? DataVolumeGb { get; set; }
+
+    [JsonPropertyName("team_size")]
+    public int? TeamSize { get; set; }
+
+    [JsonPropertyName("experience_level")]
+    public string? ExperienceLevel { get; set; } = "mixed";
+
+    [JsonPropertyName("search_complexity")]
+    public string? SearchComplexity { get; set; } = "simple";
+
+    [JsonPropertyName("deployment_frequency")]
+    public string? DeploymentFrequency { get; set; } = "weekly";
 }
 
 public class DesignRequirements
@@ -38,14 +56,17 @@ public class DesignRequirements
     public int ScenarioId { get; set; }
 
     [JsonPropertyName("title")]
-    public string Title { get; set; } = string.Empty;
+    public string? Title { get; set; }
 
     [JsonPropertyName("description")]
-    public string Description { get; set; } = string.Empty;
+    public string? Description { get; set; }
 
     [JsonPropertyName("context")]
     public DesignContext Context { get; set; } = new();
 
     [JsonPropertyName("non_functional_requirements")]
     public List<string> NonFunctionalRequirements { get; set; } = new();
+
+    [JsonPropertyName("model")]
+    public string? Model { get; set; }
 }

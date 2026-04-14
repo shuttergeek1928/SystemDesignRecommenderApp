@@ -1,0 +1,103 @@
+{
+    "extractedRequirements": {
+        "scenario_id": 0,
+        "title": "Design Real-Time Ad-Tech Bidding Engine",
+        "description": "Develop a robust and scalable real-time ad-tech bidding engine to serve ultra-low latency needs for target users with the ability to handle high traffic volumes, especially during sudden spikes.",
+        "context": {
+            "users": 1000000,
+            "traffic_pattern": "Burst",
+            "latency_requirement_ms": 20,
+            "availability_slo": "",
+            "consistency_model": "",
+            "budget": "",
+            "compliance": [
+                "GDPR",
+                "CCPA"
+            ],
+            "cloud_provider": "",
+            "region_strategy": "",
+            "request_rate": 100000,
+            "data_volume_gb": 10000,
+            "team_size": 15,
+            "experience_level": "Senior",
+            "search_complexity": "Complex",
+            "deployment_frequency": "weekly"
+        },
+        "non_functional_requirements": [
+            "Ultra-Low Latency (< 20ms)",
+            "High Scalability to handle sudden spikes in traffic",
+            "Ability to process at least 100,000 requests per second under high load conditions"
+        ],
+        "model": null
+    },
+    "architectureDesign": {
+        "database": {
+            "choice": "Cassandra",
+            "justification": "Handles horizontal scaling and writes efficiently, making it suitable for handling a data volume of 10,000 GB/month while also providing the necessary write throughput."
+        },
+        "cache": {
+            "choice": "Redis Cluster with Memcached fallback",
+            "justification": "Offers ultra-low latency for frequent read operations and can handle a significant request rate, complemented by Memcached to avoid bottlenecks in case of Redis performance degradation."
+        },
+        "messaging": {
+            "choice": "Kafka Streams with Kafka Connect",
+            "justification": "Enables real-time stream processing and efficient request handling through the use of distributed streaming, allowing for high concurrency without blocking operations under heavy load conditions."
+        },
+        "deployment": {
+            "choice": "Serverless architecture using AWS Lambda with provisioned concurrency",
+            "justification": "Ensures near-zero latency during spikes in traffic and automatic scaling down to save costs when idle. Providedconcurrency settings help maintain performance targets even under request rate of 100,000 req/s."
+        },
+        "observability": {
+            "choice": "CloudWatch with AWS X-Ray for distributed tracing",
+            "justification": "Monitors all components and provides trace data across services to quickly identify issues under varying load conditions. This is crucial in a high-demand, real-time system."
+        },
+        "security": {
+            "choice": "AWS KMS for encryption management with customer managed keys",
+            "justification": "Meets compliance requirements while providing control over the cryptographic materials used to protect sensitive user information at rest and in transit, as required by GDPR and CCPA."
+        }
+    },
+    "triggeredRules": [
+        {
+            "dimension": "Scale",
+            "condition": "Users > 100k",
+            "recommendation": "Horizontal Scaling",
+            "justification": "Single node capacity limits are reached at this scale."
+        },
+        {
+            "dimension": "Scale Type",
+            "condition": "Burst Traffic",
+            "recommendation": "Serverless (Lambda/Azure Functions)",
+            "justification": "Scales to zero to save costs during idle periods and scales instantly for spikes."
+        },
+        {
+            "dimension": "Latency",
+            "condition": "< 100ms",
+            "recommendation": "Redis/Memcached",
+            "justification": "Reduces database I/O bottlenecks for frequent read operations."
+        },
+        {
+            "dimension": "Data Volume",
+            "condition": "> 1TB / Month",
+            "recommendation": "NoSQL (Mongo/Cassandra)",
+            "justification": "Horizontal write scaling is significantly easier than sharding a massive RDBMS."
+        },
+        {
+            "dimension": "Search",
+            "condition": "Complex Text Search",
+            "recommendation": "Elasticsearch/Meilisearch",
+            "justification": "RDBMS LIKE queries do not scale for full-text indexing at volume."
+        },
+        {
+            "dimension": "Request Rate",
+            "condition": "> 5k Requests/sec",
+            "recommendation": "Message Queue (RabbitMQ/Kafka)",
+            "justification": "Decouples services to prevent cascading failures under heavy load."
+        },
+        {
+            "dimension": "Compliance",
+            "condition": "GDPR / PII Data",
+            "recommendation": "Data Masking & Encryption",
+            "justification": "Legal requirement to protect sensitive user information at rest and in transit."
+        }
+    ]
+}

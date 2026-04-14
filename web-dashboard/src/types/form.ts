@@ -17,6 +17,12 @@ export const systemDesignSchema = z.object({
     releaseCycle: z.enum(["daily", "weekly", "monthly", "quarterly"]),
     learningPace: z.enum(["fast", "moderate", "slow"]),
     automationLevel: z.enum(["low", "medium", "high"]),
+    
+    // Step 4: Scale & Traffic
+    requestRate: z.number().min(0, "Request rate must be at least 0"),
+    dataVolume: z.number().min(0, "Data volume must be at least 0"),
+    searchComplexity: z.enum(["simple", "complex"]),
+    deploymentFrequency: z.enum(["low", "medium", "high", "daily"]),
 });
 
 export type SystemDesignForm = z.infer<typeof systemDesignSchema>;

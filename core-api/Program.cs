@@ -1,5 +1,7 @@
+using Microsoft.EntityFrameworkCore;
 using OllamaSharp;
 using SystemDesignRecommenderApi.Clients;
+using SystemDesignRecommenderApi.Domain.Data;
 using SystemDesignRecommenderApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,9 +9,15 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers();
 
+// Register Database
+builder.Services.AddDbContext<DesignDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 // Register Ollama services
 builder.Services.AddSingleton(new OllamaApiClient(new Uri("http://localhost:11434")));
 builder.Services.AddSingleton<IOllamaChatService, OllamaChatService>();
+builder.Services.AddSingleton<ISettingsService, SettingsService>();
+builder.Services.AddScoped<IRuleEngineService, RuleEngineService>();
 builder.Services.AddScoped<ISystemDesignService, SystemDesignService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<McpClient>();
@@ -32,6 +40,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Automatically apply migrations at startup
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<DesignDbContext>();
+    dbContext.Database.Migrate();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -46,10 +61,6 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-var client = app.Services.GetRequiredService<McpClient>();
-await client.StartAsync();
-
 app.MapControllers();
-
 
 app.Run();

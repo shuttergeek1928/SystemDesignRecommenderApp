@@ -3,14 +3,16 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Cpu, Github, LayoutDashboard, BrainCircuit, Users, Sparkles } from "lucide-react";
+import { Menu, X, Cpu, Github, LayoutDashboard, BrainCircuit, Users, Sparkles, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useSystemDesignStore } from "@/store/useSystemDesignStore";
 
 const navItems = [
     { name: "Home", href: "/", icon: Cpu },
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Recommendations", href: "/recommendations", icon: BrainCircuit },
     { name: "Teams", href: "/teams", icon: Users },
+    { name: "Settings", href: "/settings", icon: Settings },
     { name: "Demo", href: "/demo", icon: Sparkles },
     { name: "Features", href: "/features", icon: Cpu },
 ];
@@ -18,14 +20,16 @@ const navItems = [
 export function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const { fetchSettings } = useSystemDesignStore();
 
     useEffect(() => {
+        fetchSettings();
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
         };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
-    }, []);
+    }, [fetchSettings]);
 
     return (
         <nav

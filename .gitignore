@@ -1,0 +1,101 @@
+# Dependency directories
+**/node_modules/
+**/jspm_packages/
+
+# Next.js build output
+**/.next/
+**/out/
+
+# Production builds
+**/build/
+**/dist/
+
+# .NET build output
+**/bin/
+**/obj/
+**/publish/
+
+# Python
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+**/.python-version
+**/venv/
+**/.venv/
+**/env/
+**/.env/
+**/ENV/
+
+# User-specific files (Visual Studio, Rider, etc.)
+**/*.user
+**/*.suo
+**/*.userosscache
+**/*.sln.docstates
+**/*.userprefs
+**/.vs/
+**/.idea/
+**/*.sln.iml
+**/*.swp
+**/*.swn
+**/*.swo
+
+# Visual Studio Code
+**/.vscode/
+!**/.vscode/extensions.json
+**/*.code-workspace
+
+# Logs and databases
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/.pnpm-debug.log*
+**/*.db
+**/*.sqlite
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment variables
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/*.pem
+
+# Testing
+**/coverage/
+**/*.coverage
+**/TestResults/
+
+# TypeScript
+**/*.tsbuildinfo
+
+# Project Specific (from sub-gitignores)
+**/graphify-out/cache
+**/raw/
+**/chroma_db/
+**/secrets.json
+**/appsettings.*.json
+!**/appsettings.json
+**/local.settings.json
+
+# Yarn
+**/.pnp
+**/.pnp.*
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/versions
+
+# Vercel
+**/.vercel

@@ -154,6 +154,25 @@ export function UserForm({ initialData, onClose }: { initialData?: User; onClose
                             <Input {...register("goal")} placeholder="e.g. Cloud Certification" />
                         </div>
                     </div>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-accent/30 rounded-2xl">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Productivity</Label>
+                            <Input type="number" {...register("productivity", { valueAsNumber: true })} className="h-9 text-xs" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Morale</Label>
+                            <Input type="number" {...register("morale", { valueAsNumber: true })} className="h-9 text-xs" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Satisfaction</Label>
+                            <Input type="number" {...register("satisfaction", { valueAsNumber: true })} className="h-9 text-xs" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] uppercase font-bold text-muted-foreground">Performance</Label>
+                            <Input type="number" {...register("performance", { valueAsNumber: true })} className="h-9 text-xs" />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex gap-3 pt-6 border-t border-border">

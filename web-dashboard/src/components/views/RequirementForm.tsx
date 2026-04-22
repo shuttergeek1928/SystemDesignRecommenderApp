@@ -8,6 +8,7 @@ import { ChevronRight, ChevronLeft, CheckCircle2, Info, Lightbulb, Zap } from "l
 import { systemDesignSchema, type SystemDesignForm } from "@/types/form";
 import { Button, Card, Input, Label } from "@/components/ui/base";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 const STEPS = [
     { id: "tech", title: "Technical Requirements", description: "Scale, Performance & Consistency" },
@@ -22,6 +23,7 @@ export function RequirementForm() {
     const [currentStep, setCurrentStep] = useState(0);
     const { generateRecommendation, isLoading, useRag, setUseRag, useHybrid, setUseHybrid } = useSystemDesignStore();
     const [success, setSuccess] = useState(false);
+    const router = useRouter();
 
     const {
         register,
@@ -66,8 +68,10 @@ export function RequirementForm() {
     const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
     const onSubmit = async (data: SystemDesignForm) => {
-        await generateRecommendation(data);
-        setSuccess(true);
+        const success = await generateRecommendation(data);
+        if (success) {
+            setSuccess(true);
+        }
     };
 
     if (success) {
@@ -80,7 +84,7 @@ export function RequirementForm() {
                 <p className="text-muted-foreground mb-10">
                     Our engine has analyzed your requirements and generated a personalized architecture report.
                 </p>
-                <Button className="w-full" onClick={() => window.location.href = "/dashboard"}>
+                <Button className="w-full" onClick={() => router.push("/dashboard")}>
                     View Recommendations
                 </Button>
             </Card>
@@ -312,8 +316,8 @@ export function RequirementForm() {
                                 </div>
                             )}
 
-                             {/* Engine Toggles */}
-                             {currentStep === STEPS.length - 1 && (
+                            {/* Engine Toggles */}
+                            {currentStep === STEPS.length - 1 && (
                                 <div className="space-y-4 mt-10">
                                     <div className="p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between shadow-sm">
                                         <div className="flex items-center gap-3">
@@ -366,29 +370,40 @@ export function RequirementForm() {
                                     </div>
                                 </div>
                             )}
+
+                            <div className="mt-12 flex justify-between items-center">
+                                <Button
+                                    key={`prev-${currentStep}`}
+                                    type="button"
+                                    variant="outline"
+                                    onClick={prevStep}
+                                    className={cn("gap-2", currentStep === 0 && "opacity-0 pointer-events-none")}
+                                >
+                                    <ChevronLeft className="w-4 h-4" /> Previous
+                                </Button>
+
+                                {currentStep === STEPS.length - 1 ? (
+                                    <Button 
+                                        key="submit-btn"
+                                        type="submit" 
+                                        disabled={isLoading} 
+                                        className="min-w-[140px]"
+                                    >
+                                        {isLoading ? "Analyzing..." : "Get Recommendations"}
+                                    </Button>
+                                ) : (
+                                    <Button 
+                                        key={`next-${currentStep}`}
+                                        type="button" 
+                                        onClick={nextStep} 
+                                        className="gap-2"
+                                    >
+                                        Continue <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                )}
+                            </div>
                         </motion.div>
                     </AnimatePresence>
-
-                    <div className="mt-12 flex justify-between items-center">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={prevStep}
-                            className={cn("gap-2", currentStep === 0 && "opacity-0 pointer-events-none")}
-                        >
-                            <ChevronLeft className="w-4 h-4" /> Previous
-                        </Button>
-
-                        {currentStep === STEPS.length - 1 ? (
-                            <Button type="submit" disabled={isLoading} className="min-w-[140px]">
-                                {isLoading ? "Analyzing..." : "Get Recommendations"}
-                            </Button>
-                        ) : (
-                            <Button type="button" onClick={nextStep} className="gap-2">
-                                Continue <ChevronRight className="w-4 h-4" />
-                            </Button>
-                        )}
-                    </div>
                 </form>
             </Card>
         </div>

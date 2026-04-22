@@ -1,0 +1,28 @@
+sequenceDiagram
+    autonumber
+    participant U as User (Next.js Dashboard)
+    participant C as SystemDesignController
+    participant S as SystemDesignService
+    participant R as RuleEngineService
+    participant G as RAG Engine (Python)
+    participant L as Ollama Chat Service
+    participant DB as SQL Server (EF Core)
+
+    U->>C: Submit Problem Statement
+    C->>S: Request Design Session
+    
+    par Deterministic Logic
+        S->>R: Apply Architecture Rules (RuleEngine)
+        R-->>S: Return Guardrail Constraints
+    and Knowledge Retrieval
+        alt RAG Enabled
+            S->>G: Query Knowledge Base (ChromaDB)
+            G-->>S: Return Document Context
+        end
+    end
+
+    S->>L: Generate Final Design (LLM + Context)
+    L-->>S: Returns JSON Design
+    S->>DB: Save DesignSession & ReasoningRecords
+    S-->>C: Return Recommendation Result
+    C-->>U: Display Visualization

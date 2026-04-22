@@ -17,4 +17,7 @@ public class Team
     public User Owner { get; set; } = null!;
 
     public ICollection<DesignSession> Sessions { get; set; } = new List<DesignSession>();
+    
+    [InverseProperty("Team")]
+    public ICollection<User> Members { get; set; } = new List<User>();
 }

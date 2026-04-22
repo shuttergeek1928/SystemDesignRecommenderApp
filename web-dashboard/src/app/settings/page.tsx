@@ -26,7 +26,7 @@ export default function SettingsPage() {
     const fetchAvailableModels = async () => {
         setIsLoadingModels(true);
         try {
-            const response = await fetch("http://localhost:5000/api/Settings/models");
+            const response = await fetch("http://localhost:5220/api/Settings/models");
             if (response.ok) {
                 const models = await response.json();
                 setAvailableModels(models);

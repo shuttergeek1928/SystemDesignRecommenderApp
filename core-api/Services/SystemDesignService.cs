@@ -248,8 +248,18 @@ Output ONLY the JSON. No Markdown formatting.
     {
         var query = _dbContext.Sessions.AsQueryable();
         
-        if (userId.HasValue) query = query.Where(s => s.UserId == userId.Value);
-        if (teamId.HasValue) query = query.Where(s => s.TeamId == teamId.Value);
+        if (userId.HasValue && teamId.HasValue)
+        {
+            query = query.Where(s => s.UserId == userId.Value || s.TeamId == teamId.Value);
+        }
+        else if (userId.HasValue)
+        {
+            query = query.Where(s => s.UserId == userId.Value);
+        }
+        else if (teamId.HasValue)
+        {
+            query = query.Where(s => s.TeamId == teamId.Value);
+        }
 
         return await query.OrderByDescending(s => s.CreatedAt)
             .Select(s => new DesignSessionDTO
@@ -258,6 +268,34 @@ Output ONLY the JSON. No Markdown formatting.
                 CreatedAt = s.CreatedAt,
                 Title = s.ProblemStatement.Length > 50 ? s.ProblemStatement.Substring(0, 47) + "..." : s.ProblemStatement
             }).ToListAsync();
+    }
+
+    public async Task<object?> GetSessionByIdAsync(Guid id)
+    {
+        var session = await _dbContext.Sessions
+            .Include(s => s.TriggeredRules)
+            .FirstOrDefaultAsync(s => s.Id == id);
+
+        if (session == null) return null;
+
+        var req = await _dbContext.Requirements.FirstOrDefaultAsync(r => r.SessionId == id);
+        var rec = await _dbContext.Recommendations.FirstOrDefaultAsync(r => r.SessionId == id);
+
+        return new
+        {
+            Id = session.Id,
+            CreatedAt = session.CreatedAt,
+            ProblemStatement = session.ProblemStatement,
+            ExtractedRequirements = req != null ? JsonSerializer.Deserialize<object>(req.JsonData) : null,
+            ArchitectureDesign = rec != null ? JsonSerializer.Deserialize<object>(rec.JsonData) : null,
+            TriggeredRules = session.TriggeredRules.Select(r => new {
+                r.Id,
+                r.Dimension,
+                r.Condition,
+                r.Recommendation,
+                r.Justification
+            })
+        };
     }
 
     private async Task<Guid> GetOrCreateDefaultUserId()

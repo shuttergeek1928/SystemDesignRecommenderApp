@@ -107,12 +107,12 @@ namespace SystemDesignRecommenderApi.Services
             catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "Failed to connect to Ollama service while listing models.");
-                throw;
+                return new List<string>(); // Return empty list instead of throwing
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "An error occurred while fetching available models.");
-                throw;
+                return new List<string>(); // Return empty list instead of throwing
             }
         }
     }

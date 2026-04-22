@@ -157,6 +157,10 @@ export function TeamsView() {
                     <UserDetailDialog
                         user={selectedUser}
                         onClose={() => setSelectedUser(null)}
+                        onEdit={() => {
+                            setEditingUser(selectedUser);
+                            setSelectedUser(null);
+                        }}
                     />
                 )}
                 {isManagingTeam && (
@@ -260,8 +264,8 @@ function TeamManagerModal({ teamId, onClose }: { teamId: string; onClose: () => 
                                     <Button
                                         size="sm"
                                         className="h-8 text-xs"
-                                        onClick={() => {
-                                            const res = assignUserToTeam(user.id, teamId);
+                                        onClick={async () => {
+                                            const res = await assignUserToTeam(user.id, teamId);
                                             if (!res.success) alert(res.message);
                                         }}
                                     >

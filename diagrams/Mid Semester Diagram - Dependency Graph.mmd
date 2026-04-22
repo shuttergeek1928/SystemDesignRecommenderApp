@@ -1,0 +1,23 @@
+graph LR
+    subgraph Frontend["Frontend (Port 3000)"]
+        W[Web Dashboard]
+    end
+
+    subgraph Backend["Core API Container"]
+        C[Controllers] --> S[Business Services]
+        S --> E[EF Core / SQL]
+        S --> M[McpClient]
+    end
+
+    subgraph Intelligence_Layer["Intelligence Services"]
+        RAG[RAG Python Service] --> CDB[(Chroma DB)]
+        OL[Ollama API] --> MOD[Llama 3 / Mistral]
+    end
+
+    W -.->|HTTP/JSON| C
+    S -->|REST| RAG
+    S -->|REST| OL
+    
+    style Frontend fill:#fff4dd,stroke:#d4a017
+    style Backend fill:#e1f5fe,stroke:#01579b
+    style Intelligence_Layer fill:#f3e5f5,stroke:#4a148c

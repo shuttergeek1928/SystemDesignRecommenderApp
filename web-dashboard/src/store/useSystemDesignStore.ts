@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type SystemDesignForm } from "@/types/form";
+import { useAuthStore } from "./useAuthStore";
 
 interface SystemDesignStore {
     formData: Partial<SystemDesignForm>;
@@ -22,6 +23,7 @@ interface SystemDesignStore {
     setUseHybrid: (value: boolean) => void;
     setOllamaModel: (value: string) => void;
     generateRecommendation: (data: SystemDesignForm) => Promise<void>;
+    fetchRecommendationById: (id: string) => Promise<boolean>;
     fetchSettings: () => Promise<void>;
     updateSettings: (model: string) => Promise<void>;
     reset: () => void;
@@ -44,7 +46,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
 
             fetchSettings: async () => {
                 try {
-                    const response = await fetch("http://localhost:5000/api/Settings");
+                    const response = await fetch("http://localhost:5220/api/Settings");
                     if (response.ok) {
                         const settings = await response.json();
                         set({ ollamaModel: settings.ollamaModel });
@@ -56,7 +58,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
 
             updateSettings: async (model) => {
                 try {
-                    const response = await fetch("http://localhost:5000/api/Settings", {
+                    const response = await fetch("http://localhost:5220/api/Settings", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({ ollamaModel: model }),
@@ -87,8 +89,12 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                 - Search Complexity: ${data.searchComplexity}
                 - Deployment Frequency: ${data.deploymentFrequency}`;
 
+                const authState = useAuthStore.getState();
+                const userId = authState.user?.id;
+                const teamId = authState.user?.teamId;
+
                 try {
-                    const response = await fetch("http://localhost:5000/api/SystemDesign/generate", {
+                    const response = await fetch("http://localhost:5220/api/SystemDesign/generate", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -96,7 +102,9 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                         body: JSON.stringify({
                             problem_statement: prompt,
                             use_rag: useRag,
-                            use_hybrid: useHybrid
+                            use_hybrid: useHybrid,
+                            user_id: userId,
+                            team_id: teamId
                         }),
                     });
 
@@ -114,9 +122,39 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                             data: result
                         },
                     });
+                    return true;
                 } catch (error) {
                     console.error("Error generating system design:", error);
                     set({ isLoading: false });
+                    return false;
+                }
+            },
+
+            fetchRecommendationById: async (id: string) => {
+                set({ isLoading: true });
+                try {
+                    const response = await fetch(`http://localhost:5220/api/SystemDesign/${id}`);
+                    if (!response.ok) throw new Error("Failed to fetch session");
+                    
+                    const result = await response.json();
+                    set({
+                        isLoading: false,
+                        recommendation: {
+                            id: result.id || id,
+                            generatedAt: result.createdAt || new Date().toISOString(),
+                            data: {
+                                // Match the structure expected by the UI (combining the fields)
+                                extractedRequirements: result.extractedRequirements,
+                                architectureDesign: result.architectureDesign,
+                                triggeredRules: result.triggeredRules
+                            }
+                        }
+                    });
+                    return true;
+                } catch (error) {
+                    console.error("Error fetching recommendation:", error);
+                    set({ isLoading: false });
+                    return false;
                 }
             },
 

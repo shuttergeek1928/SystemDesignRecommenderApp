@@ -1,0 +1,21 @@
+graph TD
+    subgraph Data_Ingestion["Phase 1: Ingestion"]
+        S[Web Scraper] -->|Raw HTML| CH[Content Chunker]
+        CH -->|Markdown Chunks| EX[LLM Extractor]
+    end
+
+    subgraph Knowledge_Processing["Phase 2: Extraction & KB"]
+        EX -->|Refined Knowledge| KB[Knowledge Base Builder]
+        KB -->|MD Files| V[Vector Indexer]
+    end
+
+    subgraph Retrieval_Inference["Phase 3: Recommendation"]
+        P[User Problem] -->|Query| DB[(Chroma Vector DB)]
+        V --> DB
+        DB -->|Context Clusters| R[RAG Service]
+        R -->|Augmented Prompt| LLM[LLM/Ollama]
+    end
+
+    style Data_Ingestion fill:#f9f,stroke:#333
+    style Knowledge_Processing fill:#bbf,stroke:#333
+    style Retrieval_Inference fill:#dfd,stroke:#333

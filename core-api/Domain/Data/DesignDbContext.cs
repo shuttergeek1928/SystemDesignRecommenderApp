@@ -15,6 +15,8 @@ public class DesignDbContext : DbContext
     public DbSet<RequirementRecord> Requirements { get; set; } = null!;
     public DbSet<RecommendationResult> Recommendations { get; set; } = null!;
     public DbSet<RuleTriggerRecord> TriggeredRules { get; set; } = null!;
+    public DbSet<TeamExitRequest> TeamExitRequests { get; set; } = null!;
+    public DbSet<UserProfile> UserProfiles { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -32,5 +34,29 @@ public class DesignDbContext : DbContext
             .WithMany(u => u.Sessions)
             .HasForeignKey(s => s.UserId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Team)
+            .WithMany(t => t.Members)
+            .HasForeignKey(u => u.TeamId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<TeamExitRequest>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        modelBuilder.Entity<TeamExitRequest>()
+            .HasOne(r => r.Team)
+            .WithMany()
+            .HasForeignKey(r => r.TeamId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.Profile)
+            .WithOne(p => p.User)
+            .HasForeignKey<UserProfile>(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

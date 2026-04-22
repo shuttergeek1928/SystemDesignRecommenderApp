@@ -143,6 +143,35 @@ namespace SystemDesignRecommenderApi.Domain.Data.Migrations
                     b.ToTable("Teams");
                 });
 
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.TeamExitRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("RequestDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeamId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("TeamExitRequests");
+                });
+
             modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -154,6 +183,13 @@ namespace SystemDesignRecommenderApi.Domain.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("Username")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -161,7 +197,55 @@ namespace SystemDesignRecommenderApi.Domain.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TeamId");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.UserProfile", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AdditionalSkills")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Goal")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LearningPace")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Morale")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Performance")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PrimarySkills")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Productivity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Satisfaction")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SecondarySkills")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserProfiles");
                 });
 
             modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.DesignSession", b =>
@@ -225,6 +309,46 @@ namespace SystemDesignRecommenderApi.Domain.Data.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.TeamExitRequest", b =>
+                {
+                    b.HasOne("SystemDesignRecommenderApi.Domain.Data.Entities.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("SystemDesignRecommenderApi.Domain.Data.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Team");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.User", b =>
+                {
+                    b.HasOne("SystemDesignRecommenderApi.Domain.Data.Entities.Team", "Team")
+                        .WithMany("Members")
+                        .HasForeignKey("TeamId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.UserProfile", b =>
+                {
+                    b.HasOne("SystemDesignRecommenderApi.Domain.Data.Entities.User", "User")
+                        .WithOne("Profile")
+                        .HasForeignKey("SystemDesignRecommenderApi.Domain.Data.Entities.UserProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.DesignSession", b =>
                 {
                     b.Navigation("Recommendations");
@@ -236,12 +360,16 @@ namespace SystemDesignRecommenderApi.Domain.Data.Migrations
 
             modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.Team", b =>
                 {
+                    b.Navigation("Members");
+
                     b.Navigation("Sessions");
                 });
 
             modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.User", b =>
                 {
                     b.Navigation("OwnedTeams");
+
+                    b.Navigation("Profile");
 
                     b.Navigation("Sessions");
                 });

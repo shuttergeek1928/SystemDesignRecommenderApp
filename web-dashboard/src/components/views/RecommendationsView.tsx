@@ -47,7 +47,20 @@ export function RecommendationsView() {
         )
     }
 
-    const { ArchitectureDesign: arch, ExtractedRequirements: req } = recommendation.data;
+    // Handle both PascalCase (from type definition) and camelCase (from actual JSON serialization)
+    const arch = recommendation.data.ArchitectureDesign || recommendation.data.architectureDesign;
+    const req = recommendation.data.ExtractedRequirements || recommendation.data.extractedRequirements;
+    const rules = recommendation.data.TriggeredRules || recommendation.data.triggeredRules;
+
+    if (!arch || !req) {
+        return (
+            <div className="py-20 text-center">
+                <XCircle className="mx-auto w-12 h-12 text-destructive mb-6" />
+                <h2 className="text-2xl font-bold">Analysis Failed</h2>
+                <p className="text-muted-foreground mt-2">The recommendation data is incomplete or invalid.</p>
+            </div>
+        );
+    }
 
     // Convert keys to an array for rendering
     const choices = Object.entries(arch).map(([key, value]: [string, any]) => ({
@@ -105,9 +118,9 @@ export function RecommendationsView() {
                         </div>
 
                         {/* Reasoning Anchors (Triggered Rules) */}
-                        {(recommendation.data.TriggeredRules?.length ?? 0) > 0 && (
+                        {(rules?.length ?? 0) > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                                {recommendation.data.TriggeredRules?.map((rule: any, i: number) => (
+                                {rules.map((rule: any, i: number) => (
                                     <div key={i} className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
                                             <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -179,7 +192,7 @@ export function RecommendationsView() {
 
                     <div className="p-8 bg-zinc-900 text-white rounded-[2rem] space-y-4 border border-zinc-800 shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-                             <Cpu className="w-24 h-24" />
+                            <Cpu className="w-24 h-24" />
                         </div>
                         <h4 className="font-bold flex items-center gap-2 relative z-10">
                             <Zap className="w-4 h-4 text-amber-500" /> Architecture Insight

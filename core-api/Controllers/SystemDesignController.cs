@@ -70,6 +70,14 @@ public class SystemDesignController : ControllerBase
         return Ok(history);
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetSessionById(Guid id)
+    {
+        var session = await _systemDesignService.GetSessionByIdAsync(id);
+        if (session == null) return NotFound("Session not found.");
+        return Ok(session);
+    }
+
     [HttpPost("extract-requirements")]
     public async Task<IActionResult> ExtractRequirements([FromBody] SystemDesignRequestDto request)
     {

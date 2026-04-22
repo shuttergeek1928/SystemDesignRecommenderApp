@@ -17,7 +17,7 @@ import { Button, Card } from "@/components/ui/base";
 import { User } from "@/types/team";
 import { cn } from "@/lib/utils";
 
-export function UserDetailDialog({ user, onClose }: { user: User; onClose: () => void }) {
+export function UserDetailDialog({ user, onClose, onEdit }: { user: User; onClose: () => void; onEdit: () => void }) {
     if (!user) return null;
 
     return (
@@ -136,7 +136,7 @@ export function UserDetailDialog({ user, onClose }: { user: User; onClose: () =>
 
                 <div className="p-8 border-t border-border flex justify-end gap-3 bg-secondary/20">
                     <Button variant="outline" onClick={onClose}>Close Profile</Button>
-                    <Button>Edit User Details</Button>
+                    <Button onClick={onEdit}>Edit User Details</Button>
                 </div>
             </motion.div>
         </div>

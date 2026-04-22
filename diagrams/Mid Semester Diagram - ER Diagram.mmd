@@ -1,0 +1,40 @@
+erDiagram
+    USER ||--o{ TEAM : owns
+    USER ||--o{ DESIGN_SESSION : creates
+    TEAM ||--o{ DESIGN_SESSION : contains
+    
+    DESIGN_SESSION ||--o{ REQUIREMENT_RECORD : has
+    DESIGN_SESSION ||--o{ RECOMMENDATION_RESULT : produces
+    DESIGN_SESSION ||--o{ RULE_TRIGGER_RECORD : logs
+
+    USER {
+        Guid Id
+        string Username
+        string Email
+    }
+
+    TEAM {
+        Guid Id
+        string Name
+        Guid OwnerId
+    }
+
+    DESIGN_SESSION {
+        Guid Id
+        DateTime CreatedAt
+        string ProblemStatement
+        Guid UserId
+        Guid TeamId
+    }
+
+    RULE_TRIGGER_RECORD {
+        Guid Id
+        string Dimension
+        string Recommendation
+        string Justification
+    }
+
+    REQUIREMENT_RECORD {
+        Guid Id
+        string JsonData
+    }

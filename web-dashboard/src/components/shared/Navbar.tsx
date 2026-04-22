@@ -7,20 +7,33 @@ import { Menu, X, Cpu, Github, LayoutDashboard, BrainCircuit, Users, Sparkles, S
 import { cn } from "@/lib/utils";
 import { useSystemDesignStore } from "@/store/useSystemDesignStore";
 
-const navItems = [
+import { useAuthStore } from "@/store/useAuthStore";
+
+const publicNavItems = [
     { name: "Home", href: "/", icon: Cpu },
-    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { name: "Recommendations", href: "/recommendations", icon: BrainCircuit },
-    { name: "Teams", href: "/teams", icon: Users },
-    { name: "Settings", href: "/settings", icon: Settings },
     { name: "Demo", href: "/demo", icon: Sparkles },
     { name: "Features", href: "/features", icon: Cpu },
+];
+
+const privateNavItems = [
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { name: "History", href: "/history", icon: BrainCircuit },
+    { name: "Teams", href: "/teams", icon: Users },
+    { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export function Navbar() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const { fetchSettings } = useSystemDesignStore();
+    const { user, logout } = useAuthStore();
+    const [isMounted, setIsMounted] = useState(false);
+    
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+    
+    const navItems = isMounted && user ? [...publicNavItems, ...privateNavItems] : publicNavItems;
 
     useEffect(() => {
         fetchSettings();
@@ -71,12 +84,43 @@ export function Navbar() {
                     >
                         <Github className="w-5 h-5" />
                     </Link>
-                    <Link
-                        href="/get-started"
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
-                    >
-                        Get Started
-                    </Link>
+                    
+                    {!isMounted ? (
+                        <div className="w-20 h-10 bg-accent animate-pulse rounded-full" />
+                    ) : user ? (
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-medium text-muted-foreground">
+                                Hi, {user.username}
+                            </span>
+                            <button
+                                onClick={logout}
+                                className="text-sm font-medium text-destructive hover:text-destructive/80 transition-colors"
+                            >
+                                Logout
+                            </button>
+                            <Link
+                                href="/get-started"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
+                            >
+                                Start Designing
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-4">
+                            <Link
+                                href="/login"
+                                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                Login
+                            </Link>
+                            <Link
+                                href="/register"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20"
+                            >
+                                Register
+                            </Link>
+                        </div>
+                    )}
                 </div>
 
                 {/* Mobile Toggle */}
@@ -109,14 +153,42 @@ export function Navbar() {
                                     {item.name}
                                 </Link>
                             ))}
-                            <hr className="border-border" />
-                            <Link
-                                href="/get-started"
-                                className="bg-primary text-primary-foreground text-center py-3 rounded-xl font-bold"
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                Get Started
-                            </Link>
+                            {isMounted && user ? (
+                                <>
+                                    <hr className="border-border" />
+                                    <Link
+                                        href="/get-started"
+                                        className="bg-primary text-primary-foreground text-center py-3 rounded-xl font-bold"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        Start Designing
+                                    </Link>
+                                    <button
+                                        onClick={() => { logout(); setMobileMenuOpen(false); }}
+                                        className="bg-destructive/10 text-destructive text-center py-3 rounded-xl font-bold mt-2"
+                                    >
+                                        Logout
+                                    </button>
+                                </>
+                            ) : isMounted && !user ? (
+                                <>
+                                    <hr className="border-border" />
+                                    <Link
+                                        href="/login"
+                                        className="bg-secondary text-secondary-foreground text-center py-3 rounded-xl font-bold"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        Login
+                                    </Link>
+                                    <Link
+                                        href="/register"
+                                        className="bg-primary text-primary-foreground text-center py-3 rounded-xl font-bold mt-2"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        Register
+                                    </Link>
+                                </>
+                            ) : null}
                         </div>
                     </motion.div>
                 )}

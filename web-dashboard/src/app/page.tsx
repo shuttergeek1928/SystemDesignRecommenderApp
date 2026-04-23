@@ -2,43 +2,53 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, BrainCircuit, Zap, BarChart3, ShieldCheck, Sparkles, Cpu } from "lucide-react";
+import {
+  ArrowRight,
+  BrainCircuit,
+  Zap,
+  BarChart3,
+  ShieldCheck,
+  Sparkles,
+  Cpu,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const features = [
   {
     title: "Context-Aware Intelligence",
-    description: "Our engine analyzes not just technical needs, but team velocity, learning curves, and existing stack compatibility.",
+    description:
+      "Our engine analyzes not just technical needs, but team velocity, learning curves, and existing stack compatibility.",
     icon: BrainCircuit,
     color: "text-blue-500",
     bg: "bg-blue-500/10",
   },
   {
     title: "Performance Optimization",
-    description: "Get recommendations tuned for low latency, high throughput, or massive scalability based on your requirements.",
+    description:
+      "Get recommendations tuned for low latency, high throughput, or massive scalability based on your requirements.",
     icon: Zap,
     color: "text-amber-500",
     bg: "bg-amber-500/10",
   },
   {
     title: "Productivity Analytics",
-    description: "Visualize how different architecture choices impact your team's long-term developer productivity.",
+    description:
+      "Visualize how different architecture choices impact your team's long-term developer productivity.",
     icon: BarChart3,
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
   },
   {
     title: "Enterprise Security",
-    description: "Architectural patterns that comply with industry standards (NIQ, BP, JPMC levels) right out of the box.",
+    description:
+      "Architectural patterns that comply with industry standards (NIQ, BP, JPMC levels) right out of the box.",
     icon: ShieldCheck,
     color: "text-purple-500",
     bg: "bg-purple-500/10",
   },
 ];
 
-const companies = [
-  "NIQ", "BP", "GfK", "JP Morgan & Chase", "TCS", "Infosys"
-];
+const companies = ["NIQ", "BP", "GfK", "JP Morgan & Chase", "TCS", "Infosys"];
 
 export default function LandingPage() {
   return (
@@ -65,8 +75,9 @@ export default function LandingPage() {
             </span>
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-            The decision support system that recommends software architecture by jointly analyzing
-            application requirements and developer productivity context.
+            The decision support system that recommends software architecture by
+            jointly analyzing application requirements and developer
+            productivity context.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
@@ -99,23 +110,35 @@ export default function LandingPage() {
                 <div className="w-3 h-3 rounded-full bg-amber-500/50" />
                 <div className="w-3 h-3 rounded-full bg-emerald-500/50" />
               </div>
-              <div className="mx-auto text-xs font-mono text-muted-foreground">recommendation-engine.v1</div>
+              <div className="mx-auto text-xs font-mono text-muted-foreground">
+                recommendation-engine.v1
+              </div>
             </div>
             <div className="p-8 text-left font-mono text-sm space-y-4">
               <div className="flex gap-4">
                 <span className="text-primary font-bold">REQ:</span>
-                <span className="text-foreground/80">LATENCY &lt; 50ms, SCALE: 1M+ RPS</span>
+                <span className="text-foreground/80">
+                  LATENCY &lt; 50ms, SCALE: 1M+ RPS
+                </span>
               </div>
               <div className="flex gap-4">
                 <span className="text-emerald-400 font-bold">DEV:</span>
-                <span className="text-foreground/80">TEAM: 5 FE, 8 BE | STACK: TS, GO | PACE: AGILE</span>
+                <span className="text-foreground/80">
+                  TEAM: 5 FE, 8 BE | STACK: TS, GO | PACE: AGILE
+                </span>
               </div>
               <div className="h-px bg-border/30 my-4" />
               <div className="space-y-2">
                 <p className="text-muted-foreground">// Recommended Stack:</p>
-                <p className="text-blue-400">1. Client-Side Rendering (Next.js App Router)</p>
-                <p className="text-blue-400">2. Event-Driven SQS / Lambda (Scalability focus)</p>
-                <p className="text-blue-400">3. Redis Cache with Write-Through Policy</p>
+                <p className="text-blue-400">
+                  1. Client-Side Rendering (Next.js App Router)
+                </p>
+                <p className="text-blue-400">
+                  2. Event-Driven SQS / Lambda (Scalability focus)
+                </p>
+                <p className="text-blue-400">
+                  3. Redis Cache with Write-Through Policy
+                </p>
                 <p className="text-pink-400">Confidence Score: 98.4%</p>
               </div>
             </div>
@@ -131,7 +154,10 @@ export default function LandingPage() {
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-12 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
             {companies.map((company) => (
-              <span key={company} className="text-2xl font-bold tracking-tighter text-foreground whitespace-nowrap">
+              <span
+                key={company}
+                className="text-2xl font-bold tracking-tighter text-foreground whitespace-nowrap"
+              >
                 {company}
               </span>
             ))}
@@ -142,9 +168,12 @@ export default function LandingPage() {
       {/* Features Grid */}
       <section id="features" className="container mx-auto px-4 py-32">
         <div className="text-center mb-20">
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">Precision Engineering</h2>
+          <h2 className="text-3xl md:text-5xl font-bold mb-4">
+            Precision Engineering
+          </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Our recommendation platform replaces guesswork with data-driven architecture paths.
+            Our recommendation platform replaces guesswork with data-driven
+            architecture paths.
           </p>
         </div>
 
@@ -158,7 +187,12 @@ export default function LandingPage() {
               transition={{ delay: idx * 0.1 }}
               className="group p-8 rounded-3xl border border-border bg-card hover:bg-accent transition-all duration-300 hover:border-primary/50 relative"
             >
-              <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110", feature.bg)}>
+              <div
+                className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center mb-6 transition-transform group-hover:scale-110",
+                  feature.bg,
+                )}
+              >
                 <feature.icon className={cn("w-6 h-6", feature.color)} />
               </div>
               <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
@@ -175,10 +209,12 @@ export default function LandingPage() {
         <div className="relative rounded-[2.5rem] bg-primary overflow-hidden px-8 py-20 text-center">
           <div className="absolute top-0 right-0 w-[50%] h-[100%] bg-white/10 blur-[100px] rounded-full -rotate-12" />
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-8 relative z-10">
-            Ready to architect your <br className="hidden md:block" /> next big thing?
+            Ready to architect your <br className="hidden md:block" /> next big
+            thing?
           </h2>
           <p className="text-primary-foreground/80 text-lg mb-12 max-w-xl mx-auto relative z-10">
-            Join hundreds of teams delivering high-performing systems with fewer architectural bottlenecks.
+            Join hundreds of teams delivering high-performing systems with fewer
+            architectural bottlenecks.
           </p>
           <Link
             href="/get-started"

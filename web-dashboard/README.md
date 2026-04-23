@@ -5,10 +5,12 @@ A production-ready Next.js frontend for a decision support system that recommend
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+
+- Node.js 18+
 - npm or yarn
 
 ### Installation
+
 1. Navigate to the project directory:
    ```bash
    cd apps/next-web/system-design-webapp
@@ -24,6 +26,7 @@ A production-ready Next.js frontend for a decision support system that recommend
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🛠 Tech Stack
+
 - **Framework**: Next.js 15+ (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4 (Custom Design Tokens)
@@ -34,6 +37,7 @@ A production-ready Next.js frontend for a decision support system that recommend
 - **Icons**: Lucide React
 
 ## 🏗 Architecture
+
 The project follows a modular, atomic-inspired architecture with clear separation of concerns:
 
 - `src/app`: Next.js App Router pages and layouts.
@@ -45,10 +49,12 @@ The project follows a modular, atomic-inspired architecture with clear separatio
 - `src/lib`: Utility functions and API clients.
 
 ## ✨ Key Features
+
 - **High-Fidelity UI**: Modern SaaS aesthetic with glassmorphism and dark mode.
 - **Multi-Step Wizard**: Context-aware form gathering technical and team requirements.
 - **Interactive Dashboard**: Performance-driven recommendations with data visualization.
 - **Dev Productivity Roadmap**: Personalized learning paths based on team velocity.
 
 ## 📄 License
+
 MIT

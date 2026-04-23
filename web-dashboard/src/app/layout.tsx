@@ -10,7 +10,8 @@ const poppins = Poppins({
 
 export const metadata: Metadata = {
   title: "Context-Aware System Design Recommender",
-  description: "A decision support system that recommends software architecture and design choices.",
+  description:
+    "A decision support system that recommends software architecture and design choices.",
 };
 
 import { Navbar } from "@/components/shared/Navbar";
@@ -27,9 +28,7 @@ export default function RootLayout({
         className={`${poppins.variable} font-sans antialiased bg-background text-foreground flex flex-col min-h-screen`}
       >
         <Navbar />
-        <main className="flex-grow pt-24">
-          {children}
-        </main>
+        <main className="flex-grow pt-24">{children}</main>
         <Footer />
       </body>
     </html>

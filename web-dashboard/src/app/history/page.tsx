@@ -12,7 +12,9 @@ import { useSystemDesignStore } from "@/store/useSystemDesignStore";
 
 interface HistoryItem {
     id: string;
-    title: string;
+    appName: string;
+    description: string;
+    highlights: string[];
     createdAt: string;
 }
 
@@ -75,73 +77,93 @@ export default function HistoryPage() {
 
     return (
         <div className="min-h-screen pt-24 pb-12 bg-background">
-            <div className="container mx-auto px-4 md:px-6 max-w-5xl">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold mb-2 flex items-center gap-2">
-                        <Clock className="w-8 h-8 text-primary" />
+            <div className="container mx-auto px-4 md:px-6 max-w-7xl">
+                <div className="mb-12">
+                    <h1 className="text-4xl font-extrabold mb-3 flex items-center gap-3">
+                        <Clock className="w-10 h-10 text-primary" />
                         Design History
                     </h1>
-                    <p className="text-muted-foreground">
-                        Review your past architecture recommendations and team designs.
+                    <p className="text-lg text-muted-foreground max-w-2xl">
+                        Review and manage your past architecture recommendations. Your designs are automatically saved and synced across your team.
                     </p>
                 </div>
 
                 {loading ? (
-                    <div className="text-center py-12 text-muted-foreground">Loading history...</div>
+                    <div className="text-center py-20 text-muted-foreground flex flex-col items-center gap-4">
+                        <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        <span className="font-medium">Loading your architecture history...</span>
+                    </div>
                 ) : history.length === 0 ? (
-                    <Card className="text-center py-16">
-                        <BrainCircuit className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-                        <h2 className="text-xl font-bold mb-2">No History Yet</h2>
-                        <p className="text-muted-foreground mb-6">
-                            You haven't generated any system designs yet.
+                    <Card className="text-center py-24 border-dashed border-2 bg-muted/20 rounded-[3rem]">
+                        <div className="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <BrainCircuit className="w-10 h-10 text-primary/40" />
+                        </div>
+                        <h2 className="text-3xl font-bold mb-3">No Designs Yet</h2>
+                        <p className="text-muted-foreground mb-10 max-w-md mx-auto text-lg">
+                            Ready to build something amazing? Start your first system design recommendation now.
                         </p>
                         <Link 
                             href="/get-started" 
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2 rounded-full font-semibold transition-all inline-block"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-4 rounded-full font-bold transition-all inline-flex items-center gap-2 shadow-xl shadow-primary/20 hover:-translate-y-1"
                         >
-                            Start Designing
+                            Start Designing <ChevronRight className="w-5 h-5" />
                         </Link>
                     </Card>
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {history.length === 0 ? (
-                        <div className="col-span-full py-12 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
-                            No design history found. Start a new session!
-                        </div>
-                    ) : (
-                        history.map((item) => (
+                    <div className="flex flex-col gap-4">
+                        {history.map((item) => (
                             <Card 
                                 key={item.id} 
                                 className={cn(
-                                    "p-6 border border-border/50 bg-card hover:border-primary/50 transition-all duration-300 group cursor-pointer relative overflow-hidden",
-                                    loadingId === item.id ? "opacity-70 pointer-events-none" : "hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-1"
+                                    "p-5 px-8 border border-border/40 bg-card hover:border-primary/40 transition-all duration-500 group cursor-pointer relative overflow-hidden flex items-center justify-between gap-6 rounded-[2rem]",
+                                    loadingId === item.id ? "opacity-70 pointer-events-none" : "hover:shadow-xl hover:shadow-primary/5 hover:translate-x-2"
                                 )}
                                 onClick={() => handleCardClick(item.id)}
                             >
                                 {loadingId === item.id && (
-                                    <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10">
-                                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                                    <div className="absolute inset-0 bg-background/60 backdrop-blur-md flex items-center justify-center z-10">
+                                        <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
                                     </div>
                                 )}
-                                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-10 transition-opacity">
-                                    <Cpu className="w-16 h-16 text-primary" />
+                                
+                                <div className="flex items-center gap-8 flex-1 min-w-0">
+                                    <div className="hidden sm:flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/5 text-primary shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-all duration-500 shadow-sm">
+                                        <BrainCircuit className="w-8 h-8" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-3 mb-1">
+                                            <h3 className="font-bold text-xl leading-tight group-hover:text-primary transition-colors truncate">
+                                                {item.appName}
+                                            </h3>
+                                            <div className="h-1 w-1 rounded-full bg-border" />
+                                            <span className="text-[10px] font-bold text-muted-foreground/50 uppercase tracking-widest">
+                                                {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </span>
+                                        </div>
+                                        <p className="text-muted-foreground/80 text-sm line-clamp-1 mb-4 font-medium italic">
+                                            {item.description}
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {item.highlights.map((highlight, idx) => (
+                                                <span key={idx} className="text-[10px] uppercase tracking-wider font-extrabold bg-secondary/80 text-secondary-foreground px-3 py-1 rounded-lg border border-border/50">
+                                                    {highlight}
+                                                </span>
+                                            ))}
+                                            <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground/40 ml-auto pt-1">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                {new Date(item.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-3 bg-secondary/50 w-fit px-2 py-1 rounded-md">
-                                    <Calendar className="w-4 h-4 text-primary" />
-                                    {new Date(item.createdAt).toLocaleDateString(undefined, { 
-                                        year: 'numeric', month: 'short', day: 'numeric', 
-                                        hour: '2-digit', minute: '2-digit' 
-                                    })}
-                                </div>
-                                <h3 className="font-bold text-lg leading-snug line-clamp-2 group-hover:text-primary transition-colors relative z-10 pr-4">
-                                    {item.title}
-                                </h3>
-                                <div className="mt-6 flex items-center text-sm font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity transform translate-y-2 group-hover:translate-y-0 relative z-10">
-                                    View Architecture <ChevronRight className="w-4 h-4 ml-1" />
+                                
+                                <div className="flex items-center text-sm font-bold text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0 shrink-0 bg-primary/5 px-4 py-2 rounded-full">
+                                    <span className="hidden md:inline mr-1">View Details</span>
+                                    <ChevronRight className="w-5 h-5" />
                                 </div>
                             </Card>
-                        ))
-                    )}</div>
+                        ))}
+                    </div>
                 )}
             </div>
         </div>

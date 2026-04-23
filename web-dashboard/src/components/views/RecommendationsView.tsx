@@ -13,7 +13,8 @@ import {
     Box,
     Info,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    RefreshCw
 } from "lucide-react";
 import { Card, Button } from "@/components/ui/base";
 import { useSystemDesignStore } from "@/store/useSystemDesignStore";
@@ -21,8 +22,14 @@ import { RecommendationDetail, ArchitectureChoice } from "@/types/recommendation
 import { cn } from "@/lib/utils";
 
 export function RecommendationsView() {
-    const { recommendation, isLoading } = useSystemDesignStore();
+    const { recommendation, isLoading, generateRecommendation, formData } = useSystemDesignStore();
     const [expandedChoice, setExpandedChoice] = useState<string | null>(null);
+
+    const handleRegenerate = async () => {
+        if (formData && Object.keys(formData).length > 0) {
+            await generateRecommendation(formData as any);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -80,9 +87,21 @@ export function RecommendationsView() {
                     <h1 className="text-3xl font-bold tracking-tight">
                         Recommendation for {req.title || "Your System"}
                     </h1>
+                <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1 text-xs font-bold text-emerald-500 uppercase">
                         <Zap className="w-3 h-3" /> AI Analysis Mode
                     </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleRegenerate}
+                        disabled={isLoading || !formData || Object.keys(formData).length === 0}
+                        className="gap-2 text-xs h-8"
+                    >
+                        <RefreshCw className={cn("w-3 h-3", isLoading && "animate-spin")} />
+                        {isLoading ? "Regenerating..." : "Regenerate"}
+                    </Button>
+                </div>
                 </div>
                 <p className="text-muted-foreground mb-6 leading-relaxed max-w-4xl">
                     {req.description}
@@ -120,7 +139,7 @@ export function RecommendationsView() {
                         {/* Reasoning Anchors (Triggered Rules) */}
                         {(rules?.length ?? 0) > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                                {rules.map((rule: any, i: number) => (
+                                {rules?.map((rule: any, i: number) => (
                                     <div key={i} className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex gap-3">
                                         <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
                                             <ShieldCheck className="w-4 h-4 text-emerald-500" />
@@ -198,7 +217,7 @@ export function RecommendationsView() {
                             <Zap className="w-4 h-4 text-amber-500" /> Architecture Insight
                         </h4>
                         <p className="text-xs text-zinc-400 leading-relaxed relative z-10 italic">
-                            The choices above are synthesized by analyzing the interplay between ${req.context.users.toLocaleString()} users and your "${req.context.traffic_pattern}" traffic pattern, ensuring cost-efficiency at "${req.context.budget}" budget levels.
+                            The choices above are synthesized by analyzing the interplay between {req.context.users?.toLocaleString() || "N/A"} users and your "{req.context.traffic_pattern || "Standard"}" traffic pattern, ensuring cost-efficiency at "{req.context.budget || "Targeted"}" budget levels.
                         </p>
                         <Button className="w-full bg-white text-black hover:bg-zinc-200 mt-4 relative z-10" onClick={() => window.print()}>
                             Export PDF Report

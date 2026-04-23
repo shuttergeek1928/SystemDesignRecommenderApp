@@ -12,7 +12,10 @@ public class SettingsService : ISettingsService
         _configuration = configuration;
         _settings = new AppSettings
         {
-            OllamaModel = _configuration["Ollama:Model"] ?? "phi3:latest"
+            OllamaModel = _configuration["Ollama:Model"] ?? "qwen2.5-coder:7b",
+            GeminiModel = _configuration["Gemini:Model"] ?? "gemini-1.5-flash",
+            GeminiApiKey = _configuration["Gemini:ApiKey"],
+            PreferredProvider = _configuration["App:PreferredProvider"] ?? "ollama"
         };
     }
 

@@ -7,13 +7,13 @@ namespace SystemDesignRecommenderApi.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class OllamaChatController : ControllerBase
+    public class LLMChatController : ControllerBase
     {
-        private readonly IOllamaChatService _ollamaChatService;
+        private readonly ILLMChatService _llmChatService;
 
-        public OllamaChatController(IOllamaChatService ollamaChatService)
+        public LLMChatController(ILLMChatService llmChatService)
         {
-            _ollamaChatService = ollamaChatService ?? throw new ArgumentNullException(nameof(ollamaChatService));
+            _llmChatService = llmChatService ?? throw new ArgumentNullException(nameof(llmChatService));
         }
 
         [HttpGet(Name = "Health Check")]
@@ -27,7 +27,7 @@ namespace SystemDesignRecommenderApi.Controllers
         {
             try
             {
-                var models = await _ollamaChatService.GetAvailableModelsAsync(ct);
+                var models = await _llmChatService.GetAvailableModelsAsync(ct);
                 return Ok(new { models = models.ToList() });
             }
             catch (HttpRequestException ex)
@@ -53,7 +53,7 @@ namespace SystemDesignRecommenderApi.Controllers
         {
             try
             {
-                var answer = await _ollamaChatService.ChatAsync(request, ct);
+                var answer = await _llmChatService.ChatAsync(request, ct);
                 return Ok(new { answer });
             }
             catch (ArgumentException ex)

@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, ChevronLeft, CheckCircle2, Info, Lightbulb, Zap } from "lucide-react";
 import { systemDesignSchema, type SystemDesignForm } from "@/types/form";
-import { Button, Card, Input, Label } from "@/components/ui/base";
+import { Button, Card, Input, Label, Textarea } from "@/components/ui/base";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
@@ -53,7 +53,7 @@ export function RequirementForm() {
 
     const nextStep = async () => {
         const fields = currentStep === 0
-            ? ["appName", "targetUsers", "latency", "scalability", "consistency"]
+            ? ["appName", "targetUsers", "latency", "scalability", "consistency", "additionalContext"]
             : currentStep === 1
                 ? ["teamSize", "experienceLevel"]
                 : currentStep === 2
@@ -152,6 +152,15 @@ export function RequirementForm() {
                                             <Input placeholder="e.g. Enterprise DevOps" {...register("targetUsers")} />
                                             {errors.targetUsers && <p className="text-destructive text-xs mt-1">{errors.targetUsers.message}</p>}
                                         </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label>Additional Context / Natural Language Requirements</Label>
+                                        <Textarea 
+                                            placeholder="Describe your application's unique needs or specific constraints in plain English..." 
+                                            className="min-h-[100px] bg-secondary/20 border-white/5 focus:border-primary/50"
+                                            {...register("additionalContext")} 
+                                        />
                                     </div>
 
                                     <div className="space-y-4">

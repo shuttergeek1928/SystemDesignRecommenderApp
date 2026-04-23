@@ -22,6 +22,60 @@ namespace SystemDesignRecommenderApi.Domain.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.DesignNodeDefinition", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Key");
+
+                    b.ToTable("NodeDefinitions");
+                });
+
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.DesignNodeSetting", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Choice")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Justification")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NodeKey")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("TeamId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TeamId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("NodeSettings");
+                });
+
             modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.DesignSession", b =>
                 {
                     b.Property<Guid>("Id")
@@ -246,6 +300,21 @@ namespace SystemDesignRecommenderApi.Domain.Data.Migrations
                     b.HasKey("UserId");
 
                     b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.DesignNodeSetting", b =>
+                {
+                    b.HasOne("SystemDesignRecommenderApi.Domain.Data.Entities.Team", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId");
+
+                    b.HasOne("SystemDesignRecommenderApi.Domain.Data.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Team");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.DesignSession", b =>

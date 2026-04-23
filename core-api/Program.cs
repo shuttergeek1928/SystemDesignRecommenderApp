@@ -18,11 +18,12 @@ builder.Services.AddDbContext<DesignDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register Ollama services
-builder.Services.AddSingleton(new OllamaApiClient(new Uri("http://localhost:11434")));
-builder.Services.AddSingleton<IOllamaChatService, OllamaChatService>();
+builder.Services.AddSingleton(new OllamaApiClient(new Uri(builder.Configuration["Ollama:Endpoint"] ?? "http://localhost:11434")));
+builder.Services.AddSingleton<ILLMChatService, LLMChatService>();
 builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IRuleEngineService, RuleEngineService>();
 builder.Services.AddScoped<ISystemDesignService, SystemDesignService>();
+builder.Services.AddScoped<INodeSettingsService, NodeSettingsService>();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<McpClient>();
 

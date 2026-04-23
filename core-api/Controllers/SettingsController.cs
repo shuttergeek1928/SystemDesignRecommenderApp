@@ -9,12 +9,12 @@ namespace SystemDesignRecommenderApi.Controllers;
 public class SettingsController : ControllerBase
 {
     private readonly ISettingsService _settingsService;
-    private readonly IOllamaChatService _ollamaChatService;
+    private readonly ILLMChatService _llmChatService;
 
-    public SettingsController(ISettingsService settingsService, IOllamaChatService ollamaChatService)
+    public SettingsController(ISettingsService settingsService, ILLMChatService llmChatService)
     {
         _settingsService = settingsService;
-        _ollamaChatService = ollamaChatService;
+        _llmChatService = llmChatService;
     }
 
     [HttpGet]
@@ -33,7 +33,7 @@ public class SettingsController : ControllerBase
     [HttpGet("models")]
     public async Task<ActionResult<IEnumerable<string>>> GetAvailableModels()
     {
-        var models = await _ollamaChatService.GetAvailableModelsAsync();
+        var models = await _llmChatService.GetAvailableModelsAsync();
         return Ok(models);
     }
 }

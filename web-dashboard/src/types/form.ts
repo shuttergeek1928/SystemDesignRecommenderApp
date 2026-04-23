@@ -23,6 +23,7 @@ export const systemDesignSchema = z.object({
     dataVolume: z.number().min(0, "Data volume must be at least 0"),
     searchComplexity: z.enum(["simple", "complex"]),
     deploymentFrequency: z.enum(["low", "medium", "high", "daily"]),
+    additionalContext: z.string().optional(),
 });
 
 export type SystemDesignForm = z.infer<typeof systemDesignSchema>;

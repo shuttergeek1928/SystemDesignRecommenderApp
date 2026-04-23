@@ -69,4 +69,10 @@ public class DesignRequirements
 
     [JsonPropertyName("model")]
     public string? Model { get; set; }
+
+    [JsonPropertyName("provider")]
+    public string? Provider { get; set; }
+
+    [JsonPropertyName("api_key")]
+    public string? ApiKey { get; set; }
 }

@@ -17,6 +17,8 @@ public class DesignDbContext : DbContext
     public DbSet<RuleTriggerRecord> TriggeredRules { get; set; } = null!;
     public DbSet<TeamExitRequest> TeamExitRequests { get; set; } = null!;
     public DbSet<UserProfile> UserProfiles { get; set; } = null!;
+    public DbSet<DesignNodeDefinition> NodeDefinitions { get; set; } = null!;
+    public DbSet<DesignNodeSetting> NodeSettings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

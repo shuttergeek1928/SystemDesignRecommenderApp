@@ -11,23 +11,6 @@ public class ArchComponent
     public string Justification { get; set; } = string.Empty;
 }
 
-public class ArchitectureDesign
+public class ArchitectureDesign : Dictionary<string, ArchComponent>
 {
-    [JsonPropertyName("database")]
-    public ArchComponent Database { get; set; } = new();
-
-    [JsonPropertyName("cache")]
-    public ArchComponent Cache { get; set; } = new();
-
-    [JsonPropertyName("messaging")]
-    public ArchComponent Messaging { get; set; } = new();
-
-    [JsonPropertyName("deployment")]
-    public ArchComponent Deployment { get; set; } = new();
-
-    [JsonPropertyName("observability")]
-    public ArchComponent Observability { get; set; } = new();
-
-    [JsonPropertyName("security")]
-    public ArchComponent Security { get; set; } = new();
 }

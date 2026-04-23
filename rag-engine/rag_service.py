@@ -22,7 +22,7 @@ async def root():
 
 # Configuration
 DB_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
-MODEL_NAME = "phi3" # Or whatever model is available in Ollama
+MODEL_NAME = "qwen2.5-coder:7b" # Or whatever model is available in Ollama
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 # Initialize models
@@ -49,6 +49,8 @@ class DesignContext(BaseModel):
     cloud_provider: str
     region_strategy: str
 
+from langchain_google_genai import ChatGoogleGenerativeAI, HarmCategory, HarmBlockThreshold
+
 class DesignRequirements(BaseModel):
     scenario_id: int
     title: str
@@ -56,6 +58,12 @@ class DesignRequirements(BaseModel):
     context: DesignContext
     non_functional_requirements: List[str]
     model: Optional[str] = None
+    provider: Optional[str] = "ollama"
+    api_key: Optional[str] = None
+
+class RagRequest(BaseModel):
+    requirements: DesignRequirements
+    node_structure: Dict[str, Dict[str, str]]
 
 # RAG Prompt Template
 prompt_template = """
@@ -74,15 +82,10 @@ SLO: {slo}
 Consistency: {consistency}
 Cloud: {cloud_provider} ({region_strategy})
 
-Provide the design strictly in valid JSON format:
-{{
-    "database": {{ "choice": "...", "justification": "..." }},
-    "cache": {{ "choice": "...", "justification": "..." }},
-    "messaging": {{ "choice": "...", "justification": "..." }},
-    "deployment": {{ "choice": "...", "justification": "..." }},
-    "observability": {{ "choice": "...", "justification": "..." }},
-    "security": {{ "choice": "...", "justification": "..." }}
-}}
+Provide the design strictly in valid JSON format. The output JSON MUST contain ONLY the keys specified in the structure below. DO NOT add any extra nodes or change the keys. If a choice or justification is pre-filled in the structure below, treat it as a hard constraint or strong suggestion.
+Structure:
+{node_structure}
+
 Output ONLY the JSON. No markdown frosting.
 """
 
@@ -90,9 +93,19 @@ def format_docs(docs):
     return "\n\n".join(doc.page_content for doc in docs)
 
 @app.post("/generate/rag")
-async def generate_rag_design(req: DesignRequirements):
+async def generate_rag_design(rag_req: RagRequest):
+    req = rag_req.requirements
+    node_structure = rag_req.node_structure
     try:
-        logger.info(f"Received RAG request for: {req.title} with model: {req.model or MODEL_NAME}")
+        provider = req.provider or "ollama"
+        model = req.model or (MODEL_NAME if provider == "ollama" else "gemini-3.1-flash-lite-preview")
+        
+        # Safety check for Gemini
+        if provider.lower() == "gemini" and (":" in model or not model.startswith("gemini")):
+            logger.warning(f"Detected non-Gemini model name '{model}' for Gemini provider. Defaulting to 'gemini-3.1-flash-lite-preview'.")
+            model = "gemini-3.1-flash-lite-preview"
+        
+        logger.info(f"Received RAG request for: {req.title} with provider: {provider}, model: {model}")
         
         # 1. Retrieval
         query = f"{req.title} {req.description} {req.context.traffic_pattern}"
@@ -100,12 +113,28 @@ async def generate_rag_design(req: DesignRequirements):
         context_text = format_docs(docs)
         
         # 2. Generation
-        prompt = ChatPromptTemplate.from_template(prompt_template)
+        import json
+        node_structure_json = json.dumps(node_structure, indent=4)
+        prompt = ChatPromptTemplate.from_template(prompt_template.replace("{node_structure}", node_structure_json))
         
-        # Use requested model if provided, otherwise default
-        current_llm = llm
-        if req.model and req.model != MODEL_NAME:
-            current_llm = ChatOllama(model=req.model, temperature=0, format="json", base_url=OLLAMA_BASE_URL)
+        # Initialize LLM based on provider
+        if provider.lower() == "gemini":
+            if not req.api_key:
+                raise HTTPException(status_code=400, detail="Gemini API Key is required for Gemini provider")
+            current_llm = ChatGoogleGenerativeAI(
+                model=model, 
+                google_api_key=req.api_key,
+                temperature=0,
+                convert_system_message_to_human=True,
+                safety_settings={
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                }
+            )
+        else:
+            current_llm = ChatOllama(model=model, temperature=0, format="json", base_url=OLLAMA_BASE_URL)
         
         chain = (
             {"context": lambda x: context_text, 

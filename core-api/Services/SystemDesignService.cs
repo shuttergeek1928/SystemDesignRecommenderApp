@@ -1,10 +1,9 @@
-using System.Text.Json;
-using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using SystemDesignRecommenderApi.Domain.Data;
+using SystemDesignRecommenderApi.Domain.DTO;
 using SystemDesignRecommenderApi.Domain.Models;
 using SystemDesignRecommenderApi.Helpers;
-using SystemDesignRecommenderApi.Domain.DTO;
 
 namespace SystemDesignRecommenderApi.Services;
 
@@ -18,8 +17,8 @@ public class SystemDesignService : ISystemDesignService
     private readonly INodeSettingsService _nodeSettingsService;
 
     public SystemDesignService(
-        ILLMChatService llmChatService, 
-        ISettingsService settingsService, 
+        ILLMChatService llmChatService,
+        ISettingsService settingsService,
         IRuleEngineService ruleEngineService,
         DesignDbContext dbContext,
         IHttpClientFactory httpClientFactory,
@@ -69,7 +68,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             new List<SystemDesignRecommenderApi.Domain.DTO.MessageDto> { new("user", prompt) }
         );
         var responseStr = await _llmChatService.ChatAsync(request);
-        
+
         responseStr = CleanJson(responseStr);
 
         try
@@ -85,7 +84,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             options.Converters.Add(new FlexibleDoubleConverter());
             options.Converters.Add(new FlexibleNullableDoubleConverter());
             options.Converters.Add(new FlexibleStringConverter());
-            
+
             return JsonSerializer.Deserialize<DesignRequirements>(responseStr, options);
         }
         catch (Exception ex)
@@ -101,8 +100,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         // For standard generation, we'll use merged settings if available
         var nodes = await _nodeSettingsService.GetMergedSettingsAsync(teamId, userId);
         var nodesList = nodes.ToList();
-        
-        if (!nodesList.Any()) 
+
+        if (!nodesList.Any())
         {
             // Fallback to defaults if no definitions exist yet
             nodesList = new List<NodeSettingDto> {
@@ -146,7 +145,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                 if (component != null && !string.IsNullOrWhiteSpace(component.Choice))
                 {
                     architecture[nodeKey] = component;
-                    Console.WriteLine($"  OK -> choice='{component.Choice}'  justification='{component.Justification[..Math.Min(60, component.Justification.Length)]}...'" );
+                    Console.WriteLine($"  OK -> choice='{component.Choice}'  justification='{component.Justification[..Math.Min(60, component.Justification.Length)]}...'");
                 }
                 else
                 {
@@ -199,7 +198,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             {
                 return await response.Content.ReadFromJsonAsync<ArchitectureDesign>();
             }
-            
+
             return null;
         }
         catch (Exception)
@@ -214,13 +213,13 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         var triggeredRules = _ruleEngineService.EvaluateRules(requirements).ToList();
 
         // 2. Prepare Context for LLM
-        var ruleContextText = string.Join("\n", triggeredRules.Select(r => 
+        var ruleContextText = string.Join("\n", triggeredRules.Select(r =>
             $"- {r.Dimension}: {r.Recommendation} (Reason: {r.Justification})"));
 
         // 3. Load Dynamic Nodes and Settings
         var settings = await _nodeSettingsService.GetMergedSettingsAsync(teamId, userId);
         var settingsList = settings.ToList();
-        
+
         if (!settingsList.Any())
         {
             // Fallback
@@ -320,7 +319,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         var query = _dbContext.Sessions
             .Include(s => s.Requirements)
             .AsQueryable();
-        
+
         if (userId.HasValue && teamId.HasValue)
         {
             query = query.Where(s => s.UserId == userId.Value || s.TeamId == teamId.Value);
@@ -336,30 +335,34 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
         var sessions = await query.OrderByDescending(s => s.CreatedAt).ToListAsync();
 
-        return sessions.Select(s => {
+        return sessions.Select(s =>
+        {
             var reqRecord = s.Requirements.FirstOrDefault();
             DesignRequirements? requirements = null;
-            try {
-                if (reqRecord != null) {
+            try
+            {
+                if (reqRecord != null)
+                {
                     requirements = JsonSerializer.Deserialize<DesignRequirements>(reqRecord.JsonData);
                 }
-            } catch { /* Ignore parse errors */ }
+            }
+            catch { /* Ignore parse errors */ }
 
             var highlights = new List<string>();
             if (requirements?.Context != null)
             {
-                if (requirements.Context.Users.HasValue) 
+                if (requirements.Context.Users.HasValue)
                     highlights.Add($"{requirements.Context.Users.Value:N0} Users");
-                
-                if (!string.IsNullOrEmpty(requirements.Context.TrafficPattern)) 
+
+                if (!string.IsNullOrEmpty(requirements.Context.TrafficPattern))
                     highlights.Add(requirements.Context.TrafficPattern);
-                
-                if (requirements.Context.LatencyRequirementMs.HasValue) 
+
+                if (requirements.Context.LatencyRequirementMs.HasValue)
                     highlights.Add($"{requirements.Context.LatencyRequirementMs}ms Latency");
-                
-                if (!string.IsNullOrEmpty(requirements.Context.AvailabilitySlo)) 
+
+                if (!string.IsNullOrEmpty(requirements.Context.AvailabilitySlo))
                     highlights.Add(requirements.Context.AvailabilitySlo);
-                
+
                 if (requirements.Context.DataVolumeGb.HasValue)
                     highlights.Add($"{requirements.Context.DataVolumeGb}GB Data");
             }
@@ -393,7 +396,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             ProblemStatement = session.ProblemStatement,
             ExtractedRequirements = req != null ? JsonSerializer.Deserialize<object>(req.JsonData) : null,
             ArchitectureDesign = rec != null ? JsonSerializer.Deserialize<object>(rec.JsonData) : null,
-            TriggeredRules = session.TriggeredRules.Select(r => new {
+            TriggeredRules = session.TriggeredRules.Select(r => new
+            {
                 r.Id,
                 r.Dimension,
                 r.Condition,
@@ -437,7 +441,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
     {
         var llm = llmKey.ToLower().Replace("-", "_").Replace(" ", "_");
         var cfg = configuredKey.ToLower().Replace("-", "_").Replace(" ", "_");
-        
+
         // Exact match
         if (llm == cfg) return true;
         // Bidirectional contains
@@ -546,10 +550,13 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         responseStr = System.Text.RegularExpressions.Regex.Replace(responseStr, @"(\d)_(\d)", "$1$2");
 
         // 5. Handle suffixes like 100M, 10K, 1B
-        responseStr = System.Text.RegularExpressions.Regex.Replace(responseStr, @"(\d+\.?\d*)\s*([KkMmBb])(?=\s*[,}\]])", m => {
-            if (double.TryParse(m.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val)) {
+        responseStr = System.Text.RegularExpressions.Regex.Replace(responseStr, @"(\d+\.?\d*)\s*([KkMmBb])(?=\s*[,}\]])", m =>
+        {
+            if (double.TryParse(m.Groups[1].Value, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out double val))
+            {
                 char suffix = char.ToUpper(m.Groups[2].Value[0]);
-                double multiplier = suffix switch {
+                double multiplier = suffix switch
+                {
                     'K' => 1_000,
                     'M' => 1_000_000,
                     'B' => 1_000_000_000,
@@ -587,10 +594,12 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"(^\s*""[^""]+"")\s*,", "$1: null,", System.Text.RegularExpressions.RegexOptions.Multiline);
 
         // 9. Fix hanging text after closing quotes (e.g. "value" more text -> "value more text")
-        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"(:\s*""[^""]+"")\s*([^,}\s][^,}\n]*)", m => {
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"(:\s*""[^""]+"")\s*([^,}\s][^,}\n]*)", m =>
+        {
             var val = m.Groups[1].Value;
             var hanging = m.Groups[2].Value;
-            if (val.EndsWith("\"")) {
+            if (val.EndsWith("\""))
+            {
                 return val.Substring(0, val.Length - 1) + " " + hanging + "\"";
             }
             return m.Value;

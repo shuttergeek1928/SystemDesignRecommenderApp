@@ -5,11 +5,11 @@ namespace SystemDesignRecommenderApi.Domain.Data.Entities;
 public class User
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    
+
     [Required]
     [MaxLength(100)]
     public string Username { get; set; } = string.Empty;
-    
+
     [Required]
     [MaxLength(200)]
     public string Email { get; set; } = string.Empty;
@@ -17,7 +17,7 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
 
     public Guid? TeamId { get; set; }
-    
+
     public UserProfile? Profile { get; set; }
     public Team? Team { get; set; }
 

@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using SystemDesignRecommenderApi.Domain.DTO;
 using SystemDesignRecommenderApi.Services;
 using ChatRequest = SystemDesignRecommenderApi.Domain.DTO.ChatRequest;
 
@@ -32,17 +31,17 @@ namespace SystemDesignRecommenderApi.Controllers
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, 
+                return StatusCode(StatusCodes.Status503ServiceUnavailable,
                     new { error = "Ollama service is not available. Please ensure Ollama is running." });
             }
             catch (OperationCanceledException)
             {
-                return StatusCode(StatusCodes.Status408RequestTimeout, 
+                return StatusCode(StatusCodes.Status408RequestTimeout,
                     new { error = "Request timeout. The Ollama service took too long to respond." });
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, 
+                return StatusCode(StatusCodes.Status500InternalServerError,
                     new { error = "An unexpected error occurred while fetching available models." });
             }
         }
@@ -62,17 +61,17 @@ namespace SystemDesignRecommenderApi.Controllers
             }
             catch (HttpRequestException ex)
             {
-                return StatusCode(StatusCodes.Status503ServiceUnavailable, 
+                return StatusCode(StatusCodes.Status503ServiceUnavailable,
                     new { error = "Ollama service is not available. Please ensure Ollama is running." });
             }
             catch (OperationCanceledException)
             {
-                return StatusCode(StatusCodes.Status408RequestTimeout, 
+                return StatusCode(StatusCodes.Status408RequestTimeout,
                     new { error = "Request timeout. The Ollama service took too long to respond." });
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, 
+                return StatusCode(StatusCodes.Status500InternalServerError,
                     new { error = "An unexpected error occurred while processing the chat request." });
             }
         }

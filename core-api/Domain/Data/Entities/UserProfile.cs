@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace SystemDesignRecommenderApi.Domain.Data.Entities;
 
@@ -12,7 +11,7 @@ public class UserProfile
     public User User { get; set; } = null!;
 
     public string Role { get; set; } = "Member";
-    public string PrimarySkills { get; set; } = "[]"; 
+    public string PrimarySkills { get; set; } = "[]";
     public string SecondarySkills { get; set; } = "[]";
     public string AdditionalSkills { get; set; } = "[]";
     public int Productivity { get; set; } = 90;

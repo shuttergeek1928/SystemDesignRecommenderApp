@@ -42,13 +42,13 @@ public class DesignDbContext : DbContext
             .WithMany(t => t.Members)
             .HasForeignKey(u => u.TeamId)
             .OnDelete(DeleteBehavior.Restrict);
-            
+
         modelBuilder.Entity<TeamExitRequest>()
             .HasOne(r => r.User)
             .WithMany()
             .HasForeignKey(r => r.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-            
+
         modelBuilder.Entity<TeamExitRequest>()
             .HasOne(r => r.Team)
             .WithMany()

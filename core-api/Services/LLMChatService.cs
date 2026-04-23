@@ -1,12 +1,9 @@
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using SystemDesignRecommenderApi.Domain.Models;
-using OllamaSharp;
-using OllamaSharp.Models.Chat;
-using SystemDesignRecommenderApi.Domain.DTO;
 using Google.GenAI;
 using Google.GenAI.Types;
+using OllamaSharp;
+using OllamaSharp.Models.Chat;
+using System.Text;
+using SystemDesignRecommenderApi.Domain.Models;
 using ChatRequest = SystemDesignRecommenderApi.Domain.DTO.ChatRequest;
 
 namespace SystemDesignRecommenderApi.Services
@@ -19,8 +16,8 @@ namespace SystemDesignRecommenderApi.Services
         private readonly HttpClient _httpClient;
 
         public LLMChatService(
-            OllamaApiClient ollamaApiClient, 
-            ISettingsService settingsService, 
+            OllamaApiClient ollamaApiClient,
+            ISettingsService settingsService,
             ILogger<LLMChatService> logger,
             IHttpClientFactory httpClientFactory)
         {
@@ -33,12 +30,12 @@ namespace SystemDesignRecommenderApi.Services
         public async Task<string> ChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
         {
             var settings = _settingsService.GetSettings();
-            
+
             if (settings.PreferredProvider?.ToLower() == "gemini")
             {
                 return await ChatWithGeminiAsync(request, settings, cancellationToken);
             }
-            
+
             return await ChatWithOllamaAsync(request, settings, cancellationToken);
         }
 
@@ -54,7 +51,7 @@ namespace SystemDesignRecommenderApi.Services
 
                 var ollamaRequest = new OllamaSharp.Models.Chat.ChatRequest { Messages = messages };
                 var fullResponse = new StringBuilder();
-                
+
                 await foreach (var streamResponse in _ollamaApiClient.ChatAsync(ollamaRequest, cancellationToken))
                 {
                     if (streamResponse?.Message?.Content != null)
@@ -82,10 +79,10 @@ namespace SystemDesignRecommenderApi.Services
                 }
 
                 var modelName = string.IsNullOrWhiteSpace(settings.GeminiModel) ? "gemini-3.1-flash-lite-preview" : settings.GeminiModel.Trim();
-                
+
                 // Initialize the Gemini client using the SDK
                 var client = new Client(apiKey: settings.GeminiApiKey);
-                
+
                 // Prepare messages for the SDK
                 var contents = request.Messages.Select(m => new Content
                 {
@@ -94,9 +91,9 @@ namespace SystemDesignRecommenderApi.Services
                 }).ToList();
 
                 _logger.LogInformation("Sending chat request to Gemini model: {Model} using SDK", modelName);
-                
+
                 var response = await client.Models.GenerateContentAsync(modelName, contents, cancellationToken: cancellationToken);
-                
+
                 if (response?.Candidates == null || !response.Candidates.Any())
                 {
                     _logger.LogWarning("Gemini SDK returned no candidates.");

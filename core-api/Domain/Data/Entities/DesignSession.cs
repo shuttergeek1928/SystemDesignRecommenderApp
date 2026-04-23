@@ -12,12 +12,12 @@ public class DesignSession
     public string ProblemStatement { get; set; } = string.Empty;
 
     public Guid UserId { get; set; }
-    
+
     [ForeignKey("UserId")]
     public User User { get; set; } = null!;
 
     public Guid? TeamId { get; set; }
-    
+
     [ForeignKey("TeamId")]
     public Team? Team { get; set; }
 

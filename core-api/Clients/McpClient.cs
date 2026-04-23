@@ -1,7 +1,7 @@
-﻿using System.Diagnostics;
-using System.Text.Json;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Text;
+using System.Text.Json;
 
 namespace SystemDesignRecommenderApi.Clients
 {
@@ -46,7 +46,7 @@ namespace SystemDesignRecommenderApi.Clients
 
             _stdin = _process.StandardInput;
             _stdin.AutoFlush = true;
-            
+
             _stdout = _process.StandardOutput;
             _stderr = _process.StandardError;
 
@@ -73,7 +73,7 @@ namespace SystemDesignRecommenderApi.Clients
                 Console.WriteLine("[MCP] Reader task started");
                 StringBuilder lineBuilder = new StringBuilder();
                 char[] buffer = new char[1];
-                
+
                 while (true)
                 {
                     int charsRead = await _stdout.ReadAsync(buffer.AsMemory(0, 1), cancellationToken);
@@ -95,7 +95,7 @@ namespace SystemDesignRecommenderApi.Clients
                         }
                     }
                 }
-                
+
                 Console.WriteLine("[MCP] Reader task ended (stream closed)");
             }
             catch (OperationCanceledException)
@@ -168,7 +168,7 @@ namespace SystemDesignRecommenderApi.Clients
             };
 
             await SendAsync(initializedNotification);
-            
+
             // Give the server a moment to process the notification
             await Task.Delay(100);
         }
@@ -250,7 +250,7 @@ namespace SystemDesignRecommenderApi.Clients
             try
             {
                 _cts?.Cancel();
-                
+
                 if (_readerTask != null)
                 {
                     try

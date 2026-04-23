@@ -11,7 +11,8 @@ public class RuleEngineService : IRuleEngineService
         // 1. Scalability & Performance
         if ((context.Context.Users ?? 0) > 100000)
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Scale",
                 Condition = "Users > 100k",
                 Recommendation = "Horizontal Scaling",
@@ -21,7 +22,8 @@ public class RuleEngineService : IRuleEngineService
 
         if (context.Context.TrafficPattern?.Contains("burst", StringComparison.OrdinalIgnoreCase) == true)
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Scale Type",
                 Condition = "Burst Traffic",
                 Recommendation = "Serverless (Lambda/Azure Functions)",
@@ -31,7 +33,8 @@ public class RuleEngineService : IRuleEngineService
 
         if ((context.Context.LatencyRequirementMs ?? 1000) < 100)
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Latency",
                 Condition = "< 100ms",
                 Recommendation = "Redis/Memcached",
@@ -42,7 +45,8 @@ public class RuleEngineService : IRuleEngineService
         // 2. Consistency & Data Integrity
         if (string.Equals(context.Context.ConsistencyModel, "strong", StringComparison.OrdinalIgnoreCase))
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Consistency",
                 Condition = "Strong",
                 Recommendation = "RDBMS with 2PC",
@@ -51,7 +55,8 @@ public class RuleEngineService : IRuleEngineService
         }
         else if (string.Equals(context.Context.ConsistencyModel, "eventual", StringComparison.OrdinalIgnoreCase))
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Consistency",
                 Condition = "Eventual",
                 Recommendation = "Event Sourcing",
@@ -61,7 +66,8 @@ public class RuleEngineService : IRuleEngineService
 
         if ((context.Context.DataVolumeGb ?? 0) > 1000)
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Data Volume",
                 Condition = "> 1TB / Month",
                 Recommendation = "NoSQL (Mongo/Cassandra)",
@@ -71,7 +77,8 @@ public class RuleEngineService : IRuleEngineService
 
         if (string.Equals(context.Context.SearchComplexity, "complex", StringComparison.OrdinalIgnoreCase))
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Search",
                 Condition = "Complex Text Search",
                 Recommendation = "Elasticsearch/Meilisearch",
@@ -81,7 +88,8 @@ public class RuleEngineService : IRuleEngineService
 
         if ((context.Context.RequestRate ?? 0) > 5000)
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Request Rate",
                 Condition = "> 5k Requests/sec",
                 Recommendation = "Message Queue (RabbitMQ/Kafka)",
@@ -92,7 +100,8 @@ public class RuleEngineService : IRuleEngineService
         // 3. Team & Organizational Agility
         if ((context.Context.TeamSize ?? 10) < 8)
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Team Size",
                 Condition = "< 8 Developers",
                 Recommendation = "Modular Monolith",
@@ -102,7 +111,8 @@ public class RuleEngineService : IRuleEngineService
 
         if (string.Equals(context.Context.ExperienceLevel, "junior", StringComparison.OrdinalIgnoreCase))
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "DevOps Skill",
                 Condition = "Low / Beginner",
                 Recommendation = "Managed Services (PaaS)",
@@ -112,7 +122,8 @@ public class RuleEngineService : IRuleEngineService
 
         if (string.Equals(context.Context.DeploymentFrequency, "high", StringComparison.OrdinalIgnoreCase) || string.Equals(context.Context.DeploymentFrequency, "daily", StringComparison.OrdinalIgnoreCase))
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Deployment",
                 Condition = "High Freq (10x/day)",
                 Recommendation = "Blue-Green Deployment",
@@ -123,7 +134,8 @@ public class RuleEngineService : IRuleEngineService
         // 4. Security & Compliance
         if (context.Context.Compliance?.Any(c => c.Contains("GDPR", StringComparison.OrdinalIgnoreCase) || c.Contains("PII", StringComparison.OrdinalIgnoreCase)) == true)
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Compliance",
                 Condition = "GDPR / PII Data",
                 Recommendation = "Data Masking & Encryption",
@@ -133,7 +145,8 @@ public class RuleEngineService : IRuleEngineService
 
         if (context.Context.Compliance?.Any(c => c.Contains("external", StringComparison.OrdinalIgnoreCase) || c.Contains("OAuth", StringComparison.OrdinalIgnoreCase)) == true)
         {
-            triggers.Add(new RuleTriggerRecordDTO {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
                 Dimension = "Auth Complexity",
                 Condition = "External Users",
                 Recommendation = "OAuth 2.0 / OpenID Connect",

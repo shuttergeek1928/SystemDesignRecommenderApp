@@ -44,7 +44,7 @@ public class FlexibleNullableIntConverter : JsonConverter<int?>
     public override int? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         if (reader.TokenType == JsonTokenType.Null) return null;
-        
+
         if (reader.TokenType == JsonTokenType.Number)
         {
             return reader.GetInt32();
@@ -155,21 +155,21 @@ public class FlexibleArchComponentConverter : JsonConverter<ArchComponent>
             {
                 var root = jsonDoc.RootElement;
                 var component = new ArchComponent();
-                
+
                 if (root.TryGetProperty("choice", out var choiceProp)) component.Choice = choiceProp.GetString() ?? "";
                 else if (root.TryGetProperty("Choice", out var choicePropPascal)) component.Choice = choicePropPascal.GetString() ?? "";
-                
+
                 if (root.TryGetProperty("justification", out var justProp)) component.Justification = justProp.GetString() ?? "";
                 else if (root.TryGetProperty("Justification", out var justPropPascal)) component.Justification = justPropPascal.GetString() ?? "";
-                
+
                 // Fallback for other potential field names
                 if (string.IsNullOrEmpty(component.Choice) && root.TryGetProperty("selection", out var selProp)) component.Choice = selProp.GetString() ?? "";
                 if (string.IsNullOrEmpty(component.Justification) && root.TryGetProperty("reason", out var reasonProp)) component.Justification = reasonProp.GetString() ?? "";
-                
+
                 return component;
             }
         }
-        
+
         if (reader.TokenType == JsonTokenType.String)
         {
             var text = reader.GetString() ?? "";

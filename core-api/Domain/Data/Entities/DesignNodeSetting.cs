@@ -11,12 +11,12 @@ public class DesignNodeSetting
     public string NodeKey { get; set; } = string.Empty;
 
     public Guid? TeamId { get; set; }
-    
+
     [ForeignKey("TeamId")]
     public Team? Team { get; set; }
 
     public Guid? UserId { get; set; }
-    
+
     [ForeignKey("UserId")]
     public User? User { get; set; }
 

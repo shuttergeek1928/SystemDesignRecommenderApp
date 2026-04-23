@@ -8,12 +8,12 @@ public class TeamExitRequest
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public Guid UserId { get; set; }
-    
+
     [ForeignKey("UserId")]
     public User User { get; set; } = null!;
 
     public Guid TeamId { get; set; }
-    
+
     [ForeignKey("TeamId")]
     public Team Team { get; set; } = null!;
 

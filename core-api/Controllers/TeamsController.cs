@@ -22,9 +22,9 @@ public class TeamsController : ControllerBase
     {
         var teams = await _context.Teams
             .Include(t => t.Members)
-            .Select(t => new 
-            { 
-                t.Id, 
+            .Select(t => new
+            {
+                t.Id,
                 t.Name,
                 ManagerId = t.OwnerId,
                 Members = t.Members.Select(m => new { m.Id, m.Username, m.Email })
@@ -67,7 +67,7 @@ public class TeamsController : ControllerBase
         };
 
         _context.Teams.Add(team);
-        
+
         // Add owner to team members too
         owner.TeamId = team.Id;
 
@@ -100,12 +100,12 @@ public class TeamsController : ControllerBase
         if (user == null) return NotFound("User not found in team.");
 
         user.TeamId = null;
-        
+
         // Remove any pending exit requests
         var pendingRequests = await _context.TeamExitRequests
             .Where(r => r.UserId == userId && r.TeamId == teamId && r.Status == "Pending")
             .ToListAsync();
-            
+
         foreach (var req in pendingRequests)
         {
             req.Status = "Approved"; // Automatically approve since they are being removed
@@ -143,11 +143,11 @@ public class TeamsController : ControllerBase
         var requests = await _context.TeamExitRequests
             .Include(r => r.User)
             .Where(r => r.TeamId == teamId && r.Status == "Pending")
-            .Select(r => new 
-            { 
-                r.Id, 
-                r.RequestDate, 
-                User = new { r.User.Id, r.User.Username, r.User.Email } 
+            .Select(r => new
+            {
+                r.Id,
+                r.RequestDate,
+                User = new { r.User.Id, r.User.Username, r.User.Email }
             })
             .ToListAsync();
 
@@ -172,7 +172,7 @@ public class TeamsController : ControllerBase
 
         return Ok();
     }
-    
+
     [HttpPost("exit-request/{requestId}/reject")]
     public async Task<IActionResult> RejectExitRequest(Guid requestId)
     {

@@ -1,7 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using System.Text;
 using SystemDesignRecommenderApi.Domain.Data;
 using SystemDesignRecommenderApi.Domain.Data.Entities;
 using SystemDesignRecommenderApi.Domain.DTO;
@@ -57,7 +57,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginDto request)
     {
         var hash = HashPassword(request.Password);
-        
+
         var user = await _context.Users
             .Include(u => u.Team)
             .FirstOrDefaultAsync(u => u.Email == request.Email && u.PasswordHash == hash);
@@ -82,11 +82,11 @@ public class AuthController : ControllerBase
     {
         var users = await _context.Users
             .Include(u => u.Profile)
-            .Select(u => new 
-            { 
-                u.Id, 
-                u.Username, 
-                u.Email, 
+            .Select(u => new
+            {
+                u.Id,
+                u.Username,
+                u.Email,
                 u.TeamId,
                 Role = u.Profile != null ? u.Profile.Role : "Member",
                 PrimarySkills = u.Profile != null ? u.Profile.PrimarySkills : "[]",
@@ -100,7 +100,7 @@ public class AuthController : ControllerBase
                 Goal = u.Profile != null ? u.Profile.Goal : ""
             })
             .ToListAsync();
-            
+
         return Ok(users);
     }
 
@@ -110,7 +110,7 @@ public class AuthController : ControllerBase
         var user = await _context.Users
             .Include(u => u.Profile)
             .FirstOrDefaultAsync(u => u.Id == id);
-            
+
         if (user == null) return NotFound("User not found.");
 
         if (user.Profile == null)

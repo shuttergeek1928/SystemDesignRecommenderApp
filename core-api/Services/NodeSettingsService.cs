@@ -46,11 +46,11 @@ public class NodeSettingsService : INodeSettingsService
         if (entity != null)
         {
             _dbContext.NodeDefinitions.Remove(entity);
-            
+
             // Also remove settings associated with this key
             var settings = _dbContext.NodeSettings.Where(s => s.NodeKey == key);
             _dbContext.NodeSettings.RemoveRange(settings);
-            
+
             await _dbContext.SaveChangesAsync();
         }
     }
@@ -58,11 +58,11 @@ public class NodeSettingsService : INodeSettingsService
     public async Task<IEnumerable<NodeSettingDto>> GetMergedSettingsAsync(Guid? teamId, Guid? userId)
     {
         var definitions = await _dbContext.NodeDefinitions.ToListAsync();
-        
-        var teamSettings = teamId.HasValue 
+
+        var teamSettings = teamId.HasValue
             ? await _dbContext.NodeSettings.Where(s => s.TeamId == teamId.Value).ToListAsync()
             : new List<DesignNodeSetting>();
-            
+
         var userSettings = userId.HasValue
             ? await _dbContext.NodeSettings.Where(s => s.UserId == userId.Value).ToListAsync()
             : new List<DesignNodeSetting>();
@@ -97,12 +97,12 @@ public class NodeSettingsService : INodeSettingsService
         foreach (var settingDto in dto.Settings)
         {
             DesignNodeSetting? entity = null;
-            
+
             if (dto.UserId.HasValue)
             {
                 entity = await _dbContext.NodeSettings
                     .FirstOrDefaultAsync(s => s.UserId == dto.UserId.Value && s.NodeKey == settingDto.NodeKey);
-                
+
                 if (entity == null)
                 {
                     entity = new DesignNodeSetting { UserId = dto.UserId.Value, NodeKey = settingDto.NodeKey };
@@ -113,7 +113,7 @@ public class NodeSettingsService : INodeSettingsService
             {
                 entity = await _dbContext.NodeSettings
                     .FirstOrDefaultAsync(s => s.TeamId == dto.TeamId.Value && s.NodeKey == settingDto.NodeKey);
-                
+
                 if (entity == null)
                 {
                     entity = new DesignNodeSetting { TeamId = dto.TeamId.Value, NodeKey = settingDto.NodeKey };

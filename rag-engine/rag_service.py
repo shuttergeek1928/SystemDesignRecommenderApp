@@ -39,15 +39,24 @@ retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
 llm = ChatOllama(model=MODEL_NAME, temperature=0, format="json", base_url=OLLAMA_BASE_URL)
 
 class DesignContext(BaseModel):
-    users: int
-    traffic_pattern: str
-    latency_requirement_ms: int
-    availability_slo: str
-    consistency_model: str
-    budget: str
-    compliance: List[str]
-    cloud_provider: str
-    region_strategy: str
+    users: Optional[int] = 0
+    traffic_pattern: Optional[str] = ""
+    latency_requirement_ms: Optional[int] = 0
+    availability_slo: Optional[str] = ""
+    consistency_model: Optional[str] = ""
+    budget: Optional[str] = ""
+    compliance: Optional[List[str]] = []
+    cloud_provider: Optional[str] = "aws"
+    region_strategy: Optional[str] = ""
+    request_rate: Optional[float] = 0
+    data_volume_gb: Optional[float] = 0
+    team_size: Optional[int] = 0
+    experience_level: Optional[str] = "mixed"
+    search_complexity: Optional[str] = "simple"
+    deployment_frequency: Optional[str] = "weekly"
+    read_write_ratio: Optional[str] = "balanced"
+    data_retention: Optional[str] = "years"
+    security_sensitivity: Optional[str] = "internal"
 
 from langchain_google_genai import ChatGoogleGenerativeAI, HarmCategory, HarmBlockThreshold
 
@@ -67,7 +76,7 @@ class RagRequest(BaseModel):
 
 # RAG Prompt Template
 prompt_template = """
-You are an expert Distributed Systems Architect. 
+You are an expert Distributed Systems Architect specializing in AWS. 
 Use the following pieces of architectural knowledge to design a system for the user's requirements.
 
 RELEVANT ARCHITECTURAL KNOWLEDGE:
@@ -77,10 +86,13 @@ USER REQUIREMENTS:
 Title: {title}
 Description: {description}
 Scale: {users} users, {traffic_pattern} traffic
-Latency: {latency}ms
-SLO: {slo}
+Latency: {latency}ms, Availability SLO: {slo}
 Consistency: {consistency}
-Cloud: {cloud_provider} ({region_strategy})
+Cloud: AWS ({region_strategy})
+Budget: {budget}, Security: {security_sensitivity}
+Read/Write Ratio: {read_write_ratio}, Data Retention: {data_retention}
+Team: {team_size} devs, {experience_level} experience
+Compliance: {compliance}
 
 Provide the design strictly in valid JSON format. The output JSON MUST contain ONLY the keys specified in the structure below. DO NOT add any extra nodes or change the keys. If a choice or justification is pre-filled in the structure below, treat it as a hard constraint or strong suggestion.
 Structure:
@@ -145,8 +157,14 @@ async def generate_rag_design(rag_req: RagRequest):
              "latency": lambda x: req.context.latency_requirement_ms,
              "slo": lambda x: req.context.availability_slo,
              "consistency": lambda x: req.context.consistency_model,
-             "cloud_provider": lambda x: req.context.cloud_provider,
-             "region_strategy": lambda x: req.context.region_strategy
+             "region_strategy": lambda x: req.context.region_strategy,
+             "budget": lambda x: req.context.budget,
+             "security_sensitivity": lambda x: req.context.security_sensitivity,
+             "read_write_ratio": lambda x: req.context.read_write_ratio,
+             "data_retention": lambda x: req.context.data_retention,
+             "team_size": lambda x: req.context.team_size,
+             "experience_level": lambda x: req.context.experience_level,
+             "compliance": lambda x: ", ".join(req.context.compliance) if req.context.compliance else "None"
             }
             | prompt
             | current_llm

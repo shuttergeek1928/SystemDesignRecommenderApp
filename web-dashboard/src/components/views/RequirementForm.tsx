@@ -8,14 +8,15 @@ import {
   ChevronRight,
   ChevronLeft,
   CheckCircle2,
-  Info,
   Lightbulb,
   Zap,
+  HelpCircle,
 } from "lucide-react";
 import { systemDesignSchema, type SystemDesignForm } from "@/types/form";
 import { Button, Card, Input, Label, Textarea } from "@/components/ui/base";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { useSystemDesignStore } from "@/store/useSystemDesignStore";
 
 const STEPS = [
   {
@@ -33,10 +34,59 @@ const STEPS = [
     title: "Scale & Traffic",
     description: "Volumes, Rates & Complexity",
   },
-  { id: "agile", title: "Agility & Pace", description: "Releases & Learning" },
+  {
+    id: "agile",
+    title: "Agility & Pace",
+    description: "Releases & Learning",
+  },
+  {
+    id: "infra",
+    title: "Infrastructure & Compliance",
+    description: "Cloud, Budget & Security",
+  },
 ];
 
-import { useSystemDesignStore } from "@/store/useSystemDesignStore";
+function HelpText({ text }: { text: string }) {
+  return (
+    <p className="text-xs text-muted-foreground flex items-start gap-1.5 mt-1">
+      <HelpCircle className="w-3 h-3 shrink-0 mt-0.5" />
+      <span>{text}</span>
+    </p>
+  );
+}
+
+function RadioGroup({
+  options,
+  name,
+  register,
+  columns = 4,
+}: {
+  options: string[];
+  name: string;
+  register: any;
+  columns?: number;
+}) {
+  return (
+    <div
+      className={`grid gap-3`}
+      style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+    >
+      {options.map((val) => (
+        <label key={val} className="cursor-pointer group">
+          <input
+            type="radio"
+            value={val}
+            className="peer hidden"
+            {...register(name)}
+          />
+          <div className="p-3 text-center border border-border rounded-xl text-sm font-medium transition-all group-hover:bg-accent peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary capitalize">
+            {val.replace(/-/g, " ")}
+          </div>
+        </label>
+      ))}
+    </div>
+  );
+}
 
 export function RequirementForm() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -49,56 +99,72 @@ export function RequirementForm() {
     setUseHybrid,
   } = useSystemDesignStore();
   const [success, setSuccess] = useState(false);
+  const [complianceValues, setComplianceValues] = useState<string[]>([]);
   const router = useRouter();
 
   const {
     register,
     handleSubmit,
     trigger,
+    setValue,
     formState: { errors },
     watch,
   } = useForm<SystemDesignForm>({
     resolver: zodResolver(systemDesignSchema),
     defaultValues: {
       teamSize: 5,
+      userCount: 1000,
       latency: "medium",
       scalability: "medium",
       consistency: "eventual",
+      trafficPattern: "steady",
+      availabilitySlo: "99.9",
       experienceLevel: "mid",
       releaseCycle: "weekly",
       learningPace: "moderate",
       automationLevel: "medium",
-      requestRate: 0,
-      dataVolume: 0,
+      requestRate: 100,
+      dataVolume: 10,
       searchComplexity: "simple",
       deploymentFrequency: "medium",
+      readWriteRatio: "balanced",
+      dataRetention: "years",
+      budget: "growth",
+      regionStrategy: "single-region",
+      compliance: [],
+      securitySensitivity: "internal",
     },
   });
 
   const watchTeamSize = watch("teamSize");
 
-  const nextStep = async () => {
-    const fields =
-      currentStep === 0
-        ? [
-            "appName",
-            "targetUsers",
-            "latency",
-            "scalability",
-            "consistency",
-            "additionalContext",
-          ]
-        : currentStep === 1
-          ? ["teamSize", "experienceLevel"]
-          : currentStep === 2
-            ? [
-                "requestRate",
-                "dataVolume",
-                "searchComplexity",
-                "deploymentFrequency",
-              ]
-            : [];
+  const stepFields: Record<number, string[]> = {
+    0: [
+      "appName",
+      "targetUsers",
+      "userCount",
+      "trafficPattern",
+      "latency",
+      "scalability",
+      "consistency",
+      "availabilitySlo",
+      "additionalContext",
+    ],
+    1: ["teamSize", "experienceLevel"],
+    2: [
+      "requestRate",
+      "dataVolume",
+      "searchComplexity",
+      "deploymentFrequency",
+      "readWriteRatio",
+      "dataRetention",
+    ],
+    3: ["releaseCycle", "learningPace", "automationLevel"],
+    4: ["budget", "regionStrategy", "securitySensitivity"],
+  };
 
+  const nextStep = async () => {
+    const fields = stepFields[currentStep] || [];
     // @ts-ignore
     const isValid = await trigger(fields);
     if (isValid) setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
@@ -106,16 +172,22 @@ export function RequirementForm() {
 
   const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
+  const toggleCompliance = (val: string) => {
+    const updated = complianceValues.includes(val)
+      ? complianceValues.filter((v) => v !== val)
+      : [...complianceValues, val];
+    setComplianceValues(updated);
+    setValue("compliance", updated);
+  };
+
   const onSubmit = async (data: SystemDesignForm) => {
-    const success = await generateRecommendation(data);
-    if (success) {
-      setSuccess(true);
-    }
+    const result = await generateRecommendation(data);
+    if (result) setSuccess(true);
   };
 
   if (success) {
     return (
-      <Card className="max-w-2xl mx-auto p-12 text-center">
+      <Card className="max-w-3xl mx-auto p-12 text-center">
         <div className="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8">
           <CheckCircle2 className="w-10 h-10" />
         </div>
@@ -132,7 +204,7 @@ export function RequirementForm() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="max-w-6xl mx-auto">
       {/* Progress Bar */}
       <div className="mb-12">
         <div className="flex justify-between mb-4">
@@ -195,80 +267,113 @@ export function RequirementForm() {
 
               {/* Step 1: Technical */}
               {currentStep === 0 && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+                  <div className="space-y-8">
                     <div className="space-y-2">
                       <Label>Application Name</Label>
                       <Input
                         placeholder="e.g. Nexus Core API"
                         {...register("appName")}
                       />
+                      <HelpText text="The name of the application or system you are designing." />
                       {errors.appName && (
                         <p className="text-destructive text-xs mt-1">
                           {errors.appName.message}
                         </p>
                       )}
                     </div>
+                    
                     <div className="space-y-2">
                       <Label>Target Users</Label>
                       <Input
                         placeholder="e.g. Enterprise DevOps"
                         {...register("targetUsers")}
                       />
+                      <HelpText text="Who are the primary users? (e.g. consumers, developers, internal teams)" />
                       {errors.targetUsers && (
                         <p className="text-destructive text-xs mt-1">
                           {errors.targetUsers.message}
                         </p>
                       )}
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label>
-                      Additional Context / Natural Language Requirements
-                    </Label>
-                    <Textarea
-                      placeholder="Describe your application's unique needs or specific constraints in plain English..."
-                      className="min-h-[100px] bg-secondary/20 border-white/5 focus:border-primary/50"
-                      {...register("additionalContext")}
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Expected User Count</Label>
+                      <Input
+                        type="number"
+                        placeholder="e.g. 100000"
+                        {...register("userCount", { valueAsNumber: true })}
+                      />
+                      <HelpText text="Total number of concurrent or monthly active users expected." />
+                    </div>
 
-                  <div className="space-y-4">
-                    <Label>Scalability Requirements</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {["low", "medium", "high", "extreme"].map((val) => (
-                        <label key={val} className="cursor-pointer group">
-                          <input
-                            type="radio"
-                            value={val}
-                            className="peer hidden"
-                            {...register("scalability")}
-                          />
-                          <div className="p-3 text-center border border-border rounded-xl text-sm font-medium transition-all group-hover:bg-accent peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary capitalize">
-                            {val}
-                          </div>
-                        </label>
-                      ))}
+                    <div className="space-y-2">
+                      <Label>
+                        Additional Context / Natural Language Requirements
+                      </Label>
+                      <Textarea
+                        placeholder="Describe your application's unique needs..."
+                        className="min-h-[120px] bg-secondary/20 border-white/5 focus:border-primary/50"
+                        {...register("additionalContext")}
+                      />
+                      <HelpText text="Any special requirements like real-time features, legacy integrations, or unique constraints." />
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <Label>Latency Tolerance</Label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {["low", "medium", "high"].map((val) => (
-                        <label key={val} className="cursor-pointer group">
-                          <input
-                            type="radio"
-                            value={val}
-                            className="peer hidden"
-                            {...register("latency")}
-                          />
-                          <div className="p-3 text-center border border-border rounded-xl text-sm font-medium transition-all group-hover:bg-accent peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary capitalize">
-                            {val}
-                          </div>
-                        </label>
-                      ))}
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <Label>Availability SLO</Label>
+                      <RadioGroup
+                        options={["99", "99.9", "99.99", "99.999"]}
+                        name="availabilitySlo"
+                        register={register}
+                        columns={4}
+                      />
+                      <HelpText text="Service Level Objective — 99.99% means ~4 min downtime/month." />
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label>Traffic Pattern</Label>
+                      <RadioGroup
+                        options={["steady", "bursty", "seasonal"]}
+                        name="trafficPattern"
+                        register={register}
+                        columns={3}
+                      />
+                      <HelpText text="Steady = consistent load. Bursty = sudden spikes. Seasonal = periodic peaks." />
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label>Scalability Requirements</Label>
+                      <RadioGroup
+                        options={["low", "medium", "high", "extreme"]}
+                        name="scalability"
+                        register={register}
+                        columns={4}
+                      />
+                      <HelpText text="How much the system needs to grow. Extreme = millions of users." />
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label>Latency Tolerance</Label>
+                      <RadioGroup
+                        options={["low", "medium", "high"]}
+                        name="latency"
+                        register={register}
+                        columns={3}
+                      />
+                      <HelpText text="Low = sub-50ms (real-time). Medium = 50-500ms. High = seconds acceptable." />
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label>Consistency Model</Label>
+                      <RadioGroup
+                        options={["eventual", "strong"]}
+                        name="consistency"
+                        register={register}
+                        columns={2}
+                      />
+                      <HelpText text="Eventual = faster, tolerates stale reads. Strong = ACID, critical for financial data." />
                     </div>
                   </div>
                 </div>
@@ -276,10 +381,10 @@ export function RequirementForm() {
 
               {/* Step 2: Team */}
               {currentStep === 1 && (
-                <div className="space-y-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
                   <div className="space-y-4">
                     <Label>Team Size</Label>
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 p-4 bg-secondary/10 rounded-2xl border border-border">
                       <input
                         type="range"
                         min="1"
@@ -287,10 +392,11 @@ export function RequirementForm() {
                         className="flex-grow accent-primary"
                         {...register("teamSize", { valueAsNumber: true })}
                       />
-                      <span className="w-12 h-12 bg-primary/20 text-primary rounded-xl flex items-center justify-center font-bold">
+                      <span className="w-12 h-12 bg-primary text-primary-foreground rounded-xl flex items-center justify-center font-bold shadow-lg shadow-primary/20">
                         {watchTeamSize}
                       </span>
                     </div>
+                    <HelpText text="Number of developers. Smaller teams favor simpler architectures." />
                   </div>
 
                   <div className="space-y-4">
@@ -308,80 +414,83 @@ export function RequirementForm() {
                             <div className="w-5 h-5 rounded-full border-2 border-current flex items-center justify-center">
                               <div className="w-2 h-2 rounded-full bg-current opacity-0 peer-checked:opacity-100" />
                             </div>
-                            {val} Team
+                            {val}
                           </div>
                         </label>
                       ))}
                     </div>
+                    <HelpText text="Average skill level of the team." />
                   </div>
                 </div>
               )}
 
               {/* Step 3: Scale & Traffic */}
               {currentStep === 2 && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label>Avg. Request Rate (req/s)</Label>
-                      <Input
-                        type="number"
-                        {...register("requestRate", { valueAsNumber: true })}
-                      />
-                      {errors.requestRate && (
-                        <p className="text-destructive text-xs mt-1">
-                          {errors.requestRate.message}
-                        </p>
-                      )}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+                  <div className="space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <Label>Avg. Request Rate (req/s)</Label>
+                        <Input
+                          type="number"
+                          {...register("requestRate", { valueAsNumber: true })}
+                        />
+                        <HelpText text="Average requests per second." />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Data Volume (GB/month)</Label>
+                        <Input
+                          type="number"
+                          {...register("dataVolume", { valueAsNumber: true })}
+                        />
+                        <HelpText text="Data ingested/stored per month." />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Data Volume (GB/month)</Label>
-                      <Input
-                        type="number"
-                        {...register("dataVolume", { valueAsNumber: true })}
+
+                    <div className="space-y-4">
+                      <Label>Search Complexity</Label>
+                      <RadioGroup
+                        options={["simple", "complex"]}
+                        name="searchComplexity"
+                        register={register}
+                        columns={2}
                       />
-                      {errors.dataVolume && (
-                        <p className="text-destructive text-xs mt-1">
-                          {errors.dataVolume.message}
-                        </p>
-                      )}
+                      <HelpText text="Simple = ID/key lookups. Complex = full-text, fuzzy matching." />
+                    </div>
+
+                    <div className="space-y-4">
+                      <Label>Deployment & Update Freq.</Label>
+                      <RadioGroup
+                        options={["low", "medium", "high", "daily"]}
+                        name="deploymentFrequency"
+                        register={register}
+                        columns={4}
+                      />
+                      <HelpText text="How often new code is deployed to production." />
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    <Label>Search Complexity</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {["simple", "complex"].map((val) => (
-                        <label key={val} className="cursor-pointer group">
-                          <input
-                            type="radio"
-                            value={val}
-                            className="peer hidden"
-                            {...register("searchComplexity")}
-                          />
-                          <div className="p-3 text-center border border-border rounded-xl text-sm font-medium transition-all group-hover:bg-accent peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary capitalize">
-                            {val}
-                          </div>
-                        </label>
-                      ))}
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <Label>Read/Write Ratio</Label>
+                      <RadioGroup
+                        options={["read-heavy", "balanced", "write-heavy"]}
+                        name="readWriteRatio"
+                        register={register}
+                        columns={3}
+                      />
+                      <HelpText text="Read-heavy = blogs. Write-heavy = IoT. Affects caching strategy." />
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <Label>Deployment & Update Freq.</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {["low", "medium", "high", "daily"].map((val) => (
-                        <label key={val} className="cursor-pointer group">
-                          <input
-                            type="radio"
-                            value={val}
-                            className="peer hidden"
-                            {...register("deploymentFrequency")}
-                          />
-                          <div className="p-3 text-center border border-border rounded-xl text-sm font-medium transition-all group-hover:bg-accent peer-checked:bg-primary/10 peer-checked:border-primary peer-checked:text-primary capitalize">
-                            {val}
-                          </div>
-                        </label>
-                      ))}
+                    <div className="space-y-4">
+                      <Label>Data Retention</Label>
+                      <RadioGroup
+                        options={["days", "months", "years", "permanent"]}
+                        name="dataRetention"
+                        register={register}
+                        columns={4}
+                      />
+                      <HelpText text="How long data must be kept." />
                     </div>
                   </div>
                 </div>
@@ -389,38 +498,30 @@ export function RequirementForm() {
 
               {/* Step 4: Agility */}
               {currentStep === 3 && (
-                <div className="space-y-8">
-                  <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20 flex gap-4">
-                    <Lightbulb className="text-primary w-6 h-6 shrink-0" />
-                    <div>
-                      <p className="font-semibold text-primary mb-1 text-sm">
-                        Pro Tip
-                      </p>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        For companies like BP or NIQ, weekly release cycles with
-                        high automation are recommended for stability.
-                      </p>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+                  <div className="space-y-8">
+                    <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20 flex gap-4">
+                      <Lightbulb className="text-primary w-6 h-6 shrink-0" />
+                      <div>
+                        <p className="font-semibold text-primary mb-1 text-sm">
+                          Pro Tip
+                        </p>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          Weekly release cycles with high automation are
+                          recommended for enterprise stability.
+                        </p>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <Label>Release Cycle</Label>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {["daily", "weekly", "monthly", "quarterly"].map(
-                        (val) => (
-                          <label key={val} className="cursor-pointer group">
-                            <input
-                              type="radio"
-                              value={val}
-                              className="peer hidden"
-                              {...register("releaseCycle")}
-                            />
-                            <div className="p-3 text-center border border-border rounded-xl text-sm font-medium transition-all group-hover:bg-accent peer-checked:bg-primary peer-checked:text-white capitalize">
-                              {val}
-                            </div>
-                          </label>
-                        ),
-                      )}
+                    <div className="space-y-4">
+                      <Label>Release Cycle</Label>
+                      <RadioGroup
+                        options={["daily", "weekly", "monthly", "quarterly"]}
+                        name="releaseCycle"
+                        register={register}
+                        columns={2}
+                      />
+                      <HelpText text="How frequently your team ships new versions." />
                     </div>
                   </div>
 
@@ -440,84 +541,146 @@ export function RequirementForm() {
                               <p className="font-bold capitalize">{val}</p>
                               <p className="text-xs text-muted-foreground">
                                 {val === "fast"
-                                  ? "Team picks up new tools in < 2 weeks"
-                                  : "Prioritizes stability over new tech"}
+                                  ? "Picks up tools in < 2 weeks"
+                                  : val === "moderate"
+                                    ? "Needs 2-4 weeks"
+                                    : "Prioritizes stability"}
                               </p>
-                            </div>
-                            <div className="w-6 h-6 rounded-full bg-secondary peer-checked:bg-primary items-center justify-center flex">
-                              {/* Just a visual indicator */}
                             </div>
                           </div>
                         </label>
                       ))}
                     </div>
+                    <HelpText text="How quickly your team adopts new technologies." />
                   </div>
                 </div>
               )}
 
-              {/* Engine Toggles */}
-              {currentStep === STEPS.length - 1 && (
-                <div className="space-y-4 mt-10">
-                  <div className="p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/20 rounded-lg">
-                        <CheckCircle2 className="w-4 h-4 text-primary" />
+              {/* Step 5: Infrastructure & Compliance */}
+              {currentStep === 4 && (
+                <div className="space-y-10">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-10">
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <Label>Budget Tier</Label>
+                        <RadioGroup
+                          options={["startup", "growth", "enterprise"]}
+                          name="budget"
+                          register={register}
+                          columns={3}
+                        />
+                        <HelpText text="Startup = cost-sensitive. Enterprise = premium SLAs." />
                       </div>
-                      <div>
-                        <p className="text-sm font-bold">
-                          Hybrid Reasoning Engine
-                        </p>
-                        <p className="text-xs text-muted-foreground italic">
-                          Rules + LLM synthesis (Recommended)
-                        </p>
+
+                      <div className="space-y-4">
+                        <Label>Region Strategy (AWS)</Label>
+                        <RadioGroup
+                          options={["single-region", "multi-region", "global"]}
+                          name="regionStrategy"
+                          register={register}
+                          columns={3}
+                        />
+                        <HelpText text="Single = one region. Global = CDN worldwide." />
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setUseHybrid(!useHybrid)}
-                      className={cn(
-                        "w-12 h-6 rounded-full p-1 transition-colors duration-200",
-                        useHybrid ? "bg-primary" : "bg-secondary",
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          "w-4 h-4 bg-white rounded-full transition-transform duration-200",
-                          useHybrid ? "translate-x-6" : "translate-x-0",
-                        )}
-                      />
-                    </button>
+
+                    <div className="space-y-8">
+                      <div className="space-y-4">
+                        <Label>Security Sensitivity</Label>
+                        <RadioGroup
+                          options={["public", "internal", "confidential", "regulated"]}
+                          name="securitySensitivity"
+                          register={register}
+                          columns={2}
+                        />
+                        <HelpText text="Public = open. Regulated = HIPAA/PCI, zero-trust." />
+                      </div>
+
+                      <div className="space-y-4">
+                        <Label>Compliance Requirements</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {["GDPR", "HIPAA", "SOC2", "PCI-DSS", "None"].map(
+                            (val) => (
+                              <button
+                                key={val}
+                                type="button"
+                                onClick={() => toggleCompliance(val)}
+                                className={cn(
+                                  "p-3 text-center border rounded-xl text-sm font-medium transition-all",
+                                  complianceValues.includes(val)
+                                    ? "bg-primary/10 border-primary text-primary"
+                                    : "border-border hover:bg-accent",
+                                )}
+                              >
+                                {val}
+                              </button>
+                            ),
+                          )}
+                        </div>
+                        <HelpText text="Select all applicable regulations." />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="p-4 border border-primary/20 bg-primary/5 rounded-2xl flex items-center justify-between shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-primary/20 rounded-lg">
-                        <Zap className="w-4 h-4 text-primary" />
+                  {/* Engine Toggles */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-10 border-t border-border">
+                    <div className="p-6 border border-primary/20 bg-primary/5 rounded-3xl flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/20 rounded-2xl">
+                          <CheckCircle2 className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-bold">Hybrid Engine</p>
+                          <p className="text-xs text-muted-foreground italic">
+                            Rules + LLM synthesis
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-bold">
-                          RAG-Enhanced Analysis
-                        </p>
-                        <p className="text-xs text-muted-foreground italic">
-                          Tech-specific documentation insights
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setUseRag(!useRag)}
-                      className={cn(
-                        "w-12 h-6 rounded-full p-1 transition-colors duration-200",
-                        useRag ? "bg-primary" : "bg-secondary",
-                      )}
-                    >
-                      <div
+                      <button
+                        type="button"
+                        onClick={() => setUseHybrid(!useHybrid)}
                         className={cn(
-                          "w-4 h-4 bg-white rounded-full transition-transform duration-200",
-                          useRag ? "translate-x-6" : "translate-x-0",
+                          "w-14 h-8 rounded-full p-1.5 transition-colors duration-200",
+                          useHybrid ? "bg-primary" : "bg-secondary",
                         )}
-                      />
-                    </button>
+                      >
+                        <div
+                          className={cn(
+                            "w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-sm",
+                            useHybrid ? "translate-x-6" : "translate-x-0",
+                          )}
+                        />
+                      </button>
+                    </div>
+
+                    <div className="p-6 border border-primary/20 bg-primary/5 rounded-3xl flex items-center justify-between shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 bg-primary/20 rounded-2xl">
+                          <Zap className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-bold">RAG Analysis</p>
+                          <p className="text-xs text-muted-foreground italic">
+                            Documentation insights
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setUseRag(!useRag)}
+                        className={cn(
+                          "w-14 h-8 rounded-full p-1.5 transition-colors duration-200",
+                          useRag ? "bg-primary" : "bg-secondary",
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-5 h-5 bg-white rounded-full transition-transform duration-200 shadow-sm",
+                            useRag ? "translate-x-6" : "translate-x-0",
+                          )}
+                        />
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}

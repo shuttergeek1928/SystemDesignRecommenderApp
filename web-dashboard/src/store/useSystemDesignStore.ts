@@ -142,19 +142,18 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
         set({ isLoading: true, formData: data });
         const { useRag, useHybrid } = get();
 
-        const prompt = `Design a system for an application named "${data.appName}" targeting ${data.targetUsers}. 
+        const prompt = `Design a system for an application named "${data.appName}" targeting ${data.targetUsers} (${data.userCount} users). 
                 Key Requirements: 
-                - Scalability: ${data.scalability}
-                - Latency: ${data.latency} 
+                - Scalability: ${data.scalability}, Traffic: ${data.trafficPattern}
+                - Latency: ${data.latency}, Availability SLO: ${data.availabilitySlo}%
                 - Consistency: ${data.consistency}
                 - Team Size: ${data.teamSize} developers with ${data.experienceLevel} experience level.
-                - Release Cycle: ${data.releaseCycle}
-                - Learning Pace: ${data.learningPace}
-                - Automation Level: ${data.automationLevel}
-                - Request Rate: ${data.requestRate} requests/sec
-                - Data Volume: ${data.dataVolume} GB/month
-                - Search Complexity: ${data.searchComplexity}
-                - Deployment Frequency: ${data.deploymentFrequency}
+                - Release Cycle: ${data.releaseCycle}, Learning Pace: ${data.learningPace}
+                - Request Rate: ${data.requestRate} req/s, Data Volume: ${data.dataVolume} GB/month
+                - Read/Write Ratio: ${data.readWriteRatio}, Data Retention: ${data.dataRetention}
+                - Search Complexity: ${data.searchComplexity}, Deployment Frequency: ${data.deploymentFrequency}
+                - Budget: ${data.budget}, Region: ${data.regionStrategy} (AWS)
+                - Security: ${data.securitySensitivity}, Compliance: ${(data.compliance || []).join(", ") || "None"}
                 ${data.additionalContext ? `- Additional Context: ${data.additionalContext}` : ""}`;
 
         const authState = useAuthStore.getState();
@@ -165,21 +164,29 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
           title: data.appName,
           description: data.additionalContext,
           context: {
-            users: null, // targetUsers is a string description, not a count
+            users: data.userCount,
+            traffic_pattern: data.trafficPattern,
             latency_requirement_ms:
               data.latency === "low"
                 ? 50
                 : data.latency === "medium"
                   ? 200
                   : 1000,
+            availability_slo: data.availabilitySlo + "%",
             consistency_model: data.consistency,
+            budget: data.budget,
+            compliance: data.compliance || [],
+            cloud_provider: "aws",
+            region_strategy: data.regionStrategy,
             team_size: data.teamSize,
             experience_level: data.experienceLevel,
             request_rate: data.requestRate,
             data_volume_gb: data.dataVolume,
             search_complexity: data.searchComplexity,
             deployment_frequency: data.deploymentFrequency,
-            traffic_pattern: "Targeting: " + data.targetUsers,
+            read_write_ratio: data.readWriteRatio,
+            data_retention: data.dataRetention,
+            security_sensitivity: data.securitySensitivity,
           },
         };
 

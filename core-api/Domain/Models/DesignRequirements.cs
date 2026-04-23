@@ -48,6 +48,15 @@ public class DesignContext
 
     [JsonPropertyName("deployment_frequency")]
     public string? DeploymentFrequency { get; set; } = "weekly";
+
+    [JsonPropertyName("read_write_ratio")]
+    public string? ReadWriteRatio { get; set; } = "balanced";
+
+    [JsonPropertyName("data_retention")]
+    public string? DataRetention { get; set; } = "years";
+
+    [JsonPropertyName("security_sensitivity")]
+    public string? SecuritySensitivity { get; set; } = "internal";
 }
 
 public class DesignRequirements

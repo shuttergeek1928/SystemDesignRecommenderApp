@@ -154,6 +154,109 @@ public class RuleEngineService : IRuleEngineService
             });
         }
 
+        // 5. Availability & Region
+        if (context.Context.AvailabilitySlo?.Contains("99.99") == true || context.Context.AvailabilitySlo?.Contains("99.999") == true)
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Availability", Condition = "SLO >= 99.99%",
+                Recommendation = "Multi-AZ with AWS Aurora Global + Route 53 Failover",
+                Justification = "Four 9s requires active-active across availability zones with automated failover."
+            });
+        }
+
+        if (string.Equals(context.Context.RegionStrategy, "global", StringComparison.OrdinalIgnoreCase))
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Region", Condition = "Global Distribution",
+                Recommendation = "CloudFront CDN + Lambda@Edge + DynamoDB Global Tables",
+                Justification = "Minimizes latency globally by serving content and compute at the edge."
+            });
+        }
+        else if (string.Equals(context.Context.RegionStrategy, "multi-region", StringComparison.OrdinalIgnoreCase))
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Region", Condition = "Multi-Region",
+                Recommendation = "AWS Aurora Global Database + Cross-Region Replication",
+                Justification = "Provides disaster recovery and read scaling across regions."
+            });
+        }
+
+        // 6. Budget
+        if (string.Equals(context.Context.Budget, "startup", StringComparison.OrdinalIgnoreCase))
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Budget", Condition = "Startup",
+                Recommendation = "AWS Fargate + RDS Free Tier + S3",
+                Justification = "Managed PaaS minimizes operational overhead with free-tier cost savings."
+            });
+        }
+        else if (string.Equals(context.Context.Budget, "enterprise", StringComparison.OrdinalIgnoreCase))
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Budget", Condition = "Enterprise",
+                Recommendation = "Dedicated EKS Clusters + Reserved Instances",
+                Justification = "Dedicated infrastructure with premium SLAs and reserved capacity."
+            });
+        }
+
+        // 7. Read/Write Ratio
+        if (string.Equals(context.Context.ReadWriteRatio, "read-heavy", StringComparison.OrdinalIgnoreCase))
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Read/Write", Condition = "Read-Heavy",
+                Recommendation = "ElastiCache (Redis) + CloudFront CDN + Read Replicas",
+                Justification = "Aggressive caching reduces database load for read-dominant patterns."
+            });
+        }
+        else if (string.Equals(context.Context.ReadWriteRatio, "write-heavy", StringComparison.OrdinalIgnoreCase))
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Read/Write", Condition = "Write-Heavy",
+                Recommendation = "DynamoDB + Kinesis Data Streams",
+                Justification = "Write-optimized NoSQL with stream processing for high ingestion rates."
+            });
+        }
+
+        // 8. Data Retention
+        if (string.Equals(context.Context.DataRetention, "permanent", StringComparison.OrdinalIgnoreCase))
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Retention", Condition = "Permanent",
+                Recommendation = "S3 Intelligent-Tiering + Glacier Deep Archive",
+                Justification = "Automated tiered storage minimizes long-term archival costs."
+            });
+        }
+
+        // 9. Security
+        if (string.Equals(context.Context.SecuritySensitivity, "regulated", StringComparison.OrdinalIgnoreCase))
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Security", Condition = "Regulated",
+                Recommendation = "AWS PrivateLink + KMS + CloudTrail + GuardDuty",
+                Justification = "Zero-trust with encryption, audit logging, and threat detection."
+            });
+        }
+
+        // 10. HIPAA
+        if (context.Context.Compliance?.Any(c => c.Contains("HIPAA", StringComparison.OrdinalIgnoreCase)) == true)
+        {
+            triggers.Add(new RuleTriggerRecordDTO
+            {
+                Dimension = "Compliance", Condition = "HIPAA",
+                Recommendation = "BAA-eligible AWS services + CloudTrail audit logging",
+                Justification = "HIPAA requires BAAs and comprehensive audit trails for PHI."
+            });
+        }
+
         return triggers;
     }
 }

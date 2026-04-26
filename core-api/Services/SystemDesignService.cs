@@ -67,25 +67,19 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         var request = new SystemDesignRecommenderApi.Domain.DTO.ChatRequest(
             new List<SystemDesignRecommenderApi.Domain.DTO.MessageDto> { new("user", prompt) }
         );
-        var responseStr = await _llmChatService.ChatAsync(request);
+        
+        var settings = _settingsService.GetSettings();
+        var provider = settings.ExtractionProvider ?? settings.PreferredProvider ?? "ollama";
+        var model = settings.ExtractionModel ?? (provider.ToLower().Contains("gemini") ? settings.GeminiModel : settings.OllamaModel);
+
+        Console.WriteLine($"=== [ExtractRequirementsAsync] Using Provider: {provider}, Model: {model} ===");
+        var responseStr = await _llmChatService.ChatAsync(request, provider, model);
 
         responseStr = CleanJson(responseStr);
 
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                ReadCommentHandling = JsonCommentHandling.Skip,
-                AllowTrailingCommas = true,
-                PropertyNameCaseInsensitive = true
-            };
-            options.Converters.Add(new FlexibleIntConverter());
-            options.Converters.Add(new FlexibleNullableIntConverter());
-            options.Converters.Add(new FlexibleDoubleConverter());
-            options.Converters.Add(new FlexibleNullableDoubleConverter());
-            options.Converters.Add(new FlexibleStringConverter());
-
-            return JsonSerializer.Deserialize<DesignRequirements>(responseStr, options);
+            return JsonSerializer.Deserialize<DesignRequirements>(responseStr, GetJsonOptions());
         }
         catch (Exception ex)
         {
@@ -110,11 +104,23 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             };
         }
 
+        var contextSummary = $"team={requirements.Context?.TeamSize}, latency={requirements.Context?.LatencyRequirementMs}ms, consistency={requirements.Context?.ConsistencyModel}, problem={problemStatement}";
+
+        // Check if we should use batch mode or loop mode based on the GENERATION provider
+        var appSettings = _settingsService.GetSettings();
+        var genProvider = (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini").Trim().ToLower();
+        var genModel = appSettings.GenerationModel ?? appSettings.GeminiModel;
+
+        if (genProvider.Contains("gemini"))
+        {
+            Console.WriteLine($"=== [GenerateArchitectureAsync] Using Gemini BATCH mode | Provider: {genProvider}, Model: {genModel} ===");
+            return await GenerateBatchArchitectureAsync(contextSummary, nodesList, genProvider, genModel);
+        }
+
         // Per-node strategy: ask the LLM about ONE node at a time.
         // Small local models (phi3, llama2) reliably answer single-focus prompts
         // but collapse multi-key JSON into a flat structure.
         var architecture = new ArchitectureDesign();
-        var contextSummary = $"team={requirements.Context?.TeamSize}, latency={requirements.Context?.LatencyRequirementMs}ms, consistency={requirements.Context?.ConsistencyModel}, problem={problemStatement}";
 
         foreach (var node in nodesList)
         {
@@ -131,7 +137,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             var nodeRequest = new SystemDesignRecommenderApi.Domain.DTO.ChatRequest(
                 new List<SystemDesignRecommenderApi.Domain.DTO.MessageDto> { new("user", singleNodePrompt) }
             );
-            var rawNodeResponse = await _llmChatService.ChatAsync(nodeRequest);
+            var rawNodeResponse = await _llmChatService.ChatAsync(nodeRequest, appSettings.GenerationProvider ?? appSettings.PreferredProvider, appSettings.GenerationModel ?? appSettings.OllamaModel);
             Console.WriteLine($"  RAW -> {rawNodeResponse}");
 
             var cleanedNode = CleanJson(rawNodeResponse);
@@ -139,9 +145,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
             try
             {
-                var nodeOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, AllowTrailingCommas = true };
-                nodeOptions.Converters.Add(new FlexibleStringConverter());
-                var component = JsonSerializer.Deserialize<ArchComponent>(cleanedNode, nodeOptions);
+                var component = JsonSerializer.Deserialize<ArchComponent>(cleanedNode, GetJsonOptions());
                 if (component != null && !string.IsNullOrWhiteSpace(component.Choice))
                 {
                     architecture[nodeKey] = component;
@@ -168,10 +172,10 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
     {
         try
         {
-            // Set the model and provider from settings
+            // Set the model and provider from GENERATION settings
             var appSettings = _settingsService.GetSettings();
-            requirements.Provider = appSettings.PreferredProvider;
-            requirements.Model = appSettings.PreferredProvider == "gemini" ? appSettings.GeminiModel : appSettings.OllamaModel;
+            requirements.Provider = appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini";
+            requirements.Model = appSettings.GenerationModel ?? appSettings.GeminiModel;
             requirements.ApiKey = appSettings.GeminiApiKey;
 
             // Fetch dynamic node structure
@@ -196,7 +200,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<ArchitectureDesign>();
+                var jsonStr = await response.Content.ReadAsStringAsync();
+                return JsonSerializer.Deserialize<ArchitectureDesign>(jsonStr, GetJsonOptions());
             }
 
             return null;
@@ -229,45 +234,58 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             };
         }
 
-        // Per-node strategy: one focused LLM call per node
-        var architecture = new ArchitectureDesign();
         var contextSummary = $"team={requirements.Context?.TeamSize}, latency={requirements.Context?.LatencyRequirementMs}ms, consistency={requirements.Context?.ConsistencyModel}, problem={problemStatement}";
         var ruleHint = string.IsNullOrEmpty(ruleContextText) ? "" : $" Consider these architectural anchors: {ruleContextText}";
 
-        foreach (var node in settingsList)
+        // Check if we should use batch mode or loop mode based on the GENERATION provider
+        var appSettings = _settingsService.GetSettings();
+        var genProvider = (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini").Trim().ToLower();
+        var genModel = appSettings.GenerationModel ?? appSettings.GeminiModel;
+
+        ArchitectureDesign architecture;
+
+        if (genProvider.Contains("gemini"))
         {
-            var nodeKey = node.NodeKey.ToLower();
-            // If user pre-configured a choice, respect it as a hard constraint
-            var choiceHint = string.IsNullOrEmpty(node.Choice) ? "" : $" The preferred choice is: '{node.Choice}'";
-            var singleNodePrompt =
-                $"You are a software architect.\n" +
-                $"For a system with these characteristics: {contextSummary}{ruleHint}\n" +
-                $"Recommend the best technology for the '{nodeKey}' layer.{choiceHint}\n" +
-                $"Output ONLY this JSON and nothing else:\n" +
-                $"{{\"choice\": \"<specific technology name>\", \"justification\": \"<one sentence why>\"}}";
-
-            Console.WriteLine($"=== [GenerateHybridArchitectureAsync] Querying node: '{nodeKey}' ===");
-            var nodeRequest = new SystemDesignRecommenderApi.Domain.DTO.ChatRequest(
-                new List<SystemDesignRecommenderApi.Domain.DTO.MessageDto> { new("user", singleNodePrompt) }
-            );
-            var rawNodeResponse = await _llmChatService.ChatAsync(nodeRequest);
-            Console.WriteLine($"  RAW -> {rawNodeResponse}");
-
-            var cleanedNode = CleanJson(rawNodeResponse);
-            try
+            Console.WriteLine($"=== [GenerateHybridArchitectureAsync] Using Gemini BATCH mode | Provider: {genProvider}, Model: {genModel} ===");
+            architecture = await GenerateBatchArchitectureAsync(contextSummary, settingsList, genProvider, genModel, ruleHint);
+        }
+        else
+        {
+            // Per-node strategy: one focused LLM call per node
+            architecture = new ArchitectureDesign();
+            foreach (var node in settingsList)
             {
-                var nodeOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, AllowTrailingCommas = true };
-                nodeOptions.Converters.Add(new FlexibleStringConverter());
-                var component = JsonSerializer.Deserialize<ArchComponent>(cleanedNode, nodeOptions);
-                architecture[nodeKey] = (component != null && !string.IsNullOrWhiteSpace(component.Choice))
-                    ? component
-                    : new ArchComponent { Choice = node.Choice ?? "See justification", Justification = rawNodeResponse.Trim() };
-                Console.WriteLine($"  OK -> choice='{architecture[nodeKey].Choice}'");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"  ERROR parsing node '{nodeKey}': {ex.Message}");
-                architecture[nodeKey] = new ArchComponent { Choice = node.Choice ?? "Parse Error", Justification = rawNodeResponse.Trim() };
+                var nodeKey = node.NodeKey.ToLower();
+                // If user pre-configured a choice, respect it as a hard constraint
+                var choiceHint = string.IsNullOrEmpty(node.Choice) ? "" : $" The preferred choice is: '{node.Choice}'";
+                var singleNodePrompt =
+                    $"You are a software architect.\n" +
+                    $"For a system with these characteristics: {contextSummary}{ruleHint}\n" +
+                    $"Recommend the best technology for the '{nodeKey}' layer.{choiceHint}\n" +
+                    $"Output ONLY this JSON and nothing else:\n" +
+                    $"{{\"choice\": \"<specific technology name>\", \"justification\": \"<one sentence why>\"}}";
+
+                Console.WriteLine($"=== [GenerateHybridArchitectureAsync] Querying node: '{nodeKey}' ===");
+                var nodeRequest = new SystemDesignRecommenderApi.Domain.DTO.ChatRequest(
+                    new List<SystemDesignRecommenderApi.Domain.DTO.MessageDto> { new("user", singleNodePrompt) }
+                );
+                var rawNodeResponse = await _llmChatService.ChatAsync(nodeRequest, appSettings.GenerationProvider ?? appSettings.PreferredProvider, appSettings.GenerationModel ?? appSettings.OllamaModel);
+                Console.WriteLine($"  RAW -> {rawNodeResponse}");
+
+                var cleanedNode = CleanJson(rawNodeResponse);
+                try
+                {
+                    var component = JsonSerializer.Deserialize<ArchComponent>(cleanedNode, GetJsonOptions());
+                    architecture[nodeKey] = (component != null && !string.IsNullOrWhiteSpace(component.Choice))
+                        ? component
+                        : new ArchComponent { Choice = node.Choice ?? "See justification", Justification = rawNodeResponse.Trim() };
+                    Console.WriteLine($"  OK -> choice='{architecture[nodeKey].Choice}'");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"  ERROR parsing node '{nodeKey}': {ex.Message}");
+                    architecture[nodeKey] = new ArchComponent { Choice = node.Choice ?? "Parse Error", Justification = rawNodeResponse.Trim() };
+                }
             }
         }
 
@@ -407,6 +425,59 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         };
     }
 
+    private async Task<ArchitectureDesign> GenerateBatchArchitectureAsync(
+        string contextSummary,
+        List<NodeSettingDto> nodesList,
+        string provider,
+        string model,
+        string ruleHint = "")
+    {
+        // Prepare the desired structure for the LLM
+        var nodeStructure = nodesList.ToDictionary(s => s.NodeKey, s => new { choice = s.Choice ?? "", justification = s.Justification ?? "" });
+        var nodeStructureJson = JsonSerializer.Serialize(nodeStructure, new JsonSerializerOptions { WriteIndented = true });
+
+        var prompt =
+            $"You are an expert Distributed Systems Architect.\n" +
+            $"For a system with these characteristics: {contextSummary}{ruleHint}\n" +
+            $"TASK: Recommend the best technology for EACH architectural layer listed below.\n" +
+            $"CRITICAL: You MUST return a JSON object where every key is one of the requested layers. DO NOT return a flat object with 'choice' at the top level.\n" +
+            $"Structure to follow:\n" +
+            $"{nodeStructureJson}\n" +
+            $"Output ONLY the JSON and nothing else.";
+
+        var request = new SystemDesignRecommenderApi.Domain.DTO.ChatRequest(
+            new List<SystemDesignRecommenderApi.Domain.DTO.MessageDto> { new("user", prompt) }
+        );
+
+        var rawResponse = await _llmChatService.ChatAsync(request, provider, model);
+        Console.WriteLine($"[BatchGeneration] RAW: {rawResponse}");
+        var cleanedResponse = CleanJson(rawResponse);
+
+        try
+        {
+            var fullDesign = JsonSerializer.Deserialize<ArchitectureDesign>(cleanedResponse, GetJsonOptions());
+            
+            if (fullDesign != null)
+            {
+                Console.WriteLine($"[BatchGeneration] Successfully parsed {fullDesign.Count} nodes: [{string.Join(", ", fullDesign.Keys)}]");
+            }
+
+            // Use existing enforcement logic to map keys correctly and handle hallucinations
+            return EnforceNodeConstraints(fullDesign ?? new ArchitectureDesign(), nodesList.Select(n => n.NodeKey).ToHashSet());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[BatchGeneration] Error parsing response: {ex.Message}\nRaw: {rawResponse}");
+            // Fallback: return architectural design with error markers
+            var errorDesign = new ArchitectureDesign();
+            foreach (var node in nodesList)
+            {
+                errorDesign[node.NodeKey] = new ArchComponent { Choice = "Batch Parse Error", Justification = "The LLM response could not be parsed." };
+            }
+            return errorDesign;
+        }
+    }
+
     private async Task<Guid> GetOrCreateDefaultUserId()
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync();
@@ -462,14 +533,19 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         var usedLlmKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // --- Flat response detection ---
-        // If the LLM returned a flat object like {"choice":"X", "justification":"Y"}
-        // instead of {"database":{...}, "security":{...}}, handle it gracefully.
         var flatKeyNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "choice", "justification", "tech", "why", "recommendation", "reason", "technology", "solution" };
-        bool isFlat = architecture.Any() && architecture.Keys.All(k => flatKeyNames.Contains(k));
+
+        // A response is only considered 'flat' if it contains architectural metadata keys (like 'choice')
+        // AND it doesn't contain any of the actual architectural nodes we asked for.
+        bool hasFlatKeys = architecture.Keys.Any(k => flatKeyNames.Contains(k));
+        bool hasNodeKeys = allowedKeys.Any(ak => architecture.Keys.Any(lk => KeyMatchesNode(lk, ak)));
+        
+        bool isFlat = hasFlatKeys && !hasNodeKeys;
+        
         if (isFlat)
         {
-            Console.WriteLine("[NodeEnforcement] Detected FLAT response. LLM output a single object instead of a keyed dictionary. Reconstructing...");
+            Console.WriteLine($"[NodeEnforcement] Detected FLAT response. LLM output a single object with keys [{string.Join(", ", architecture.Keys)}]. Reconstructing...");
             // Build one component from the flat keys
             var flatChoice = architecture.TryGetValue("choice", out var cv) ? cv.Choice
                 : architecture.TryGetValue("tech", out var tv) ? tv.Choice
@@ -477,9 +553,19 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             var flatJust = architecture.TryGetValue("justification", out var jv) ? jv.Choice
                 : architecture.TryGetValue("why", out var wv) ? wv.Choice
                 : architecture.TryGetValue("reason", out var rsv) ? rsv.Choice : "";
+            
+            if (string.IsNullOrEmpty(flatChoice) && architecture.Count > 0)
+            {
+                // Last resort: if no standard key found, use the first key's value as choice
+                var first = architecture.First();
+                flatChoice = first.Value.Choice;
+                flatJust = first.Value.Justification;
+            }
+
             // Assign the same flat result to all configured nodes
             foreach (var key in allowedKeys)
                 enforced[key] = new ArchComponent { Choice = flatChoice, Justification = flatJust };
+            
             Console.WriteLine($"[NodeEnforcement] Flat fix applied. Keys: [{string.Join(", ", enforced.Keys)}]");
             return enforced;
         }
@@ -589,11 +675,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         });
         var cleaned = string.Join("\n", jsonLines);
 
-        // 8. Fix orphan keys followed by commas (e.g. "strategy", -> "strategy": null,)
-        // Only match if the key is at the start of the line and has no colon
-        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"(^\s*""[^""]+"")\s*,", "$1: null,", System.Text.RegularExpressions.RegexOptions.Multiline);
-
-        // 9. Fix hanging text after closing quotes (e.g. "value" more text -> "value more text")
+        // 8. Fix hanging text after closing quotes (e.g. "value" more text -> "value more text")
         cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"(:\s*""[^""]+"")\s*([^,}\s][^,}\n]*)", m =>
         {
             var val = m.Groups[1].Value;
@@ -613,44 +695,46 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
     private string ExtractLastBalancedJson(string input)
     {
-        // Find all '{' positions
-        var starts = new List<int>();
-        for (int i = 0; i < input.Length; i++)
-        {
-            if (input[i] == '{') starts.Add(i);
-        }
+        int start = input.IndexOf('{');
+        if (start == -1) return input;
 
-        // Try from the last '{' backwards to see if we can find a balanced match
-        for (int i = starts.Count - 1; i >= 0; i--)
+        int balance = 0;
+        bool inString = false;
+        for (int i = start; i < input.Length; i++)
         {
-            int start = starts[i];
-            int balance = 0;
-            bool inString = false;
+            char c = input[i];
+            if (c == '\"' && (i == 0 || input[i - 1] != '\\')) inString = !inString;
 
-            for (int j = start; j < input.Length; j++)
+            if (!inString)
             {
-                char c = input[j];
-                if (c == '\"' && (j == 0 || input[j - 1] != '\\')) inString = !inString;
+                if (c == '{') balance++;
+                else if (c == '}') balance--;
 
-                if (!inString)
+                if (balance == 0)
                 {
-                    if (c == '{') balance++;
-                    else if (c == '}') balance--;
-
-                    if (balance == 0)
-                    {
-                        // Found a balanced block!
-                        return input.Substring(start, j - start + 1);
-                    }
+                    // Found the matching closing brace for the FIRST opening brace
+                    return input.Substring(start, i - start + 1);
                 }
             }
         }
 
-        // Fallback to original logic if no balanced block found
-        int first = input.IndexOf('{');
-        int last = input.LastIndexOf('}');
-        if (first != -1 && last > first) return input.Substring(first, last - first + 1);
-
         return input;
+    }
+
+    private JsonSerializerOptions GetJsonOptions()
+    {
+        var options = new JsonSerializerOptions
+        {
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true,
+            PropertyNameCaseInsensitive = true
+        };
+        options.Converters.Add(new FlexibleIntConverter());
+        options.Converters.Add(new FlexibleNullableIntConverter());
+        options.Converters.Add(new FlexibleDoubleConverter());
+        options.Converters.Add(new FlexibleNullableDoubleConverter());
+        options.Converters.Add(new FlexibleStringConverter());
+        options.Converters.Add(new FlexibleArchComponentConverter());
+        return options;
     }
 }

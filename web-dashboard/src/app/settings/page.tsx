@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Settings,
   Save,
   RefreshCw,
   Cpu,
+  Sparkles,
   CheckCircle2,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useSystemDesignStore } from "@/store/useSystemDesignStore";
 import { cn } from "@/lib/utils";
@@ -19,6 +22,10 @@ export default function SettingsPage() {
     geminiModel,
     geminiApiKey,
     preferredProvider,
+    extractionProvider,
+    extractionModel,
+    generationProvider,
+    generationModel,
     fetchSettings,
     updateSettings,
   } = useSystemDesignStore();
@@ -26,7 +33,11 @@ export default function SettingsPage() {
   const [localOllamaModel, setLocalOllamaModel] = useState(ollamaModel);
   const [localGeminiModel, setLocalGeminiModel] = useState(geminiModel);
   const [localGeminiApiKey, setLocalGeminiApiKey] = useState(geminiApiKey);
-  const [localProvider, setLocalProvider] = useState(preferredProvider);
+  
+  const [localExtProvider, setLocalExtProvider] = useState(extractionProvider);
+  const [localExtModel, setLocalExtModel] = useState(extractionModel);
+  const [localGenProvider, setLocalGenProvider] = useState(generationProvider);
+  const [localGenModel, setLocalGenModel] = useState(generationModel);
 
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
@@ -35,6 +46,8 @@ export default function SettingsPage() {
     text: string;
     type: "success" | "error";
   } | null>(null);
+
+  const [isModelConfigOpen, setIsModelConfigOpen] = useState(true);
 
   useEffect(() => {
     fetchSettings();
@@ -45,8 +58,11 @@ export default function SettingsPage() {
     setLocalOllamaModel(ollamaModel);
     setLocalGeminiModel(geminiModel);
     setLocalGeminiApiKey(geminiApiKey);
-    setLocalProvider(preferredProvider);
-  }, [ollamaModel, geminiModel, geminiApiKey, preferredProvider]);
+    setLocalExtProvider(extractionProvider);
+    setLocalExtModel(extractionModel);
+    setLocalGenProvider(generationProvider);
+    setLocalGenModel(generationModel);
+  }, [ollamaModel, geminiModel, geminiApiKey, extractionProvider, extractionModel, generationProvider, generationModel]);
 
   const fetchAvailableModels = async () => {
     setIsLoadingModels(true);
@@ -71,7 +87,10 @@ export default function SettingsPage() {
         ollamaModel: localOllamaModel,
         geminiModel: localGeminiModel,
         geminiApiKey: localGeminiApiKey,
-        preferredProvider: localProvider,
+        extractionProvider: localExtProvider,
+        extractionModel: localExtModel,
+        generationProvider: localGenProvider,
+        generationModel: localGenModel,
       });
       setMessage({ text: "Settings saved successfully!", type: "success" });
     } catch (error) {
@@ -82,7 +101,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-16rem)] py-12 px-4 md:px-8 bg-secondary/20">
+    <div className="min-h-screen py-12 px-4 md:px-8 bg-secondary/20">
       <div className="container mx-auto max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -102,184 +121,223 @@ export default function SettingsPage() {
           </div>
 
           <div className="grid gap-6">
-            {/* Provider Selection */}
-            <div className="bg-card border border-border rounded-[2rem] p-8 shadow-sm">
-              <h2 className="text-xl font-semibold mb-6">AI Provider</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <button
-                  onClick={() => setLocalProvider("ollama")}
-                  className={cn(
-                    "p-6 rounded-2xl border-2 transition-all text-left",
-                    localProvider === "ollama"
-                      ? "border-primary bg-primary/5 ring-4 ring-primary/10"
-                      : "border-border hover:border-primary/50",
-                  )}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <Cpu
-                      className={cn(
-                        "w-6 h-6",
-                        localProvider === "ollama"
-                          ? "text-primary"
-                          : "text-muted-foreground",
-                      )}
-                    />
-                    <span className="font-bold">Ollama</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Local inference using your CPU/GPU. Private and free.
-                  </p>
-                </button>
-                <button
-                  onClick={() => setLocalProvider("gemini")}
-                  className={cn(
-                    "p-6 rounded-2xl border-2 transition-all text-left",
-                    localProvider === "gemini"
-                      ? "border-blue-500 bg-blue-500/5 ring-4 ring-blue-500/10"
-                      : "border-border hover:border-blue-500/50",
-                  )}
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <RefreshCw
-                      className={cn(
-                        "w-6 h-6",
-                        localProvider === "gemini"
-                          ? "text-blue-500"
-                          : "text-muted-foreground",
-                      )}
-                    />
-                    <span className="font-bold">Google Gemini</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Cloud-based inference. Highly reliable and ultra-fast.
-                  </p>
-                </button>
-              </div>
-            </div>
-
-            {/* Model Configuration */}
-            <div className="bg-card border border-border rounded-[2rem] p-8 shadow-sm">
-              {localProvider === "ollama" ? (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Ollama Settings</h3>
-                    <button
-                      onClick={fetchAvailableModels}
-                      className="p-2 hover:bg-accent rounded-full transition-colors"
-                    >
-                      <RefreshCw
-                        className={cn(
-                          "w-4 h-4",
-                          isLoadingModels && "animate-spin",
-                        )}
-                      />
-                    </button>
+            {/* AI Pipeline Configuration Collapsible */}
+            <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm">
+              <button
+                onClick={() => setIsModelConfigOpen(!isModelConfigOpen)}
+                className="w-full flex items-center justify-between p-8 hover:bg-accent/50 transition-colors text-left"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="bg-primary/20 p-3 rounded-2xl">
+                    <Sparkles className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <label className="text-sm font-medium mb-2 block">
-                      Active Model
-                    </label>
-                    <select
-                      value={localOllamaModel}
-                      onChange={(e) => setLocalOllamaModel(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
-                      <option value="">Select a model...</option>
-                      {availableModels.map((model) => (
-                        <option key={model} value={model}>
-                          {model}
-                        </option>
-                      ))}
-                      {!availableModels.includes(localOllamaModel) &&
-                        localOllamaModel && (
-                          <option value={localOllamaModel}>
-                            {localOllamaModel} (configured)
-                          </option>
-                        )}
-                    </select>
+                    <h2 className="text-2xl font-bold">AI Pipeline Configuration</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Configure the models for each step of the recommendation process.
+                    </p>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold">Gemini Settings</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Gemini API Key
-                      </label>
-                      <input
-                        type="password"
-                        value={localGeminiApiKey}
-                        onChange={(e) => setLocalGeminiApiKey(e.target.value)}
-                        placeholder="Enter your Google AI Studio API Key"
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">
-                        Model Version
-                      </label>
-                      <select
-                        value={localGeminiModel}
-                        onChange={(e) => setLocalGeminiModel(e.target.value)}
-                        className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      >
-                        <option value="gemini-3.1-flash-lite-preview">
-                          Gemini 3.1 Flash-Lite (Preview)
-                        </option>
-                        <option value="gemini-3-flash-preview">
-                          Gemini 3 Flash (Preview)
-                        </option>
-                        <option value="gemini-2.0-flash-exp">
-                          Gemini 2.0 Flash (Experimental)
-                        </option>
-                        <option value="gemini-1.5-flash">
-                          Gemini 1.5 Flash (Stable)
-                        </option>
-                        <option value="gemini-1.5-pro">
-                          Gemini 1.5 Pro (Intelligent)
-                        </option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
+                {isModelConfigOpen ? (
+                  <ChevronUp className="w-6 h-6 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="w-6 h-6 text-muted-foreground" />
+                )}
+              </button>
 
-              <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  {message && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      className={cn(
-                        "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium",
-                        message.type === "success"
-                          ? "bg-emerald-500/10 text-emerald-500"
-                          : "bg-red-500/10 text-red-500",
-                      )}
-                    >
-                      {message.type === "success" ? (
-                        <CheckCircle2 className="w-4 h-4" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4" />
-                      )}
-                      {message.text}
-                    </motion.div>
-                  )}
-                </div>
-                <button
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
-                >
-                  {isSaving ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  Apply Configuration
-                </button>
-              </div>
+              <AnimatePresence>
+                {isModelConfigOpen ? (
+                  <motion.div
+                    key="model-config-content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                  >
+                    <div className="p-8 pt-0 space-y-8 border-t border-border/50 bg-secondary/5">
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8">
+                        {/* 1. Extraction Phase */}
+                        <div className="space-y-6">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-primary/10 p-2 rounded-xl">
+                              <Cpu className="w-5 h-5 text-primary" />
+                            </div>
+                            <h3 className="text-lg font-semibold">1. Requirement Extraction</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Choose the model that will parse your natural language statements.
+                          </p>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              onClick={() => setLocalExtProvider("ollama")}
+                              className={cn(
+                                "p-3 rounded-xl border-2 transition-all text-center",
+                                localExtProvider === "ollama"
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-primary/30",
+                              )}
+                            >
+                              <span className="font-bold text-sm block">Local</span>
+                            </button>
+                            <button
+                              onClick={() => setLocalExtProvider("gemini")}
+                              className={cn(
+                                "p-3 rounded-xl border-2 transition-all text-center",
+                                localExtProvider === "gemini"
+                                  ? "border-blue-500 bg-blue-500/5"
+                                  : "border-border hover:border-blue-500/30",
+                              )}
+                            >
+                              <span className="font-bold text-sm block">Gemini</span>
+                            </button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Model</label>
+                            {localExtProvider === "ollama" ? (
+                              <select
+                                value={localExtModel}
+                                onChange={(e) => setLocalExtModel(e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none"
+                              >
+                                {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                            ) : (
+                              <select
+                                value={localExtModel}
+                                onChange={(e) => setLocalExtModel(e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                              >
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite</option>
+                              </select>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 2. Generation Phase */}
+                        <div className="space-y-6">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-blue-500/10 p-2 rounded-xl">
+                              <RefreshCw className="w-5 h-5 text-blue-500" />
+                            </div>
+                            <h3 className="text-lg font-semibold">2. Architecture Generation</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Choose the brain that will design your system components.
+                          </p>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              onClick={() => setLocalGenProvider("ollama")}
+                              className={cn(
+                                "p-3 rounded-xl border-2 transition-all text-center",
+                                localGenProvider === "ollama"
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-primary/30",
+                              )}
+                            >
+                              <span className="font-bold text-sm block">Local</span>
+                            </button>
+                            <button
+                              onClick={() => setLocalGenProvider("gemini")}
+                              className={cn(
+                                "p-3 rounded-xl border-2 transition-all text-center",
+                                localGenProvider === "gemini"
+                                  ? "border-blue-500 bg-blue-500/5"
+                                  : "border-border hover:border-blue-500/30",
+                              )}
+                            >
+                              <span className="font-bold text-sm block">Gemini</span>
+                            </button>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Model</label>
+                            {localGenProvider === "ollama" ? (
+                              <select
+                                value={localGenModel}
+                                onChange={(e) => setLocalGenModel(e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none"
+                              >
+                                {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                            ) : (
+                              <select
+                                value={localGenModel}
+                                onChange={(e) => setLocalGenModel(e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                              >
+                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+                              </select>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* API Credentials */}
+                      <div className="pt-6 border-t border-border/30">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+                          <div>
+                            <label className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Gemini API Key</label>
+                            <input
+                              type="password"
+                              value={localGeminiApiKey}
+                              onChange={(e) => setLocalGeminiApiKey(e.target.value)}
+                              placeholder="Enter your Google AI Studio API Key"
+                              className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                            />
+                          </div>
+                          <div className="lg:pt-7">
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              Required for any cloud-based options. Your keys are stored locally in your browser and never shared with anyone else.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-6 border-t border-border/30 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                          {message && (
+                            <motion.div
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              className={cn(
+                                "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium",
+                                message.type === "success"
+                                  ? "bg-emerald-500/10 text-emerald-500"
+                                  : "bg-red-500/10 text-red-500",
+                              )}
+                            >
+                              {message.type === "success" ? (
+                                <CheckCircle2 className="w-4 h-4" />
+                              ) : (
+                                <AlertCircle className="w-4 h-4" />
+                              )}
+                              {message.text}
+                            </motion.div>
+                          )}
+                        </div>
+                        <button
+                          onClick={handleSave}
+                          disabled={isSaving}
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground px-10 py-3 rounded-xl font-bold flex items-center gap-2 transition-all hover:scale-105 active:scale-95 shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
+                        >
+                          {isSaving ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Save className="w-4 h-4" />
+                          )}
+                          Apply Configuration
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </div>
 
             {/* Architecture Node Configuration */}

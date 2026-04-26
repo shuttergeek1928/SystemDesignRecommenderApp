@@ -7,13 +7,16 @@ namespace SystemDesignRecommenderApi.Services
     /// </summary>
     public interface ILLMChatService
     {
-        /// <summary>
-        /// Sends a chat request to the selected LLM and returns the response.
-        /// </summary>
-        /// <param name="request">The chat request containing messages.</param>
-        /// <param name="cancellationToken">Cancellation token for the async operation.</param>
-        /// <returns>The model's response text.</returns>
         Task<string> ChatAsync(ChatRequest request, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Sends a chat request to a specific LLM provider and model.
+        /// </summary>
+        /// <param name="request">The chat request.</param>
+        /// <param name="provider">The provider name (gemini/ollama).</param>
+        /// <param name="model">The specific model name.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        Task<string> ChatAsync(ChatRequest request, string provider, string model, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets the list of available local models (Ollama only).

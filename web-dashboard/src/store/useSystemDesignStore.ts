@@ -36,6 +36,10 @@ interface SystemDesignStore {
   geminiModel: string;
   geminiApiKey: string;
   preferredProvider: string;
+  extractionProvider: string;
+  extractionModel: string;
+  generationProvider: string;
+  generationModel: string;
   setFormData: (data: Partial<SystemDesignForm>) => void;
   setUseRag: (value: boolean) => void;
   setUseHybrid: (value: boolean) => void;
@@ -51,6 +55,10 @@ interface SystemDesignStore {
     geminiModel?: string;
     geminiApiKey?: string;
     preferredProvider?: string;
+    extractionProvider?: string;
+    extractionModel?: string;
+    generationProvider?: string;
+    generationModel?: string;
   }) => Promise<void>;
   reset: () => void;
 
@@ -83,6 +91,10 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
       geminiModel: "gemini-3.1-flash-lite-preview",
       geminiApiKey: "",
       preferredProvider: "ollama",
+      extractionProvider: "ollama",
+      extractionModel: "qwen2.5-coder:7b",
+      generationProvider: "gemini",
+      generationModel: "gemini-3.1-flash-lite-preview",
       nodeDefinitions: [],
       nodeSettings: [],
 
@@ -107,6 +119,10 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
               geminiModel: settings.geminiModel,
               geminiApiKey: settings.geminiApiKey,
               preferredProvider: settings.preferredProvider,
+              extractionProvider: settings.extractionProvider,
+              extractionModel: settings.extractionModel,
+              generationProvider: settings.generationProvider,
+              generationModel: settings.generationModel,
             });
           }
         } catch (error) {
@@ -121,6 +137,10 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
             geminiModel: get().geminiModel,
             geminiApiKey: get().geminiApiKey,
             preferredProvider: get().preferredProvider,
+            extractionProvider: get().extractionProvider,
+            extractionModel: get().extractionModel,
+            generationProvider: get().generationProvider,
+            generationModel: get().generationModel,
             ...settings,
           };
 

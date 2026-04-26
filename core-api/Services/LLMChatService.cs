@@ -30,24 +30,33 @@ namespace SystemDesignRecommenderApi.Services
         public async Task<string> ChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
         {
             var settings = _settingsService.GetSettings();
+            var provider = settings.PreferredProvider ?? "ollama";
+            var model = provider.ToLower() == "gemini" ? settings.GeminiModel : settings.OllamaModel;
 
-            if (settings.PreferredProvider?.ToLower() == "gemini")
-            {
-                return await ChatWithGeminiAsync(request, settings, cancellationToken);
-            }
-
-            return await ChatWithOllamaAsync(request, settings, cancellationToken);
+            return await ChatAsync(request, provider, model, cancellationToken);
         }
 
-        private async Task<string> ChatWithOllamaAsync(ChatRequest request, AppSettings settings, CancellationToken cancellationToken)
+        public async Task<string> ChatAsync(ChatRequest request, string provider, string model, CancellationToken cancellationToken = default)
+        {
+            var settings = _settingsService.GetSettings();
+
+            if (provider?.ToLower() == "gemini")
+            {
+                return await ChatWithGeminiAsync(request, model, settings, cancellationToken);
+            }
+
+            return await ChatWithOllamaAsync(request, model, settings, cancellationToken);
+        }
+
+        private async Task<string> ChatWithOllamaAsync(ChatRequest request, string model, AppSettings settings, CancellationToken cancellationToken)
         {
             try
             {
                 var messages = request.Messages.Select(m => new Message { Role = m.Role, Content = m.Content }).ToList();
-                var model = settings.OllamaModel;
+                var modelName = string.IsNullOrWhiteSpace(model) ? settings.OllamaModel : model;
 
-                _logger.LogInformation("Sending chat request to Ollama model: {Model}", model);
-                _ollamaApiClient.SelectedModel = model;
+                _logger.LogInformation("Sending chat request to Ollama model: {Model}", modelName);
+                _ollamaApiClient.SelectedModel = modelName;
 
                 var ollamaRequest = new OllamaSharp.Models.Chat.ChatRequest { Messages = messages };
                 var fullResponse = new StringBuilder();
@@ -69,7 +78,7 @@ namespace SystemDesignRecommenderApi.Services
             }
         }
 
-        private async Task<string> ChatWithGeminiAsync(ChatRequest request, AppSettings settings, CancellationToken cancellationToken)
+        private async Task<string> ChatWithGeminiAsync(ChatRequest request, string model, AppSettings settings, CancellationToken cancellationToken)
         {
             try
             {
@@ -78,7 +87,7 @@ namespace SystemDesignRecommenderApi.Services
                     throw new InvalidOperationException("Gemini API Key is missing in settings.");
                 }
 
-                var modelName = string.IsNullOrWhiteSpace(settings.GeminiModel) ? "gemini-3.1-flash-lite-preview" : settings.GeminiModel.Trim();
+                var modelName = string.IsNullOrWhiteSpace(model) ? (string.IsNullOrWhiteSpace(settings.GeminiModel) ? "gemini-3.1-flash-lite-preview" : settings.GeminiModel.Trim()) : model.Trim();
 
                 // Initialize the Gemini client using the SDK
                 var client = new Client(apiKey: settings.GeminiApiKey);

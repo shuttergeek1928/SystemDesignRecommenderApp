@@ -267,7 +267,7 @@ export default function NodeConfigPage() {
                     onClick={handleSaveSettings}
                     className="bg-purple-600 hover:bg-purple-500 text-white gap-2 px-8"
                   >
-                    <Save className="w-4 h-4" /> Save Team Defaults
+                    <Save className="w-4 h-4" /> Update Team Default Nodes
                   </Button>
                 </div>
               )}

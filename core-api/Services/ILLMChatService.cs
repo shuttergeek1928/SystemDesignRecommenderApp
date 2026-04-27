@@ -24,5 +24,10 @@ namespace SystemDesignRecommenderApi.Services
         /// <param name="cancellationToken">Cancellation token for the async operation.</param>
         /// <returns>A list of available model names.</returns>
         Task<IEnumerable<string>> GetAvailableModelsAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// Gets the list of available Gemini models using the provided API key.
+        /// </summary>
+        Task<IEnumerable<string>> GetGeminiModelsAsync(string apiKey, CancellationToken cancellationToken = default);
     }
 }

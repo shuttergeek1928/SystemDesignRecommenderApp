@@ -36,4 +36,11 @@ public class SettingsController : ControllerBase
         var models = await _llmChatService.GetAvailableModelsAsync();
         return Ok(models);
     }
+
+    [HttpGet("gemini-models")]
+    public async Task<ActionResult<IEnumerable<string>>> GetGeminiModels([FromQuery] string apiKey)
+    {
+        var models = await _llmChatService.GetGeminiModelsAsync(apiKey);
+        return Ok(models);
+    }
 }

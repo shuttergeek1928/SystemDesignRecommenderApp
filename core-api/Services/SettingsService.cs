@@ -15,14 +15,16 @@ public class SettingsService : ISettingsService
             OllamaModel = _configuration["Ollama:Model"] ?? "qwen2.5-coder:7b",
             GeminiModel = _configuration["Gemini:Model"] ?? "gemini-1.5-flash",
             GeminiApiKey = _configuration["Gemini:ApiKey"],
-            PreferredProvider = _configuration["App:PreferredProvider"] ?? "ollama",
+            PreferredProvider = _configuration["App:PreferredProvider"] ?? "gemini",
             
-            // Map new extraction/generation settings from config if present, otherwise use defaults
-            ExtractionProvider = _configuration["App:ExtractionProvider"] ?? _configuration["App:PreferredProvider"] ?? "ollama",
-            ExtractionModel = _configuration["App:ExtractionModel"] ?? _configuration["Ollama:Model"] ?? "qwen2.5-coder:7b",
-            GenerationProvider = _configuration["App:GenerationProvider"] ?? _configuration["App:PreferredProvider"] ?? "gemini",
-            GenerationModel = _configuration["App:GenerationModel"] ?? _configuration["Gemini:Model"] ?? "gemini-1.5-flash"
-        };
+            // Task-specific models
+            ExtractionProvider = _configuration["App:ExtractionProvider"] ?? "gemini",
+            ExtractionModel = _configuration["App:ExtractionModel"] ?? "gemini-3.1-flash-lite-preview", // Gemini 3.1 Flash Lite
+            GenerationProvider = _configuration["App:GenerationProvider"] ?? "gemini",
+            GenerationModel = _configuration["App:GenerationModel"] ?? "gemini-3-flash-preview", // Gemini 3 Flash
+            EvaluationProvider = _configuration["App:EvaluationProvider"] ?? "gemini",
+            EvaluationModel = _configuration["App:EvaluationModel"] ?? "gemini-1.5-pro" // Use Pro for higher quality audit
+        };  
     }
 
     public AppSettings GetSettings()

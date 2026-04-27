@@ -19,6 +19,9 @@ public class SystemDesignRequestDto
     [JsonPropertyName("team_id")]
     public Guid? TeamId { get; set; }
 
+    [JsonPropertyName("connection_id")]
+    public string? ConnectionId { get; set; }
+
     [JsonPropertyName("requirements")]
     public Models.DesignRequirements? Requirements { get; set; }
 }

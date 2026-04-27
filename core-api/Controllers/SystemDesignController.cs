@@ -94,11 +94,14 @@ public class SystemDesignController : ControllerBase
         }
 
         // Step 2: Generate Architecture Design based on requirements
-        ArchitectureDesign? architecture;
+        ArchitectureDesign? architecture = null;
+        EvaluationResult? evaluation = null;
 
         if (request.UseHybrid)
         {
-            architecture = await _systemDesignService.GenerateHybridArchitectureAsync(request.ProblemStatement, requirements, request.UserId, request.TeamId);
+            var hybridResult = await _systemDesignService.GenerateHybridArchitectureAsync(request.ProblemStatement, requirements, request.UserId, request.TeamId, request.ConnectionId);
+            architecture = hybridResult?.Architecture;
+            evaluation = hybridResult?.Evaluation;
         }
         else if (request.UseRag)
         {
@@ -118,7 +121,8 @@ public class SystemDesignController : ControllerBase
         {
             ExtractedRequirements = requirements,
             ArchitectureDesign = architecture,
-            TriggeredRules = request.UseHybrid ? _ruleEngineService.EvaluateRules(requirements) : null
+            EvaluationScores = evaluation,
+            TriggeredRules = request.UseHybrid ? await _ruleEngineService.EvaluateRulesAsync(requirements) : null
         });
     }
 
@@ -153,5 +157,12 @@ public class SystemDesignController : ControllerBase
         }
 
         return Ok(requirements);
+    }
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteSession(Guid id)
+    {
+        var result = await _systemDesignService.DeleteSessionAsync(id);
+        if (!result) return NotFound("Session not found or could not be deleted.");
+        return Ok(new { message = "Session deleted successfully." });
     }
 }

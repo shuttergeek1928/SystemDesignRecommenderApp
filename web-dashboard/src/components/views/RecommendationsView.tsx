@@ -23,9 +23,10 @@ import {
   ArchitectureChoice,
 } from "@/types/recommendation";
 import { cn } from "@/lib/utils";
+import { AuditDashboard } from "./AuditDashboard";
 
 export function RecommendationsView() {
-  const { recommendation, isLoading, generateRecommendation, formData } =
+  const { recommendation, isLoading, generateRecommendation, formData, agentStatus } =
     useSystemDesignStore();
   const [expandedChoice, setExpandedChoice] = useState<string | null>(null);
 
@@ -41,7 +42,7 @@ export function RecommendationsView() {
         <Cpu className="mx-auto w-12 h-12 text-primary mb-6 animate-spin" />
         <h2 className="text-2xl font-bold">Synthesizing Architecture...</h2>
         <p className="text-muted-foreground mt-2">
-          Checking reliability models and cost trade-offs
+          {agentStatus || "Checking reliability models and cost trade-offs..."}
         </p>
       </div>
     );
@@ -74,6 +75,11 @@ export function RecommendationsView() {
     recommendation.data.extractedRequirements;
   const rules =
     recommendation.data.TriggeredRules || recommendation.data.triggeredRules;
+  const scores =
+    recommendation.data.EvaluationScores || recommendation.data.evaluationScores;
+  
+  console.log("RecommendationsView: recommendation.data keys:", Object.keys(recommendation.data));
+  console.log("RecommendationsView: scores:", scores);
 
   if (!arch || !req) {
     return (
@@ -146,6 +152,9 @@ export function RecommendationsView() {
           </div>
         </div>
       </header>
+
+      {/* AGENTIC AUDIT DASHBOARD */}
+      {scores && <AuditDashboard scores={scores} />}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}

@@ -80,43 +80,62 @@ namespace SystemDesignRecommenderApi.Services
 
         private async Task<string> ChatWithGeminiAsync(ChatRequest request, string model, AppSettings settings, CancellationToken cancellationToken)
         {
-            try
+            int maxRetries = 3;
+            int delayMs = 1000;
+
+            for (int i = 0; i <= maxRetries; i++)
             {
-                if (string.IsNullOrEmpty(settings.GeminiApiKey))
+                try
                 {
-                    throw new InvalidOperationException("Gemini API Key is missing in settings.");
+                    if (string.IsNullOrEmpty(settings.GeminiApiKey))
+                    {
+                        throw new InvalidOperationException("Gemini API Key is missing in settings.");
+                    }
+
+                    var modelName = string.IsNullOrWhiteSpace(model) ? (string.IsNullOrWhiteSpace(settings.GeminiModel) ? "gemini-1.5-flash" : settings.GeminiModel.Trim()) : model.Trim();
+
+                    // Initialize the Gemini client using the SDK
+                    var client = new Client(apiKey: settings.GeminiApiKey);
+
+                    // Prepare messages for the SDK
+                    var contents = request.Messages.Select(m => new Content
+                    {
+                        Role = m.Role == "assistant" ? "model" : "user",
+                        Parts = new List<Part> { new Part { Text = m.Content } }
+                    }).ToList();
+
+                    _logger.LogInformation("Sending chat request to Gemini model: {Model} using SDK (Attempt {Attempt})", modelName, i + 1);
+
+                    var response = await client.Models.GenerateContentAsync(modelName, contents, cancellationToken: cancellationToken);
+
+                    if (response?.Candidates == null || !response.Candidates.Any())
+                    {
+                        _logger.LogWarning("Gemini SDK returned no candidates.");
+                        return "Model returned no output. Please check your API key and model selection.";
+                    }
+
+                    var text = response.Candidates[0].Content?.Parts?[0]?.Text;
+                    return text ?? string.Empty;
                 }
-
-                var modelName = string.IsNullOrWhiteSpace(model) ? (string.IsNullOrWhiteSpace(settings.GeminiModel) ? "gemini-3.1-flash-lite-preview" : settings.GeminiModel.Trim()) : model.Trim();
-
-                // Initialize the Gemini client using the SDK
-                var client = new Client(apiKey: settings.GeminiApiKey);
-
-                // Prepare messages for the SDK
-                var contents = request.Messages.Select(m => new Content
+                catch (Exception ex) when (ex.Message.Contains("high demand") || ex.Message.Contains("503") || ex.Message.Contains("429"))
                 {
-                    Role = m.Role == "assistant" ? "model" : "user",
-                    Parts = new List<Part> { new Part { Text = m.Content } }
-                }).ToList();
+                    if (i == maxRetries)
+                    {
+                        _logger.LogError(ex, "Gemini SDK chat failed after {Retries} retries due to high demand.", maxRetries);
+                        throw;
+                    }
 
-                _logger.LogInformation("Sending chat request to Gemini model: {Model} using SDK", modelName);
-
-                var response = await client.Models.GenerateContentAsync(modelName, contents, cancellationToken: cancellationToken);
-
-                if (response?.Candidates == null || !response.Candidates.Any())
-                {
-                    _logger.LogWarning("Gemini SDK returned no candidates.");
-                    return "Model returned no output. Please check your API key and model selection.";
+                    _logger.LogWarning("Gemini high demand detected. Retrying in {Delay}ms...", delayMs);
+                    await Task.Delay(delayMs, cancellationToken);
+                    delayMs *= 2; // Exponential backoff
                 }
-
-                var text = response.Candidates[0].Content?.Parts?[0]?.Text;
-                return text ?? string.Empty;
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Gemini SDK chat failed with a non-retryable error.");
+                    throw;
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Gemini SDK chat failed.");
-                throw;
-            }
+            return string.Empty;
         }
 
         public async Task<IEnumerable<string>> GetAvailableModelsAsync(CancellationToken cancellationToken = default)
@@ -129,6 +148,51 @@ namespace SystemDesignRecommenderApi.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to list Ollama models.");
+                return new List<string>();
+            }
+        }
+
+        public async Task<IEnumerable<string>> GetGeminiModelsAsync(string apiKey, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(apiKey)) return new List<string>();
+
+                var url = $"https://generativelanguage.googleapis.com/v1beta/models?key={apiKey}";
+                var response = await _httpClient.GetAsync(url, cancellationToken);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogWarning("Gemini API returned {StatusCode} when listing models.", response.StatusCode);
+                    return new List<string>();
+                }
+
+                var json = await response.Content.ReadAsStringAsync(cancellationToken);
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                
+                if (!doc.RootElement.TryGetProperty("models", out var modelsElement))
+                    return new List<string>();
+
+                var modelNames = new List<string>();
+                foreach (var m in modelsElement.EnumerateArray())
+                {
+                    if (m.TryGetProperty("name", out var nameElement) && 
+                        m.TryGetProperty("supportedGenerationMethods", out var methodsElement))
+                    {
+                        var methods = methodsElement.EnumerateArray().Select(x => x.GetString());
+                        if (methods.Contains("generateContent"))
+                        {
+                            var name = nameElement.GetString()?.Replace("models/", "");
+                            if (!string.IsNullOrEmpty(name)) modelNames.Add(name);
+                        }
+                    }
+                }
+
+                return modelNames;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to list Gemini models via REST API.");
                 return new List<string>();
             }
         }

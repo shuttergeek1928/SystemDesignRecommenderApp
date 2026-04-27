@@ -1,0 +1,38 @@
+# Walkthrough: Polyglot Agentic Evaluation Framework
+
+I have successfully transformed the system design recommender into a professional-grade research framework. The system now features a multi-dimensional "Critic Agent" that audits designs, provides rubric-based feedback, and self-corrects through an agentic loop.
+
+## Key Accomplishments
+
+### 1. Polyglot Persistence Layer
+- **MongoDB**: Integrated as the document store for architectural blueprints and design history.
+- **MS SQL**: Retained for relational rule management.
+- **Seeding**: Automatically seeded 40 reference blueprints into MongoDB and 13 structured rules into SQL on startup.
+
+### 2. Agentic "Critic" Evaluation Engine
+- Created `IEvaluationConstraint` with concrete implementations:
+  - **CostConstraint**: Analyzes entry cost and operational efficiency.
+  - **SecurityConstraint**: Audits security posture and compliance.
+  - **OperationalConstraint**: Evaluates deployment complexity.
+- **LLM-as-a-Judge**: Uses Gemini 3.1 Pro as a critic to generate a detailed rubric score and a textual critique.
+
+### 3. Real-Time Agentic Loop (SignalR)
+- **Agentic Loop**: If the Critic assigns a score below 70, the system automatically triggers a second generation pass, feeding the critique back into the prompt for self-correction.
+- **SignalR Hub**: Stream real-time status updates ("Analyzing cost...", "Critic rejected draft...") directly to the dashboard.
+
+### 4. Architectural Audit Dashboard
+- **Radar Charts**: Integrated `recharts` to visualize scores across 5 dimensions.
+- **Critic Report**: Displays the raw, unfiltered critique from the Agentic Critic.
+
+## How to Test
+
+1. **Start the System**: Run `dotnet run` in `core-api` and `npm run dev` in `web-dashboard`.
+2. **Generate a Design**: Go to the generation page. You will see the loading text update in real-time as the agent works.
+3. **View the Audit**: Once complete, the recommendation page will feature a new **Architectural Radar** and **Critic Agent Report** section.
+4. **History**: Old sessions viewed from the history page will now also load their evaluation data from MongoDB.
+
+## Screenshots & Visuals
+(Note: Real-time SignalR feedback can be seen during the generation process)
+
+> [!TIP]
+> The Agentic Loop ensures that even if the initial LLM response is weak, the system "double-checks" itself before showing you the result, significantly increasing reliability for your M.Tech audit.

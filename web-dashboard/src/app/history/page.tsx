@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Card } from "@/components/ui/base";
-import { Calendar, Clock, BrainCircuit, Cpu, ChevronRight } from "lucide-react";
+import { Calendar, Clock, BrainCircuit, Cpu, ChevronRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -66,10 +66,29 @@ export default function HistoryPage() {
     setLoadingId(id);
     const success = await fetchRecommendationById(id);
     if (success) {
-      router.push("/dashboard");
+      router.push(`/history/${id}`);
     } else {
       setLoadingId(null);
       alert("Failed to load recommendation");
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this design? This action cannot be undone.")) return;
+
+    try {
+      const res = await fetch(`http://localhost:5220/api/SystemDesign/${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setHistory(history.filter((item) => item.id !== id));
+      } else {
+        alert("Failed to delete design");
+      }
+    } catch (err) {
+      console.error("Failed to delete history item", err);
+      alert("An error occurred while deleting");
     }
   };
 
@@ -172,9 +191,18 @@ export default function HistoryPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center text-sm font-bold text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0 shrink-0 bg-primary/5 px-4 py-2 rounded-full">
-                  <span className="hidden md:inline mr-1">View Details</span>
-                  <ChevronRight className="w-5 h-5" />
+                <div className="flex items-center gap-3 shrink-0">
+                  <button
+                    onClick={(e) => handleDelete(e, item.id)}
+                    className="p-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-all opacity-0 group-hover:opacity-100"
+                    title="Delete Design"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                  <div className="flex items-center text-sm font-bold text-primary opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0 bg-primary/5 px-4 py-2 rounded-full">
+                    <span className="hidden md:inline mr-1">View Details</span>
+                    <ChevronRight className="w-5 h-5" />
+                  </div>
                 </div>
               </Card>
             ))}

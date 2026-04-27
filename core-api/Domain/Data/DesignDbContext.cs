@@ -19,6 +19,7 @@ public class DesignDbContext : DbContext
     public DbSet<UserProfile> UserProfiles { get; set; } = null!;
     public DbSet<DesignNodeDefinition> NodeDefinitions { get; set; } = null!;
     public DbSet<DesignNodeSetting> NodeSettings { get; set; } = null!;
+    public DbSet<DesignRule> DesignRules { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

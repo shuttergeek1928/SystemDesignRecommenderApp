@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import * as signalR from "@microsoft/signalr";
 import { type SystemDesignForm } from "@/types/form";
 import { useAuthStore } from "./useAuthStore";
 
@@ -24,9 +25,11 @@ interface SystemDesignStore {
       ExtractedRequirements?: any;
       ArchitectureDesign?: any;
       TriggeredRules?: any[];
+      EvaluationScores?: any;
       extractedRequirements?: any;
       architectureDesign?: any;
       triggeredRules?: any[];
+      evaluationScores?: any;
     };
   } | null;
   isLoading: boolean;
@@ -40,6 +43,11 @@ interface SystemDesignStore {
   extractionModel: string;
   generationProvider: string;
   generationModel: string;
+  evaluationProvider: string;
+  evaluationModel: string;
+  agentStatus: string | null;
+  connectionId: string | null;
+  initSignalR: () => void;
   setFormData: (data: Partial<SystemDesignForm>) => void;
   setUseRag: (value: boolean) => void;
   setUseHybrid: (value: boolean) => void;
@@ -59,6 +67,8 @@ interface SystemDesignStore {
     extractionModel?: string;
     generationProvider?: string;
     generationModel?: string;
+    evaluationProvider?: string;
+    evaluationModel?: string;
   }) => Promise<void>;
   reset: () => void;
 
@@ -88,15 +98,38 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
       useRag: false,
       useHybrid: true,
       ollamaModel: "qwen2.5-coder:7b",
-      geminiModel: "gemini-3.1-flash-lite-preview",
+      geminiModel: "gemini-3-flash-preview",
       geminiApiKey: "",
       preferredProvider: "ollama",
       extractionProvider: "ollama",
       extractionModel: "qwen2.5-coder:7b",
       generationProvider: "gemini",
-      generationModel: "gemini-3.1-flash-lite-preview",
+      generationModel: "gemini-3-flash-preview",
+      evaluationProvider: "gemini",
+      evaluationModel: "gemini-1.5-pro",
       nodeDefinitions: [],
       nodeSettings: [],
+      agentStatus: null,
+      connectionId: null,
+
+      initSignalR: () => {
+        if (get().connectionId) return; // Already connected
+        
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("http://localhost:5220/hubs/agentStatus")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveAgentStatus", (message: string) => {
+            set({ agentStatus: message });
+        });
+
+        connection.start()
+            .then(() => {
+                set({ connectionId: connection.connectionId });
+            })
+            .catch(err => console.error("Error connecting to SignalR: ", err));
+      },
 
       setFormData: (data) =>
         set((state) => ({ formData: { ...state.formData, ...data } })),
@@ -123,6 +156,8 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
               extractionModel: settings.extractionModel,
               generationProvider: settings.generationProvider,
               generationModel: settings.generationModel,
+              evaluationProvider: settings.evaluationProvider,
+              evaluationModel: settings.evaluationModel,
             });
           }
         } catch (error) {
@@ -141,6 +176,8 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
             extractionModel: get().extractionModel,
             generationProvider: get().generationProvider,
             generationModel: get().generationModel,
+            evaluationProvider: get().evaluationProvider,
+            evaluationModel: get().evaluationModel,
             ...settings,
           };
 
@@ -159,8 +196,12 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
 
       generateRecommendation: async (data) => {
         if (get().isLoading) return false;
-        set({ isLoading: true, formData: data });
-        const { useRag, useHybrid } = get();
+        
+        // Ensure SignalR is connected
+        get().initSignalR();
+        
+        set({ isLoading: true, formData: data, agentStatus: "Starting Agentic Loop...", recommendation: null });
+        const { useRag, useHybrid, connectionId } = get();
 
         const prompt = `Design a system for an application named "${data.appName}" targeting ${data.targetUsers} (${data.userCount} users). 
                 Key Requirements: 
@@ -224,6 +265,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                 use_hybrid: useHybrid,
                 user_id: userId,
                 team_id: teamId,
+                connection_id: connectionId,
                 requirements: mappedRequirements,
               }),
             },
@@ -239,6 +281,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
 
           set({
             isLoading: false,
+            agentStatus: "Done",
             recommendation: {
               id: "rec-" + Math.random().toString(36).substr(2, 9),
               generatedAt: new Date().toISOString(),
@@ -254,7 +297,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
       },
 
       fetchRecommendationById: async (id: string) => {
-        set({ isLoading: true });
+        set({ isLoading: true, agentStatus: "Initializing...", recommendation: null });
         try {
           const response = await fetch(
             `http://localhost:5220/api/SystemDesign/${id}`,
@@ -272,6 +315,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                 extractedRequirements: result.extractedRequirements,
                 architectureDesign: result.architectureDesign,
                 triggeredRules: result.triggeredRules,
+                evaluationScores: result.evaluationScores,
               },
             },
           });

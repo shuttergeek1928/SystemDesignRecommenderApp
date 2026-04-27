@@ -110,12 +110,12 @@ async def generate_rag_design(rag_req: RagRequest):
     node_structure = rag_req.node_structure
     try:
         provider = req.provider or "ollama"
-        model = req.model or (MODEL_NAME if provider == "ollama" else "gemini-3.1-flash-lite-preview")
+        model = req.model or (MODEL_NAME if provider == "ollama" else "gemini-3-flash-preview")
         
         # Safety check for Gemini
         if provider.lower() == "gemini" and (":" in model or not model.startswith("gemini")):
-            logger.warning(f"Detected non-Gemini model name '{model}' for Gemini provider. Defaulting to 'gemini-3.1-flash-lite-preview'.")
-            model = "gemini-3.1-flash-lite-preview"
+            logger.warning(f"Detected non-Gemini model name '{model}' for Gemini provider. Defaulting to 'gemini-3-flash-preview'.")
+            model = "gemini-3-flash-preview"
         
         logger.info(f"Received RAG request for: {req.title} with provider: {provider}, model: {model}")
         

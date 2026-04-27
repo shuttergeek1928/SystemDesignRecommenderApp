@@ -26,6 +26,8 @@ export default function SettingsPage() {
     extractionModel,
     generationProvider,
     generationModel,
+    evaluationProvider,
+    evaluationModel,
     fetchSettings,
     updateSettings,
   } = useSystemDesignStore();
@@ -38,9 +40,13 @@ export default function SettingsPage() {
   const [localExtModel, setLocalExtModel] = useState(extractionModel);
   const [localGenProvider, setLocalGenProvider] = useState(generationProvider);
   const [localGenModel, setLocalGenModel] = useState(generationModel);
+  const [localEvalProvider, setLocalEvalProvider] = useState(evaluationProvider);
+  const [localEvalModel, setLocalEvalModel] = useState(evaluationModel);
 
   const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [availableGeminiModels, setAvailableGeminiModels] = useState<string[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isLoadingGeminiModels, setIsLoadingGeminiModels] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{
     text: string;
@@ -55,6 +61,12 @@ export default function SettingsPage() {
   }, [fetchSettings]);
 
   useEffect(() => {
+    if (localGeminiApiKey) {
+      fetchGeminiModels(localGeminiApiKey);
+    }
+  }, [localGeminiApiKey]);
+
+  useEffect(() => {
     setLocalOllamaModel(ollamaModel);
     setLocalGeminiModel(geminiModel);
     setLocalGeminiApiKey(geminiApiKey);
@@ -62,7 +74,9 @@ export default function SettingsPage() {
     setLocalExtModel(extractionModel);
     setLocalGenProvider(generationProvider);
     setLocalGenModel(generationModel);
-  }, [ollamaModel, geminiModel, geminiApiKey, extractionProvider, extractionModel, generationProvider, generationModel]);
+    setLocalEvalProvider(evaluationProvider);
+    setLocalEvalModel(evaluationModel);
+  }, [ollamaModel, geminiModel, geminiApiKey, extractionProvider, extractionModel, generationProvider, generationModel, evaluationProvider, evaluationModel]);
 
   const fetchAvailableModels = async () => {
     setIsLoadingModels(true);
@@ -79,6 +93,22 @@ export default function SettingsPage() {
     }
   };
 
+  const fetchGeminiModels = async (apiKey: string) => {
+    if (!apiKey) return;
+    setIsLoadingGeminiModels(true);
+    try {
+      const response = await fetch(`http://localhost:5220/api/Settings/gemini-models?apiKey=${apiKey}`);
+      if (response.ok) {
+        const models = await response.json();
+        setAvailableGeminiModels(models);
+      }
+    } catch (error) {
+      console.error("Error fetching Gemini models:", error);
+    } finally {
+      setIsLoadingGeminiModels(false);
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     setMessage(null);
@@ -91,6 +121,8 @@ export default function SettingsPage() {
         extractionModel: localExtModel,
         generationProvider: localGenProvider,
         generationModel: localGenModel,
+        evaluationProvider: localEvalProvider,
+        evaluationModel: localEvalModel,
       });
       setMessage({ text: "Settings saved successfully!", type: "success" });
     } catch (error) {
@@ -181,15 +213,27 @@ export default function SettingsPage() {
                               <span className="font-bold text-sm block">Local</span>
                             </button>
                             <button
-                              onClick={() => setLocalExtProvider("gemini")}
+                              onClick={() => {
+                                if (!localGeminiApiKey) {
+                                  setMessage({ text: "Gemini requires an API Key. Please provide one below.", type: "error" });
+                                  return;
+                                }
+                                setLocalExtProvider("gemini");
+                              }}
                               className={cn(
-                                "p-3 rounded-xl border-2 transition-all text-center",
+                                "p-3 rounded-xl border-2 transition-all text-center relative",
                                 localExtProvider === "gemini"
                                   ? "border-blue-500 bg-blue-500/5"
                                   : "border-border hover:border-blue-500/30",
+                                !localGeminiApiKey && "opacity-50 grayscale cursor-not-allowed"
                               )}
                             >
                               <span className="font-bold text-sm block">Gemini</span>
+                              {!localGeminiApiKey && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-xl">
+                                  <AlertCircle className="w-4 h-4 text-red-500" />
+                                </div>
+                              )}
                             </button>
                           </div>
 
@@ -209,8 +253,17 @@ export default function SettingsPage() {
                                 onChange={(e) => setLocalExtModel(e.target.value)}
                                 className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/50 outline-none"
                               >
-                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                                <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite</option>
+                                {availableGeminiModels.length > 0 ? (
+                                  availableGeminiModels.map(m => (
+                                    <option key={m} value={m}>{m.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
+                                  ))
+                                ) : (
+                                  <>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                    <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+                                    <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite</option>
+                                  </>
+                                )}
                               </select>
                             )}
                           </div>
@@ -241,15 +294,27 @@ export default function SettingsPage() {
                               <span className="font-bold text-sm block">Local</span>
                             </button>
                             <button
-                              onClick={() => setLocalGenProvider("gemini")}
+                              onClick={() => {
+                                if (!localGeminiApiKey) {
+                                  setMessage({ text: "Gemini requires an API Key. Please provide one below.", type: "error" });
+                                  return;
+                                }
+                                setLocalGenProvider("gemini");
+                              }}
                               className={cn(
-                                "p-3 rounded-xl border-2 transition-all text-center",
+                                "p-3 rounded-xl border-2 transition-all text-center relative",
                                 localGenProvider === "gemini"
                                   ? "border-blue-500 bg-blue-500/5"
                                   : "border-border hover:border-blue-500/30",
+                                !localGeminiApiKey && "opacity-50 grayscale cursor-not-allowed"
                               )}
                             >
                               <span className="font-bold text-sm block">Gemini</span>
+                              {!localGeminiApiKey && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-xl">
+                                  <AlertCircle className="w-4 h-4 text-red-500" />
+                                </div>
+                              )}
                             </button>
                           </div>
 
@@ -269,9 +334,100 @@ export default function SettingsPage() {
                                 onChange={(e) => setLocalGenModel(e.target.value)}
                                 className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/50 outline-none"
                               >
-                                <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-                                <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-                                <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+                                {availableGeminiModels.length > 0 ? (
+                                  availableGeminiModels.map(m => (
+                                    <option key={m} value={m}>{m.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
+                                  ))
+                                ) : (
+                                  <>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                    <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+                                    <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite</option>
+                                  </>
+                                )}
+                              </select>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* 3. Evaluation Phase */}
+                        <div className="space-y-6 lg:col-span-2 pt-8 border-t border-border/30">
+                          <div className="flex items-center gap-3">
+                            <div className="bg-emerald-500/10 p-2 rounded-xl">
+                              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                            </div>
+                            <h3 className="text-lg font-semibold">3. Agentic Audit (Evaluation)</h3>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Choose the critic model that will audit the architecture and provide scores.
+                          </p>
+                          
+                          <div className="grid grid-cols-2 gap-3 max-w-md">
+                            <button
+                              onClick={() => setLocalEvalProvider("ollama")}
+                              className={cn(
+                                "p-3 rounded-xl border-2 transition-all text-center",
+                                localEvalProvider === "ollama"
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-primary/30",
+                              )}
+                            >
+                              <span className="font-bold text-sm block">Local</span>
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (!localGeminiApiKey) {
+                                  setMessage({ text: "Gemini requires an API Key. Please provide one below.", type: "error" });
+                                  return;
+                                }
+                                setLocalEvalProvider("gemini");
+                              }}
+                              className={cn(
+                                "p-3 rounded-xl border-2 transition-all text-center relative",
+                                localEvalProvider === "gemini"
+                                  ? "border-blue-500 bg-blue-500/5"
+                                  : "border-border hover:border-blue-500/30",
+                                !localGeminiApiKey && "opacity-50 grayscale cursor-not-allowed"
+                              )}
+                            >
+                              <span className="font-bold text-sm block">Gemini</span>
+                              {!localGeminiApiKey && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-background/50 rounded-xl">
+                                  <AlertCircle className="w-4 h-4 text-red-500" />
+                                </div>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="space-y-2 max-w-md">
+                            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Active Model</label>
+                            {localEvalProvider === "ollama" ? (
+                              <select
+                                value={localEvalModel}
+                                onChange={(e) => setLocalEvalModel(e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary/50 outline-none"
+                              >
+                                {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                              </select>
+                            ) : (
+                              <select
+                                value={localEvalModel}
+                                onChange={(e) => setLocalEvalModel(e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500/50 outline-none"
+                              >
+                                {availableGeminiModels.length > 0 ? (
+                                  availableGeminiModels.map(m => (
+                                    <option key={m} value={m}>{m.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>
+                                  ))
+                                ) : (
+                                  <>
+                                    <option value="gemini-1.5-pro">Gemini 1.5 Pro (Recommended)</option>
+                                    <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+                                    <option value="gemini-3-flash-preview">Gemini 3 Flash</option>
+                                    <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite</option>
+                                  </>
+                                )}
                               </select>
                             )}
                           </div>
@@ -292,8 +448,13 @@ export default function SettingsPage() {
                             />
                           </div>
                           <div className="lg:pt-7">
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              Required for any cloud-based options. Your keys are stored locally in your browser and never shared with anyone else.
+                            <p className={cn(
+                              "text-xs leading-relaxed",
+                              !localGeminiApiKey ? "text-red-500 font-bold" : "text-muted-foreground"
+                            )}>
+                              {!localGeminiApiKey 
+                                ? "Critical: Gemini models are disabled because no API Key is provided. You are currently restricted to Local (Ollama) models only."
+                                : "Required for any cloud-based options. Your keys are stored locally in your browser and never shared with anyone else."}
                             </p>
                           </div>
                         </div>

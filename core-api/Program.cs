@@ -2,6 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using OllamaSharp;
 using SystemDesignRecommenderApi.Clients;
 using SystemDesignRecommenderApi.Domain.Data;
+using SystemDesignRecommenderApi.Domain.Data.Mongo;
+using SystemDesignRecommenderApi.Domain.Evaluation;
+using SystemDesignRecommenderApi.Hubs;
 using SystemDesignRecommenderApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +19,7 @@ builder.Services.AddControllers()
 // Register Database
 builder.Services.AddDbContext<DesignDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddSingleton<MongoDbContext>();
 
 // Register Ollama services
 builder.Services.AddSingleton(new OllamaApiClient(new Uri(builder.Configuration["Ollama:Endpoint"] ?? "http://localhost:11434")));
@@ -24,6 +28,15 @@ builder.Services.AddSingleton<ISettingsService, SettingsService>();
 builder.Services.AddScoped<IRuleEngineService, RuleEngineService>();
 builder.Services.AddScoped<ISystemDesignService, SystemDesignService>();
 builder.Services.AddScoped<INodeSettingsService, NodeSettingsService>();
+
+// Register Evaluation Services
+builder.Services.AddScoped<IEvaluationConstraint, CostConstraint>();
+builder.Services.AddScoped<IEvaluationConstraint, SecurityConstraint>();
+builder.Services.AddScoped<IEvaluationConstraint, OperationalConstraint>();
+builder.Services.AddScoped<IEvaluationService, EvaluationService>();
+builder.Services.AddScoped<IAgenticFeedbackService, AgenticFeedbackService>();
+
+builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<McpClient>();
 
@@ -50,6 +63,9 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<DesignDbContext>();
     dbContext.Database.Migrate();
+
+    // Seed MongoDB
+    DatabaseSeeder.SeedAsync(app.Services).GetAwaiter().GetResult();
 }
 
 app.UseCors("AllowAll");
@@ -67,5 +83,6 @@ if (app.Environment.IsDevelopment())
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<AgentStatusHub>("/hubs/agentStatus");
 
 app.Run();

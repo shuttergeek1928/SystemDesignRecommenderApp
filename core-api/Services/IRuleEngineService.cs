@@ -4,7 +4,7 @@ namespace SystemDesignRecommenderApi.Services;
 
 public interface IRuleEngineService
 {
-    IEnumerable<RuleTriggerRecordDTO> EvaluateRules(DesignRequirements context);
+    Task<IEnumerable<RuleTriggerRecordDTO>> EvaluateRulesAsync(DesignRequirements context);
 }
 
 public class RuleTriggerRecordDTO

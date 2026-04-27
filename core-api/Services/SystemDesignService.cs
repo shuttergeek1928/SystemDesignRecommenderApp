@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 using System.Text.Json;
 using SystemDesignRecommenderApi.Domain.Data;
+using SystemDesignRecommenderApi.Domain.Data.Mongo;
 using SystemDesignRecommenderApi.Domain.DTO;
 using SystemDesignRecommenderApi.Domain.Models;
 using SystemDesignRecommenderApi.Helpers;
@@ -15,21 +17,30 @@ public class SystemDesignService : ISystemDesignService
     private readonly DesignDbContext _dbContext;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly INodeSettingsService _nodeSettingsService;
+    private readonly IEvaluationService _evaluationService;
+    private readonly IAgenticFeedbackService _agenticFeedbackService;
+    private readonly MongoDbContext _mongoDbContext;
 
     public SystemDesignService(
-        ILLMChatService llmChatService,
-        ISettingsService settingsService,
-        IRuleEngineService ruleEngineService,
         DesignDbContext dbContext,
+        ILLMChatService llmChatService,
+        IRuleEngineService ruleEngineService,
+        INodeSettingsService nodeSettingsService,
+        ISettingsService settingsService,
+        IEvaluationService evaluationService,
+        IAgenticFeedbackService agenticFeedbackService,
         IHttpClientFactory httpClientFactory,
-        INodeSettingsService nodeSettingsService)
+        MongoDbContext mongoDbContext)
     {
-        _llmChatService = llmChatService;
-        _settingsService = settingsService;
-        _ruleEngineService = ruleEngineService;
         _dbContext = dbContext;
-        _httpClientFactory = httpClientFactory;
+        _llmChatService = llmChatService;
+        _ruleEngineService = ruleEngineService;
         _nodeSettingsService = nodeSettingsService;
+        _settingsService = settingsService;
+        _evaluationService = evaluationService;
+        _agenticFeedbackService = agenticFeedbackService;
+        _httpClientFactory = httpClientFactory;
+        _mongoDbContext = mongoDbContext;
     }
 
     public async Task<DesignRequirements?> ExtractRequirementsAsync(string problemStatement)
@@ -212,10 +223,12 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         }
     }
 
-    public async Task<ArchitectureDesign?> GenerateHybridArchitectureAsync(string problemStatement, DesignRequirements requirements, Guid? userId = null, Guid? teamId = null)
+    public async Task<GenerationResult?> GenerateHybridArchitectureAsync(string problemStatement, DesignRequirements requirements, Guid? userId = null, Guid? teamId = null, string? connectionId = null)
     {
+        await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Initializing System Design Generation...");
         // 1. Evaluate Rules
-        var triggeredRules = _ruleEngineService.EvaluateRules(requirements).ToList();
+        var triggeredRulesResult = await _ruleEngineService.EvaluateRulesAsync(requirements);
+        var triggeredRules = triggeredRulesResult.ToList();
 
         // 2. Prepare Context for LLM
         var ruleContextText = string.Join("\n", triggeredRules.Select(r =>
@@ -246,6 +259,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
         if (genProvider.Contains("gemini"))
         {
+            await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Drafting initial architecture (Batch Mode)...");
             Console.WriteLine($"=== [GenerateHybridArchitectureAsync] Using Gemini BATCH mode | Provider: {genProvider}, Model: {genModel} ===");
             architecture = await GenerateBatchArchitectureAsync(contextSummary, settingsList, genProvider, genModel, ruleHint);
         }
@@ -253,9 +267,11 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         {
             // Per-node strategy: one focused LLM call per node
             architecture = new ArchitectureDesign();
+            await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Drafting initial architecture (Iterative Mode)...");
             foreach (var node in settingsList)
             {
                 var nodeKey = node.NodeKey.ToLower();
+                await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, $"Resolving component: {nodeKey}...");
                 // If user pre-configured a choice, respect it as a hard constraint
                 var choiceHint = string.IsNullOrEmpty(node.Choice) ? "" : $" The preferred choice is: '{node.Choice}'";
                 var singleNodePrompt =
@@ -288,6 +304,33 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                 }
             }
         }
+
+        // --- AGENTIC FEEDBACK LOOP ---
+        await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Submitting draft to Critic Agent for evaluation...");
+        
+        var evaluation = await _evaluationService.EvaluateArchitectureAsync(architecture, requirements, problemStatement);
+        
+        if (evaluation.RubricScore < 70)
+        {
+            await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, $"Critic Score: {evaluation.RubricScore}/100. Critic rejected draft. Analyzing feedback for self-correction...");
+            
+            // Loop! Re-generate with the critic's report
+            string correctionHint = $"The previous design was rejected with score {evaluation.RubricScore}. The Critic provided this feedback:\n{evaluation.CriticReport}\n\nFIX ALL ISSUES MENTIONED IN THE CRITIQUE.";
+            
+            if (genProvider.Contains("gemini"))
+            {
+                await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Drafting corrected architecture...");
+                architecture = await GenerateBatchArchitectureAsync(contextSummary, settingsList, genProvider, genModel, ruleHint + " " + correctionHint);
+            }
+            // In iterative mode, we could regenerate each node, but for simplicity, we'll just log it.
+            
+            // Evaluate again (we could loop N times, but let's just do 1 correction pass)
+            await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Re-evaluating corrected architecture...");
+            evaluation = await _evaluationService.EvaluateArchitectureAsync(architecture, requirements, problemStatement);
+        }
+
+        await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, $"Final Rubric Score: {evaluation.RubricScore}/100. Generation complete.");
+        // --- END AGENTIC FEEDBACK LOOP ---
 
         // 3. Persist Session & Results
         if (architecture.Any())
@@ -322,6 +365,27 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                     JsonData = JsonSerializer.Serialize(architecture)
                 });
                 await _dbContext.SaveChangesAsync();
+
+                // Persist Polyglot Document to MongoDB
+                var mongoDoc = new SystemDesignRecommenderApi.Domain.Data.Mongo.Entities.DesignHistoryDocument
+                {
+                    SqlSessionId = session.Id.ToString(),
+                    UserId = activeUserId.ToString(),
+                    TeamId = teamId?.ToString(),
+                    ProblemStatement = problemStatement,
+                    ExtractedRequirements = requirements,
+                    ArchitectureDesign = architecture,
+                    EvaluationScores = new SystemDesignRecommenderApi.Domain.Data.Mongo.Entities.EvaluationScoreDocument
+                    {
+                        IndustryAlignmentScore = evaluation.IndustryAlignmentScore,
+                        ConstraintFulfillmentScore = evaluation.ConstraintFulfillmentScore,
+                        DeploymentReadinessScore = evaluation.DeploymentReadinessScore,
+                        RubricScore = evaluation.RubricScore,
+                        CriticReport = evaluation.CriticReport,
+                        MatchedBlueprintId = evaluation.MatchedBlueprintId
+                    }
+                };
+                await _mongoDbContext.DesignHistory.InsertOneAsync(mongoDoc);
             }
             catch (Exception ex)
             {
@@ -329,7 +393,11 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             }
         }
 
-        return architecture;
+        return new GenerationResult
+        {
+            Architecture = architecture,
+            Evaluation = evaluation
+        };
     }
 
     public async Task<IEnumerable<DesignSessionDTO>> GetSessionHistoryAsync(Guid? userId = null, Guid? teamId = null)
@@ -404,6 +472,11 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
         if (session == null) return null;
 
+        // Try to fetch evaluation from MongoDB
+        var evaluation = await _mongoDbContext.DesignHistory
+            .Find(h => h.SqlSessionId == id.ToString())
+            .FirstOrDefaultAsync();
+
         var req = await _dbContext.Requirements.FirstOrDefaultAsync(r => r.SessionId == id);
         var rec = await _dbContext.Recommendations.FirstOrDefaultAsync(r => r.SessionId == id);
 
@@ -421,8 +494,36 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                 r.Condition,
                 r.Recommendation,
                 r.Justification
-            })
+            }),
+            EvaluationScores = evaluation?.EvaluationScores
         };
+    }
+
+    public async Task<bool> DeleteSessionAsync(Guid id)
+    {
+        var session = await _dbContext.Sessions.FindAsync(id);
+        if (session == null) return false;
+
+        try
+        {
+            // Remove related records first if cascade isn't automatic
+            var requirements = _dbContext.Requirements.Where(r => r.SessionId == id);
+            var recommendations = _dbContext.Recommendations.Where(r => r.SessionId == id);
+            var triggeredRules = _dbContext.TriggeredRules.Where(r => r.SessionId == id);
+
+            _dbContext.Requirements.RemoveRange(requirements);
+            _dbContext.Recommendations.RemoveRange(recommendations);
+            _dbContext.TriggeredRules.RemoveRange(triggeredRules);
+            
+            _dbContext.Sessions.Remove(session);
+            await _dbContext.SaveChangesAsync();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[DeleteSession] Error: {ex.Message}");
+            return false;
+        }
     }
 
     private async Task<ArchitectureDesign> GenerateBatchArchitectureAsync(

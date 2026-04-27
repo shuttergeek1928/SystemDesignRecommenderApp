@@ -22,7 +22,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 const publicNavItems = [
   { name: "Home", href: "/", icon: Cpu },
   { name: "Demo", href: "/demo", icon: Sparkles },
-  { name: "Features", href: "/features", icon: Cpu },
+  // { name: "Features", href: "/features", icon: Cpu },
 ];
 
 const privateNavItems = [
@@ -35,7 +35,7 @@ const privateNavItems = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { fetchSettings } = useSystemDesignStore();
+  const { fetchSettings, reset } = useSystemDesignStore();
   const { user, logout } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -83,6 +83,9 @@ export function Navbar() {
               key={item.name}
               href={item.href}
               className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              onClick={() => {
+                if (item.name === "Dashboard") reset();
+              }}
             >
               {item.name}
             </Link>
@@ -160,7 +163,10 @@ export function Navbar() {
                   key={item.name}
                   href={item.href}
                   className="flex items-center gap-3 text-lg font-medium p-2 hover:bg-accent rounded-lg"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={() => {
+                    if (item.name === "Dashboard") reset();
+                    setMobileMenuOpen(false);
+                  }}
                 >
                   <item.icon className="w-5 h-5 text-primary" />
                   {item.name}

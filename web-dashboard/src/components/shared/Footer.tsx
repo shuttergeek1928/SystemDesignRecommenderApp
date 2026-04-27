@@ -32,11 +32,11 @@ export function Footer() {
                   Dashboard
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link href="#features" className="hover:text-primary">
                   Features
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link href="/api" className="hover:text-primary">
                   API Reference

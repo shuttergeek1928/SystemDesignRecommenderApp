@@ -1,3 +1,4 @@
+using SystemDesignRecommenderApi.Domain.DTO;
 using SystemDesignRecommenderApi.Domain.Models;
 
 namespace SystemDesignRecommenderApi.Services;
@@ -7,9 +8,10 @@ public interface ISystemDesignService
     Task<DesignRequirements?> ExtractRequirementsAsync(string problemStatement);
     Task<ArchitectureDesign?> GenerateArchitectureAsync(string problemStatement, DesignRequirements requirements, Guid? userId = null, Guid? teamId = null);
     Task<ArchitectureDesign?> GenerateArchitectureWithRagAsync(DesignRequirements requirements, Guid? userId = null, Guid? teamId = null);
-    Task<ArchitectureDesign?> GenerateHybridArchitectureAsync(string problemStatement, DesignRequirements requirements, Guid? userId = null, Guid? teamId = null);
+    Task<GenerationResult?> GenerateHybridArchitectureAsync(string problemStatement, DesignRequirements requirements, Guid? userId = null, Guid? teamId = null, string? connectionId = null);
     Task<IEnumerable<DesignSessionDTO>> GetSessionHistoryAsync(Guid? userId = null, Guid? teamId = null);
     Task<object?> GetSessionByIdAsync(Guid id);
+    Task<bool> DeleteSessionAsync(Guid id);
 }
 
 public class DesignSessionDTO

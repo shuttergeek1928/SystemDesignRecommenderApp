@@ -230,8 +230,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         var triggeredRulesResult = await _ruleEngineService.EvaluateRulesAsync(requirements);
         var triggeredRules = triggeredRulesResult.ToList();
 
-        // 2. Prepare Context for LLM
-        var ruleContextText = string.Join("\n", triggeredRules.Select(r =>
+        // 2. Prepare Context for LLM (Only use MATCHED rules)
+        var ruleContextText = string.Join("\n", triggeredRules.Where(r => r.IsMatched).Select(r =>
             $"- {r.Dimension}: {r.Recommendation} (Reason: {r.Justification})"));
 
         // 3. Load Dynamic Nodes and Settings
@@ -343,7 +343,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                     ProblemStatement = problemStatement,
                     UserId = activeUserId,
                     TeamId = teamId,
-                    TriggeredRules = triggeredRules.Select(r => new SystemDesignRecommenderApi.Domain.Data.Entities.RuleTriggerRecord
+                    TriggeredRules = triggeredRules.Where(r => r.IsMatched).Select(r => new SystemDesignRecommenderApi.Domain.Data.Entities.RuleTriggerRecord
                     {
                         Dimension = r.Dimension,
                         Condition = r.Condition,
@@ -396,7 +396,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         return new GenerationResult
         {
             Architecture = architecture,
-            Evaluation = evaluation
+            Evaluation = evaluation,
+            Rules = triggeredRules
         };
     }
 

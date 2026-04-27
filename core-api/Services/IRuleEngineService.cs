@@ -13,4 +13,5 @@ public class RuleTriggerRecordDTO
     public string Condition { get; set; } = string.Empty;
     public string Recommendation { get; set; } = string.Empty;
     public string Justification { get; set; } = string.Empty;
+    public bool IsMatched { get; set; }
 }

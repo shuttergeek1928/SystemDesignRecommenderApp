@@ -37,7 +37,7 @@ public class EvaluationService : IEvaluationService
         result.IndustryAlignmentScore = await CalculateIndustryAlignmentAsync(design, requirements);
 
         // 2. Constraint Fulfillment Score
-        result.ConstraintFulfillmentScore = await CalculateConstraintFulfillmentAsync(requirements);
+        result.ConstraintFulfillmentScore = await CalculateConstraintFulfillmentAsync(design, requirements);
 
         // 3. Deployment Readiness Score (Simple heuristic based on specific services vs generic terms)
         result.DeploymentReadinessScore = CalculateDeploymentReadiness(design);
@@ -69,14 +69,30 @@ public class EvaluationService : IEvaluationService
         return 50; // Default score if no match
     }
 
-    private async Task<int> CalculateConstraintFulfillmentAsync(DesignRequirements requirements)
+    private async Task<int> CalculateConstraintFulfillmentAsync(ArchitectureDesign design, DesignRequirements requirements)
     {
-        var triggeredRules = await _ruleEngine.EvaluateRulesAsync(requirements);
-        
-        // In a real scenario, we check if the design ACTUALLY implemented the recommendation.
-        // For now, if there are many triggered rules, we assume it's a complex scenario and 
-        // the generator handled them well enough, or we dock points if it didn't.
-        return 90; // Placeholder
+        var allRules = await _ruleEngine.EvaluateRulesAsync(requirements);
+        var matchedRules = allRules.Where(r => r.IsMatched).ToList();
+
+        if (!matchedRules.Any()) return 100; // No rules triggered, full compliance
+
+        int followedCount = 0;
+        var designJson = JsonSerializer.Serialize(design).ToLower();
+
+        foreach (var rule in matchedRules)
+        {
+            // Very simple heuristic: check if keywords from the recommendation appear in the design
+            var keywords = rule.Recommendation.Split(' ')
+                .Where(w => w.Length > 4) // Only significant words
+                .Select(w => w.TrimEnd(',', '.', ';').ToLower());
+
+            if (keywords.Any(k => designJson.Contains(k)))
+            {
+                followedCount++;
+            }
+        }
+
+        return (int)((double)followedCount / matchedRules.Count * 100);
     }
 
     private int CalculateDeploymentReadiness(ArchitectureDesign design)

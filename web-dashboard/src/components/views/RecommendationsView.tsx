@@ -74,9 +74,20 @@ export function RecommendationsView() {
     recommendation.data.ExtractedRequirements ||
     recommendation.data.extractedRequirements;
   const rules =
-    recommendation.data.TriggeredRules || recommendation.data.triggeredRules;
+    recommendation.data.Rules || recommendation.data.rules || 
+    recommendation.data.TriggeredRules || recommendation.data.triggeredRules || [];
   const scores =
     recommendation.data.EvaluationScores || recommendation.data.evaluationScores;
+  
+  // Calculate dynamic Integrity Score (average of available evaluation scores)
+  const integrityScore = scores 
+    ? Math.round((
+        (scores.industryAlignmentScore ?? scores.IndustryAlignmentScore ?? 0) +
+        (scores.constraintFulfillmentScore ?? scores.ConstraintFulfillmentScore ?? 0) +
+        (scores.deploymentReadinessScore ?? scores.DeploymentReadinessScore ?? 0) +
+        (scores.rubricScore ?? scores.RubricScore ?? 0)
+      ) / 4)
+    : 94; // Fallback to 94 if scores are missing
   
   console.log("RecommendationsView: recommendation.data keys:", Object.keys(recommendation.data));
   console.log("RecommendationsView: scores:", scores);
@@ -154,7 +165,7 @@ export function RecommendationsView() {
       </header>
 
       {/* AGENTIC AUDIT DASHBOARD */}
-      {scores && <AuditDashboard scores={scores} />}
+      {scores && <AuditDashboard scores={scores} rules={rules} />}
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -171,10 +182,10 @@ export function RecommendationsView() {
               </h2>
             </div>
 
-            {/* Reasoning Anchors (Triggered Rules) */}
-            {(rules?.length ?? 0) > 0 && (
+            {/* Reasoning Anchors (Only Matched Triggered Rules) */}
+            {rules?.filter((r: any) => r.isMatched !== false).length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                {rules?.map((rule: any, i: number) => (
+                {rules?.filter((r: any) => r.isMatched !== false).map((rule: any, i: number) => (
                   <div
                     key={i}
                     className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex gap-3"
@@ -231,33 +242,43 @@ export function RecommendationsView() {
                   <span className="text-muted-foreground uppercase tracking-widest text-[10px]">
                     Confidence Match
                   </span>
-                  <span className="text-emerald-500">94%</span>
+                  <span className={cn(
+                    integrityScore >= 80 ? "text-emerald-500" : 
+                    integrityScore >= 60 ? "text-amber-500" : 
+                    "text-rose-500"
+                  )}>{integrityScore}%</span>
                 </div>
                 <div className="h-2 bg-secondary rounded-full overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
-                    animate={{ width: "94%" }}
-                    className="h-full bg-emerald-500"
+                    animate={{ width: `${integrityScore}%` }}
+                    className={cn(
+                      "h-full transition-all duration-1000",
+                      integrityScore >= 80 ? "bg-emerald-500" : 
+                      integrityScore >= 60 ? "bg-amber-500" : 
+                      "bg-rose-500"
+                    )}
                   />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border/50 grid grid-cols-1 gap-2 text-sm leading-relaxed">
-                <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-                    Strategy Context
-                  </span>
-                  <p className="text-xs font-medium">
-                    Provider: AWS (Joint Analysis Mode)
-                  </p>
+              <div className="pt-6 border-t border-border/50 space-y-3">
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-[0.2em] mb-2">Calculation Breakdown</p>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-muted-foreground font-bold">Industry Alignment</span>
+                  <span className="font-mono">{scores?.industryAlignmentScore ?? scores?.IndustryAlignmentScore ?? 0}%</span>
                 </div>
-                <div className="flex flex-col gap-1 mt-2">
-                  <span className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-                    Cloud Strategy
-                  </span>
-                  <p className="text-xs font-medium">
-                    {req.context.region_strategy}
-                  </p>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-muted-foreground font-bold">Rule Compliance</span>
+                  <span className="font-mono">{scores?.constraintFulfillmentScore ?? scores?.ConstraintFulfillmentScore ?? 0}%</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-muted-foreground font-bold">Deployment Readiness</span>
+                  <span className="font-mono">{scores?.deploymentReadinessScore ?? scores?.DeploymentReadinessScore ?? 0}%</span>
+                </div>
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-muted-foreground font-bold">Agentic Rubric</span>
+                  <span className="font-mono">{scores?.rubricScore ?? scores?.RubricScore ?? 0}%</span>
                 </div>
               </div>
             </div>

@@ -7,4 +7,5 @@ public class GenerationResult
 {
     public ArchitectureDesign Architecture { get; set; } = new();
     public EvaluationResult Evaluation { get; set; } = new();
+    public IEnumerable<RuleTriggerRecordDTO> Rules { get; set; } = new List<RuleTriggerRecordDTO>();
 }

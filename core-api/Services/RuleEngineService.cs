@@ -20,16 +20,15 @@ public class RuleEngineService : IRuleEngineService
 
         foreach (var rule in rules)
         {
-            if (EvaluateRule(rule, context))
+            bool isMatched = EvaluateRule(rule, context);
+            triggers.Add(new RuleTriggerRecordDTO
             {
-                triggers.Add(new RuleTriggerRecordDTO
-                {
-                    Dimension = rule.Dimension,
-                    Condition = $"{rule.Field} {rule.Operator} {rule.Value}",
-                    Recommendation = rule.Recommendation,
-                    Justification = rule.Justification
-                });
-            }
+                Dimension = rule.Dimension,
+                Condition = $"{rule.Field} {rule.Operator} {rule.Value}",
+                Recommendation = rule.Recommendation,
+                Justification = rule.Justification,
+                IsMatched = isMatched
+            });
         }
 
         return triggers;

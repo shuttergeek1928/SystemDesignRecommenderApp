@@ -15,12 +15,15 @@ I have successfully transformed the system design recommender into a professiona
   - **SecurityConstraint**: Audits security posture and compliance.
   - **OperationalConstraint**: Evaluates deployment complexity.
 - **LLM-as-a-Judge**: Uses Gemini 3.1 Pro as a critic to generate a detailed rubric score and a textual critique.
+- **Dynamic Constraint Fulfillment**: Replaced static placeholders with a keyword-based heuristic that verifies if the generated architecture actually implements the triggered rules.
 
 ### 3. Real-Time Agentic Loop (SignalR)
 - **Agentic Loop**: If the Critic assigns a score below 70, the system automatically triggers a second generation pass, feeding the critique back into the prompt for self-correction.
-- **SignalR Hub**: Stream real-time status updates ("Analyzing cost...", "Critic rejected draft...") directly to the dashboard.
+- **SignalR Hub**: Streams real-time status updates ("Analyzing cost...", "Critic rejected draft...") directly to the dashboard.
 
 ### 4. Architectural Audit Dashboard
+- **Integrity Score**: A dynamic confidence metric in the sidebar calculated as the average of Industry Alignment, Rule Compliance, Deployment Readiness, and the Agentic Rubric.
+- **Rule Engine Audit**: A new transparency layer that shows exactly which architectural rules were **Active** (matched requirements) and which remained **Idle**.
 - **Radar Charts**: Integrated `recharts` to visualize scores across 5 dimensions.
 - **Critic Report**: Displays the raw, unfiltered critique from the Agentic Critic.
 
@@ -28,7 +31,7 @@ I have successfully transformed the system design recommender into a professiona
 
 1. **Start the System**: Run `dotnet run` in `core-api` and `npm run dev` in `web-dashboard`.
 2. **Generate a Design**: Go to the generation page. You will see the loading text update in real-time as the agent works.
-3. **View the Audit**: Once complete, the recommendation page will feature a new **Architectural Radar** and **Critic Agent Report** section.
+3. **View the Audit**: Once complete, the recommendation page will feature a new **Architectural Radar**, a **Rule Engine Audit**, and a **Critic Agent Report** section.
 4. **History**: Old sessions viewed from the history page will now also load their evaluation data from MongoDB.
 
 ## Screenshots & Visuals

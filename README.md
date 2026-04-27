@@ -8,25 +8,26 @@ A sophisticated hybrid reasoning platform designed to assist software architects
 
 The application follows a modular architecture where the **.NET Core API** acts as the central orchestrator:
 
-1.  **Ingestion**: User enters a natural language problem statement (e.g., "Build a ride-sharing app") and non-functional goals via the **Next.js Dashboard**.
+1.  **Ingestion**: User enters a natural language problem statement and non-functional goals.
 2.  **Hybrid Extraction**:
-    *   **LLM** extracts technical dimensions (Request Rate, Latency, Team Size).
-    *   **Deterministic Rule Engine** evaluates these dimensions against 20+ architectural best practices (e.g., "If Team < 8, recommend Modular Monolith").
-3.  **Reasoning synthesis**:
-    *   The orchestrator injects these "Rule-Based Anchors" into a specialized LLM prompt.
-    *   If **RAG Mode** is active, technical context is retrieved from **ChromaDB** based on the prompt.
-4.  **Persistence**: The final architecture, requirements, and triggered rules are saved to **SQL Server** for history and multi-tenancy.
-5.  **Visualization**: Results are displayed in the dashboard as "Proposed Architecture" with "Reasoning Anchors" showing clear justifications.
+    *   **LLM** extracts technical dimensions.
+    *   **Deterministic Rule Engine** evaluates these against best practices.
+3.  **Agentic Evaluation**:
+    *   The **Critic Agent (Gemini)** performs a 4-way audit (Alignment, Compliance, Readiness, Rubric).
+    *   The system performs a **self-correction loop** if the initial design score is too low.
+4.  **Polyglot Persistence**: The session, requirements, rules, and AI audit report are stored across **SQL Server** and **MongoDB**.
+5.  **Visualization**: Results are displayed with an **Architectural Radar** and a detailed **Rule Engine Audit** showing matched vs. idle constraints.
 
 ---
 
 ## 🌟 Key Features
 
-- **Hybrid Reasoning Engine**: Combines the creativity of LLMs (Phi-3) with the reliability of deterministic rule-based anchors.
-- **RAG-Enhanced Analysis**: Leverages expert documentation (AWS Well-Architected, GCP Cloud Architecture Center) from a local vector store.
-- **Persistent Sessions**: Entire design history is stored in SQL Server with automatic startup migrations.
-- **Multi-Tenancy Support**: Database schema ready for User and Team level segregation.
-- **Advanced UX**: Premium Next.js 14 dashboard with glassmorphism, Framer Motion animations, and real-time validation.
+- **Hybrid Reasoning Engine**: Combines LLM creativity with deterministic rule-based anchors.
+- **Agentic "Critic" Loop**: A Gemini-powered critic that audits designs and forces regenerations for sub-par results.
+- **Architectural Audit Dashboard**: Real-time visualization of system integrity using Radar Charts and Rule Audits.
+- **Polyglot Persistence**: Strategic use of SQL Server (Rules/Users) and MongoDB (History/Blueprints).
+- **RAG-Enhanced Analysis**: Technical context retrieved from local expert documentation.
+- **Advanced UX**: Premium dashboard with real-time SignalR status updates during generation.
 
 ---
 

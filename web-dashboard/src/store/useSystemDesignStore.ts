@@ -25,10 +25,12 @@ interface SystemDesignStore {
       ExtractedRequirements?: any;
       ArchitectureDesign?: any;
       TriggeredRules?: any[];
+      Rules?: any[];
       EvaluationScores?: any;
       extractedRequirements?: any;
       architectureDesign?: any;
       triggeredRules?: any[];
+      rules?: any[];
       evaluationScores?: any;
     };
   } | null;
@@ -315,6 +317,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                 extractedRequirements: result.extractedRequirements,
                 architectureDesign: result.architectureDesign,
                 triggeredRules: result.triggeredRules,
+                rules: result.rules || result.Rules,
                 evaluationScores: result.evaluationScores,
               },
             },

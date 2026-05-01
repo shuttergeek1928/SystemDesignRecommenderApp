@@ -13,6 +13,7 @@ import {
   Users,
   Sparkles,
   Settings,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSystemDesignStore } from "@/store/useSystemDesignStore";
@@ -28,6 +29,7 @@ const publicNavItems = [
 const privateNavItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "History", href: "/history", icon: BrainCircuit },
+  { name: "Knowledge Base", href: "/blueprints", icon: Database },
   { name: "Teams", href: "/teams", icon: Users },
   { name: "Settings", href: "/settings", icon: Settings },
 ];

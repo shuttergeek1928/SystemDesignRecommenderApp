@@ -17,23 +17,31 @@ public static class DatabaseSeeder
         
         // Seed MongoDB Reference Blueprints
         var blueprintsCollection = mongoContext.ReferenceBlueprints;
-        var count = await blueprintsCollection.CountDocumentsAsync(Builders<ReferenceBlueprint>.Filter.Empty);
         
-        if (count == 0)
+        // FORCED RESET: If data is corrupted (e.g. missing architectures), drop and re-seed
+        var existingCount = await blueprintsCollection.CountDocumentsAsync(Builders<ReferenceBlueprint>.Filter.Empty);
+        var firstItem = await blueprintsCollection.Find(Builders<ReferenceBlueprint>.Filter.Empty).FirstOrDefaultAsync();
+        
+        if (existingCount == 0 || (firstItem != null && (firstItem.GroundTruthArchitecture == null || firstItem.GroundTruthArchitecture.Count == 0)))
         {
+            if (existingCount > 0)
+            {
+                Console.WriteLine("Data corruption detected (empty architectures). Re-seeding...");
+                await mongoContext.Database.DropCollectionAsync("ReferenceBlueprints");
+            }
+
             var filePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "data", "architecture_dataset_40.json");
             if (File.Exists(filePath))
             {
                 var json = await File.ReadAllTextAsync(filePath);
-                var blueprints = JsonSerializer.Deserialize<List<ReferenceBlueprint>>(json, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
+                
+                // Use MongoDB's BsonSerializer to respect [BsonElement] and [BsonExtraElements]
+                var blueprints = MongoDB.Bson.Serialization.BsonSerializer.Deserialize<List<ReferenceBlueprint>>(json);
 
                 if (blueprints != null && blueprints.Any())
                 {
                     await blueprintsCollection.InsertManyAsync(blueprints);
-                    Console.WriteLine($"Seeded {blueprints.Count} reference blueprints into MongoDB.");
+                    Console.WriteLine($"Seeded {blueprints.Count} reference blueprints into MongoDB using BsonSerializer.");
                 }
             }
             else

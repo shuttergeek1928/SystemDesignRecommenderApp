@@ -73,6 +73,7 @@ class DesignRequirements(BaseModel):
 class RagRequest(BaseModel):
     requirements: DesignRequirements
     node_structure: Dict[str, Dict[str, str]]
+    feedback_context: Optional[str] = ""
 
 # RAG Prompt Template
 prompt_template = """
@@ -81,6 +82,8 @@ Use the following pieces of architectural knowledge to design a system for the u
 
 RELEVANT ARCHITECTURAL KNOWLEDGE:
 {context}
+
+{feedback_context}
 
 USER REQUIREMENTS:
 Title: {title}
@@ -164,7 +167,8 @@ async def generate_rag_design(rag_req: RagRequest):
              "data_retention": lambda x: req.context.data_retention,
              "team_size": lambda x: req.context.team_size,
              "experience_level": lambda x: req.context.experience_level,
-             "compliance": lambda x: ", ".join(req.context.compliance) if req.context.compliance else "None"
+             "compliance": lambda x: ", ".join(req.context.compliance) if req.context.compliance else "None",
+             "feedback_context": lambda x: rag_req.feedback_context or ""
             }
             | prompt
             | current_llm

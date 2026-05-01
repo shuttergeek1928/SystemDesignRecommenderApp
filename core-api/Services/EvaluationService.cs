@@ -34,7 +34,9 @@ public class EvaluationService : IEvaluationService
         var result = new EvaluationResult();
 
         // 1. Industry Alignment Score
-        result.IndustryAlignmentScore = await CalculateIndustryAlignmentAsync(design, requirements);
+        var alignment = await CalculateIndustryAlignmentAsync(design, requirements);
+        result.IndustryAlignmentScore = alignment.Score;
+        result.MatchedBlueprintId = alignment.MatchedBlueprintId;
 
         // 2. Constraint Fulfillment Score
         result.ConstraintFulfillmentScore = await CalculateConstraintFulfillmentAsync(design, requirements);
@@ -50,23 +52,47 @@ public class EvaluationService : IEvaluationService
         return result;
     }
 
-    private async Task<int> CalculateIndustryAlignmentAsync(ArchitectureDesign design, DesignRequirements requirements)
+    private async Task<(int Score, int? MatchedBlueprintId)> CalculateIndustryAlignmentAsync(ArchitectureDesign design, DesignRequirements requirements)
     {
-        // Simple heuristic: Try to match context. Users, traffic pattern, etc.
-        // In a real system, use embeddings for vector similarity.
-        var builder = Builders<Domain.Data.Mongo.Entities.ReferenceBlueprint>.Filter;
-        var filter = builder.Empty;
+        var filter = Builders<Domain.Data.Mongo.Entities.ReferenceBlueprint>.Filter.Empty;
+        var blueprints = await _mongoDbContext.ReferenceBlueprints.Find(filter).ToListAsync();
 
-        // Try to find a matching scenario based on some context or just return a default
-        var blueprint = await _mongoDbContext.ReferenceBlueprints.Find(filter).FirstOrDefaultAsync();
+        Domain.Data.Mongo.Entities.ReferenceBlueprint? bestBlueprint = null;
+        int bestScore = 50;
 
-        if (blueprint != null)
+        var aiJson = JsonSerializer.Serialize(design).ToLower();
+        var aiWords = aiJson.Split(new[] { ' ', '"', ':', '{', '}', ',', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 3).ToHashSet();
+
+        foreach (var blueprint in blueprints)
         {
-            // Calculate overlap (dummy calculation for prototype)
-            return 85;
+            int matchWeight = 0;
+            if (requirements.Context != null && blueprint.Context != null)
+            {
+                if (requirements.Context.TrafficPattern == blueprint.Context.TrafficPattern) matchWeight += 2;
+                if (requirements.Context.ConsistencyModel == blueprint.Context.ConsistencyModel) matchWeight += 2;
+                if (requirements.Context.LatencyRequirementMs == blueprint.Context.LatencyRequirementMs) matchWeight += 1;
+            }
+
+            var baselineJson = JsonSerializer.Serialize(blueprint.GroundTruthArchitecture).ToLower();
+            var baselineWords = baselineJson.Split(new[] { ' ', '"', ':', '{', '}', ',', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 3).ToHashSet();
+            
+            var overlap = baselineWords.Intersect(aiWords).Count();
+            int currentScore = Math.Min(100, (int)((double)overlap / Math.Max(1, baselineWords.Count) * 100)) + matchWeight * 5;
+            currentScore = Math.Min(100, currentScore);
+
+            if (currentScore > bestScore)
+            {
+                bestScore = currentScore;
+                bestBlueprint = blueprint;
+            }
         }
 
-        return 50; // Default score if no match
+        if (bestBlueprint != null)
+        {
+            return (bestScore, bestBlueprint.ScenarioId);
+        }
+
+        return (50, null);
     }
 
     private async Task<int> CalculateConstraintFulfillmentAsync(ArchitectureDesign design, DesignRequirements requirements)

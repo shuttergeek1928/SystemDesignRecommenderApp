@@ -285,7 +285,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
             isLoading: false,
             agentStatus: "Done",
             recommendation: {
-              id: "rec-" + Math.random().toString(36).substr(2, 9),
+              id: result.sessionId || result.SessionId || "rec-" + Math.random().toString(36).substr(2, 9),
               generatedAt: new Date().toISOString(),
               data: result,
             },

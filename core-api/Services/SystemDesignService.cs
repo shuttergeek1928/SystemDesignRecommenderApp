@@ -200,10 +200,30 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                 };
             }
 
+            // Fetch negative feedback to pass to RAG
+            var pastFeedback = await _mongoDbContext.DesignFeedback
+                .Find(f => f.OverallRating <= 3)
+                .SortByDescending(f => f.CreatedAt)
+                .Limit(5)
+                .ToListAsync();
+
+            var feedbackHint = "";
+            if (pastFeedback.Any())
+            {
+                var corrections = pastFeedback
+                    .SelectMany(f => f.NodeFeedback.Where(nf => !nf.IsApproved))
+                    .Select(nf => $"- For '{nf.NodeKey}': User corrected to '{nf.Correction}' because '{nf.Reason}'");
+                if (corrections.Any())
+                {
+                    feedbackHint = $"\n\nHISTORICAL CORRECTIONS FROM PAST USERS:\n{string.Join("\n", corrections)}\nCRITICAL: You must consider these past corrections and avoid repeating rejected choices if the context is similar.";
+                }
+            }
+
             var payload = new
             {
                 requirements = requirements,
-                node_structure = settingsList.ToDictionary(s => s.NodeKey, s => new { choice = s.Choice, justification = s.Justification })
+                node_structure = settingsList.ToDictionary(s => s.NodeKey, s => new { choice = s.Choice, justification = s.Justification }),
+                feedback_context = feedbackHint
             };
 
             var client = _httpClientFactory.CreateClient();
@@ -249,6 +269,27 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
         var contextSummary = $"team={requirements.Context?.TeamSize}, latency={requirements.Context?.LatencyRequirementMs}ms, consistency={requirements.Context?.ConsistencyModel}, problem={problemStatement}";
         var ruleHint = string.IsNullOrEmpty(ruleContextText) ? "" : $" Consider these architectural anchors: {ruleContextText}";
+
+        // --- FEEDBACK LOOP INJECTION ---
+        var pastFeedback = await _mongoDbContext.DesignFeedback
+            .Find(f => f.OverallRating <= 3) // Fetch negative or mediocre feedback
+            .SortByDescending(f => f.CreatedAt)
+            .Limit(5)
+            .ToListAsync();
+
+        if (pastFeedback.Any())
+        {
+            var corrections = pastFeedback
+                .SelectMany(f => f.NodeFeedback.Where(nf => !nf.IsApproved))
+                .Select(nf => $"- For '{nf.NodeKey}': User corrected to '{nf.Correction}' because '{nf.Reason}'");
+                
+            if (corrections.Any())
+            {
+                var feedbackHint = $"\n\nHISTORICAL CORRECTIONS FROM PAST USERS:\n{string.Join("\n", corrections)}\nCRITICAL: You must consider these past corrections and avoid repeating rejected choices if the context is similar.";
+                ruleHint += feedbackHint;
+            }
+        }
+        // --- END FEEDBACK LOOP INJECTION ---
 
         // Check if we should use batch mode or loop mode based on the GENERATION provider
         var appSettings = _settingsService.GetSettings();
@@ -333,6 +374,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         // --- END AGENTIC FEEDBACK LOOP ---
 
         // 3. Persist Session & Results
+        Guid? persistedSessionId = null;
         if (architecture.Any())
         {
             try
@@ -353,6 +395,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                 };
                 _dbContext.Sessions.Add(session);
                 await _dbContext.SaveChangesAsync();
+                persistedSessionId = session.Id;
 
                 _dbContext.Requirements.Add(new SystemDesignRecommenderApi.Domain.Data.Entities.RequirementRecord
                 {
@@ -395,6 +438,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
         return new GenerationResult
         {
+            SessionId = persistedSessionId,
             Architecture = architecture,
             Evaluation = evaluation,
             Rules = triggeredRules

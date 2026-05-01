@@ -35,6 +35,7 @@ builder.Services.AddScoped<IEvaluationConstraint, SecurityConstraint>();
 builder.Services.AddScoped<IEvaluationConstraint, OperationalConstraint>();
 builder.Services.AddScoped<IEvaluationService, EvaluationService>();
 builder.Services.AddScoped<IAgenticFeedbackService, AgenticFeedbackService>();
+builder.Services.AddScoped<IBenchmarkService, BenchmarkService>();
 
 builder.Services.AddSignalR();
 builder.Services.AddHttpClient();

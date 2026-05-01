@@ -7,6 +7,7 @@ namespace SystemDesignRecommenderApi.Domain.Data.Mongo;
 public class MongoDbContext
 {
     private readonly IMongoDatabase _database;
+    public IMongoDatabase Database => _database;
 
     public MongoDbContext(IConfiguration configuration)
     {
@@ -16,4 +17,5 @@ public class MongoDbContext
 
     public IMongoCollection<ReferenceBlueprint> ReferenceBlueprints => _database.GetCollection<ReferenceBlueprint>("ReferenceBlueprints");
     public IMongoCollection<DesignHistoryDocument> DesignHistory => _database.GetCollection<DesignHistoryDocument>("DesignHistory");
+    public IMongoCollection<DesignFeedback> DesignFeedback => _database.GetCollection<DesignFeedback>("DesignFeedback");
 }

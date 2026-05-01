@@ -24,6 +24,9 @@ import {
 } from "@/types/recommendation";
 import { cn } from "@/lib/utils";
 import { AuditDashboard } from "./AuditDashboard";
+import { BenchmarkView } from "./BenchmarkView";
+
+import { FeedbackWidget } from "./FeedbackWidget";
 
 export function RecommendationsView() {
   const { recommendation, isLoading, generateRecommendation, formData, agentStatus } =
@@ -307,6 +310,20 @@ export function RecommendationsView() {
           </div>
         </div>
       </motion.div>
+
+      {/* BENCHMARK COMPARISON ENGINE */}
+      <BenchmarkView />
+
+      {/* ACTIVE FEEDBACK LEARNING LOOP */}
+      {recommendation.id && (
+        <FeedbackWidget 
+          sessionId={recommendation.id} 
+          architectureDesign={arch}
+          onSubmitted={() => {
+            // Optional: Show a toast or trigger a refresh if needed
+          }}
+        />
+      )}
     </div>
   );
 }

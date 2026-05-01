@@ -11,11 +11,13 @@ public class SystemDesignController : ControllerBase
 {
     private readonly ISystemDesignService _systemDesignService;
     private readonly IRuleEngineService _ruleEngineService;
+    private readonly IBenchmarkService _benchmarkService;
 
-    public SystemDesignController(ISystemDesignService systemDesignService, IRuleEngineService ruleEngineService)
+    public SystemDesignController(ISystemDesignService systemDesignService, IRuleEngineService ruleEngineService, IBenchmarkService benchmarkService)
     {
         _systemDesignService = systemDesignService;
         _ruleEngineService = ruleEngineService;
+        _benchmarkService = benchmarkService;
     }
 
     [HttpPost("generate")]
@@ -96,10 +98,11 @@ public class SystemDesignController : ControllerBase
         // Step 2: Generate Architecture Design based on requirements
         ArchitectureDesign? architecture = null;
         EvaluationResult? evaluation = null;
+        GenerationResult? hybridResult = null;
 
         if (request.UseHybrid)
         {
-            var hybridResult = await _systemDesignService.GenerateHybridArchitectureAsync(request.ProblemStatement, requirements, request.UserId, request.TeamId, request.ConnectionId);
+            hybridResult = await _systemDesignService.GenerateHybridArchitectureAsync(request.ProblemStatement, requirements, request.UserId, request.TeamId, request.ConnectionId);
             architecture = hybridResult?.Architecture;
             evaluation = hybridResult?.Evaluation;
         }
@@ -119,6 +122,7 @@ public class SystemDesignController : ControllerBase
 
         return Ok(new
         {
+            SessionId = hybridResult?.SessionId,
             ExtractedRequirements = requirements,
             ArchitectureDesign = architecture,
             EvaluationScores = evaluation,
@@ -139,6 +143,14 @@ public class SystemDesignController : ControllerBase
         var session = await _systemDesignService.GetSessionByIdAsync(id);
         if (session == null) return NotFound("Session not found.");
         return Ok(session);
+    }
+
+    [HttpGet("{id}/benchmark")]
+    public async Task<IActionResult> GetBenchmarkComparison(Guid id)
+    {
+        var comparison = await _benchmarkService.CompareSessionWithBaselineAsync(id);
+        if (comparison == null) return NotFound("Benchmark not found.");
+        return Ok(comparison);
     }
 
     [HttpPost("extract-requirements")]

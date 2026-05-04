@@ -26,10 +26,8 @@ MODEL_NAME = "qwen2.5-coder:7b" # Or whatever model is available in Ollama
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
 # Initialize models
-embeddings = OllamaEmbeddings(
-    model="nomic-embed-text",
-    base_url=OLLAMA_BASE_URL
-)
+# Switch to local embeddings to avoid Gemini Quota issues
+embeddings = OllamaEmbeddings(model="nomic-embed-text", base_url=OLLAMA_BASE_URL)
 vectorstore = Chroma(
     persist_directory=DB_DIR,
     embedding_function=embeddings
@@ -112,13 +110,9 @@ async def generate_rag_design(rag_req: RagRequest):
     req = rag_req.requirements
     node_structure = rag_req.node_structure
     try:
-        provider = req.provider or "ollama"
-        model = req.model or (MODEL_NAME if provider == "ollama" else "gemini-3-flash-preview")
-        
-        # Safety check for Gemini
-        if provider.lower() == "gemini" and (":" in model or not model.startswith("gemini")):
-            logger.warning(f"Detected non-Gemini model name '{model}' for Gemini provider. Defaulting to 'gemini-3-flash-preview'.")
-            model = "gemini-3-flash-preview"
+        # Dynamically select provider and model from the request
+        provider = (req.provider or "ollama").lower()
+        model = req.model or "qwen2.5-coder:7b"
         
         logger.info(f"Received RAG request for: {req.title} with provider: {provider}, model: {model}")
         
@@ -130,24 +124,25 @@ async def generate_rag_design(rag_req: RagRequest):
         # 2. Generation
         import json
         node_structure_json = json.dumps(node_structure, indent=4)
-        prompt = ChatPromptTemplate.from_template(prompt_template.replace("{node_structure}", node_structure_json))
+        prompt_tmpl = ChatPromptTemplate.from_template(prompt_template)
         
-        # Initialize LLM based on provider
-        if provider.lower() == "gemini":
+        # Initialize the appropriate LLM based on provider
+        if provider == "gemini":
             if not req.api_key:
-                raise HTTPException(status_code=400, detail="Gemini API Key is required for Gemini provider")
-            current_llm = ChatGoogleGenerativeAI(
-                model=model, 
-                google_api_key=req.api_key,
-                temperature=0,
-                convert_system_message_to_human=True,
-                safety_settings={
-                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
-                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
-                }
-            )
+                logger.warning("Gemini requested but no API key provided. Falling back to Ollama.")
+                current_llm = ChatOllama(model="qwen2.5-coder:7b", temperature=0, format="json", base_url=OLLAMA_BASE_URL)
+            else:
+                current_llm = ChatGoogleGenerativeAI(
+                    model=model if "gemini" in model else "gemini-1.5-flash",
+                    google_api_key=req.api_key,
+                    temperature=0,
+                    safety_settings={
+                        HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                        HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                        HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                        HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                    }
+                )
         else:
             current_llm = ChatOllama(model=model, temperature=0, format="json", base_url=OLLAMA_BASE_URL)
         
@@ -168,14 +163,15 @@ async def generate_rag_design(rag_req: RagRequest):
              "team_size": lambda x: req.context.team_size,
              "experience_level": lambda x: req.context.experience_level,
              "compliance": lambda x: ", ".join(req.context.compliance) if req.context.compliance else "None",
-             "feedback_context": lambda x: rag_req.feedback_context or ""
+             "feedback_context": lambda x: rag_req.feedback_context or "",
+             "node_structure": lambda x: node_structure_json
             }
-            | prompt
+            | prompt_tmpl
             | current_llm
             | JsonOutputParser()
         )
         
-        result = chain.invoke({})
+        result = await chain.ainvoke({})
         return result
         
     except Exception as e:

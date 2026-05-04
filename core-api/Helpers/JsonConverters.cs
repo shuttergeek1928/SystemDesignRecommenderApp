@@ -195,6 +195,9 @@ public class FlexibleArchComponentConverter : JsonConverter<ArchComponent>
 
     public override void Write(Utf8JsonWriter writer, ArchComponent value, JsonSerializerOptions options)
     {
-        JsonSerializer.Serialize(writer, (object)value, options);
+        writer.WriteStartObject();
+        writer.WriteString("choice", value.Choice);
+        writer.WriteString("justification", value.Justification);
+        writer.WriteEndObject();
     }
 }

@@ -181,27 +181,9 @@ export function RequirementForm() {
   };
 
   const onSubmit = async (data: SystemDesignForm) => {
-    const result = await generateRecommendation(data);
-    if (result) setSuccess(true);
+    generateRecommendation(data);
+    router.push("/recommendations");
   };
-
-  if (success) {
-    return (
-      <Card className="max-w-3xl mx-auto p-12 text-center">
-        <div className="w-20 h-20 bg-emerald-500/20 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-8">
-          <CheckCircle2 className="w-10 h-10" />
-        </div>
-        <h2 className="text-3xl font-bold mb-4">Analysis Complete!</h2>
-        <p className="text-muted-foreground mb-10">
-          Our engine has analyzed your requirements and generated a personalized
-          architecture report.
-        </p>
-        <Button className="w-full" onClick={() => router.push("/dashboard")}>
-          View Recommendations
-        </Button>
-      </Card>
-    );
-  }
 
   return (
     <div className="max-w-6xl mx-auto">

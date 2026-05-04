@@ -25,11 +25,11 @@ import {
 import { cn } from "@/lib/utils";
 import { AuditDashboard } from "./AuditDashboard";
 import { BenchmarkView } from "./BenchmarkView";
-
 import { FeedbackWidget } from "./FeedbackWidget";
+import { PipelineTraceViewer } from "@/components/PipelineTraceViewer";
 
 export function RecommendationsView() {
-  const { recommendation, isLoading, generateRecommendation, formData, agentStatus } =
+  const { recommendation, isLoading, generateRecommendation, formData, agentStatus, pipelineLogs } =
     useSystemDesignStore();
   const [expandedChoice, setExpandedChoice] = useState<string | null>(null);
 
@@ -41,12 +41,15 @@ export function RecommendationsView() {
 
   if (isLoading) {
     return (
-      <div className="py-20 text-center animate-pulse">
-        <Cpu className="mx-auto w-12 h-12 text-primary mb-6 animate-spin" />
-        <h2 className="text-2xl font-bold">Synthesizing Architecture...</h2>
-        <p className="text-muted-foreground mt-2">
-          {agentStatus || "Checking reliability models and cost trade-offs..."}
-        </p>
+      <div className="py-10">
+        <div className="text-center mb-8">
+          <Cpu className="mx-auto w-12 h-12 text-primary mb-6 animate-spin" />
+          <h2 className="text-2xl font-bold">Synthesizing Architecture...</h2>
+          <p className="text-muted-foreground mt-2">
+            {agentStatus || "Initializing Agentic Loop..."}
+          </p>
+        </div>
+        <PipelineTraceViewer logs={pipelineLogs} />
       </div>
     );
   }
@@ -323,6 +326,13 @@ export function RecommendationsView() {
             // Optional: Show a toast or trigger a refresh if needed
           }}
         />
+      )}
+
+      {/* PIPELINE TRACE VIEWER FOR HISTORICAL REPLAY */}
+      {pipelineLogs && pipelineLogs.length > 0 && (
+        <div className="mt-16 pt-8 border-t border-border/50">
+            <PipelineTraceViewer logs={pipelineLogs} />
+        </div>
       )}
     </div>
   );

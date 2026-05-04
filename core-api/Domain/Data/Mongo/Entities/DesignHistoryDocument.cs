@@ -33,6 +33,9 @@ public class DesignHistoryDocument
 
     [BsonElement("created_at")]
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [BsonElement("pipeline_logs")]
+    public List<PipelineTraceStep> PipelineLogs { get; set; } = new();
 }
 
 public class EvaluationScoreDocument

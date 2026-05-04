@@ -117,17 +117,21 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
         var contextSummary = $"team={requirements.Context?.TeamSize}, latency={requirements.Context?.LatencyRequirementMs}ms, consistency={requirements.Context?.ConsistencyModel}, problem={problemStatement}";
 
-        // Check if we should use batch mode or loop mode based on the GENERATION provider
+        // Set the model and provider from incoming requirements if specified, else use global settings
         var appSettings = _settingsService.GetSettings();
-        var genProvider = (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini").Trim().ToLower();
-        var genModel = appSettings.GenerationModel ?? appSettings.GeminiModel;
+        var genProvider = (!string.IsNullOrEmpty(requirements.Provider) ? requirements.Provider : (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini")).Trim().ToLower();
+        var genModel = !string.IsNullOrEmpty(requirements.Model) ? requirements.Model : (appSettings.GenerationModel ?? appSettings.GeminiModel);
+        requirements.ApiKey = !string.IsNullOrEmpty(requirements.ApiKey) ? requirements.ApiKey : appSettings.GeminiApiKey;
 
+        // Strictly use Gemini Batch mode only if Gemini is explicitly selected
         if (genProvider.Contains("gemini"))
         {
             Console.WriteLine($"=== [GenerateArchitectureAsync] Using Gemini BATCH mode | Provider: {genProvider}, Model: {genModel} ===");
             return await GenerateBatchArchitectureAsync(contextSummary, nodesList, genProvider, genModel);
         }
 
+        Console.WriteLine($"=== [GenerateArchitectureAsync] Using Local ITERATIVE mode | Provider: {genProvider}, Model: {genModel} ===");
+        
         // Per-node strategy: ask the LLM about ONE node at a time.
         // Small local models (phi3, llama2) reliably answer single-focus prompts
         // but collapse multi-key JSON into a flat structure.
@@ -148,8 +152,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
             var nodeRequest = new SystemDesignRecommenderApi.Domain.DTO.ChatRequest(
                 new List<SystemDesignRecommenderApi.Domain.DTO.MessageDto> { new("user", singleNodePrompt) }
             );
-            var rawNodeResponse = await _llmChatService.ChatAsync(nodeRequest, appSettings.GenerationProvider ?? appSettings.PreferredProvider, appSettings.GenerationModel ?? appSettings.OllamaModel);
-            Console.WriteLine($"  RAW -> {rawNodeResponse}");
+            var rawNodeResponse = await _llmChatService.ChatAsync(nodeRequest, genProvider, genModel);
+            Console.WriteLine($"  RAW ({genProvider}) -> {rawNodeResponse}");
 
             var cleanedNode = CleanJson(rawNodeResponse);
             Console.WriteLine($"  CLEANED -> {cleanedNode}");
@@ -183,11 +187,11 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
     {
         try
         {
-            // Set the model and provider from GENERATION settings
+            // Set the model and provider from incoming requirements if specified, else use global settings
             var appSettings = _settingsService.GetSettings();
-            requirements.Provider = appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini";
-            requirements.Model = appSettings.GenerationModel ?? appSettings.GeminiModel;
-            requirements.ApiKey = appSettings.GeminiApiKey;
+            requirements.Provider = !string.IsNullOrEmpty(requirements.Provider) ? requirements.Provider : (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini");
+            requirements.Model = !string.IsNullOrEmpty(requirements.Model) ? requirements.Model : (appSettings.GenerationModel ?? appSettings.GeminiModel);
+            requirements.ApiKey = !string.IsNullOrEmpty(requirements.ApiKey) ? requirements.ApiKey : appSettings.GeminiApiKey;
 
             // Fetch dynamic node structure
             var settings = await _nodeSettingsService.GetMergedSettingsAsync(teamId, userId);
@@ -245,7 +249,24 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
     public async Task<GenerationResult?> GenerateHybridArchitectureAsync(string problemStatement, DesignRequirements requirements, Guid? userId = null, Guid? teamId = null, string? connectionId = null)
     {
-        await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Initializing System Design Generation...");
+        var pipelineLogs = new List<PipelineTraceStep>();
+
+        async Task LogStepAsync(string stepName, string status, string summary, string details = "")
+        {
+            var step = new PipelineTraceStep
+            {
+                StepName = stepName,
+                Status = status,
+                Summary = summary,
+                Details = details
+            };
+            pipelineLogs.Add(step);
+            await _agenticFeedbackService.SendPipelineStepAsync(connectionId ?? string.Empty, step);
+            // also send legacy status for compatibility
+            if (status != "Success") await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, summary);
+        }
+
+        await LogStepAsync("Initialization", "Running", "Initializing System Design Generation...");
         // 1. Evaluate Rules
         var triggeredRulesResult = await _ruleEngineService.EvaluateRulesAsync(requirements);
         var triggeredRules = triggeredRulesResult.ToList();
@@ -293,26 +314,28 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
         // Check if we should use batch mode or loop mode based on the GENERATION provider
         var appSettings = _settingsService.GetSettings();
-        var genProvider = (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini").Trim().ToLower();
-        var genModel = appSettings.GenerationModel ?? appSettings.GeminiModel;
-
+        var genProvider = (!string.IsNullOrEmpty(requirements.Provider) ? requirements.Provider : (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini")).Trim().ToLower();
+        var genModel = !string.IsNullOrEmpty(requirements.Model) ? requirements.Model : (appSettings.GenerationModel ?? appSettings.GeminiModel);
+        
         ArchitectureDesign architecture;
 
+        // Strictly use Gemini Batch mode only if Gemini is explicitly selected
         if (genProvider.Contains("gemini"))
         {
-            await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Drafting initial architecture (Batch Mode)...");
+            await LogStepAsync("Generation", "Running", "Drafting initial architecture (Batch Mode)...", $"Provider: {genProvider}\nModel: {genModel}\nContext: {contextSummary}\nRules: {ruleHint}");
             Console.WriteLine($"=== [GenerateHybridArchitectureAsync] Using Gemini BATCH mode | Provider: {genProvider}, Model: {genModel} ===");
             architecture = await GenerateBatchArchitectureAsync(contextSummary, settingsList, genProvider, genModel, ruleHint);
         }
         else
         {
+            Console.WriteLine($"=== [GenerateHybridArchitectureAsync] Using Local ITERATIVE mode | Provider: {genProvider}, Model: {genModel} ===");
             // Per-node strategy: one focused LLM call per node
             architecture = new ArchitectureDesign();
-            await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Drafting initial architecture (Iterative Mode)...");
+            await LogStepAsync("Generation", "Running", "Drafting initial architecture (Iterative Mode)...", $"Provider: {genProvider}\nModel: {genModel}\nContext: {contextSummary}\nRules: {ruleHint}");
             foreach (var node in settingsList)
             {
                 var nodeKey = node.NodeKey.ToLower();
-                await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, $"Resolving component: {nodeKey}...");
+                await LogStepAsync("Component Resolution", "Running", $"Resolving component: {nodeKey}...");
                 // If user pre-configured a choice, respect it as a hard constraint
                 var choiceHint = string.IsNullOrEmpty(node.Choice) ? "" : $" The preferred choice is: '{node.Choice}'";
                 var singleNodePrompt =
@@ -326,8 +349,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                 var nodeRequest = new SystemDesignRecommenderApi.Domain.DTO.ChatRequest(
                     new List<SystemDesignRecommenderApi.Domain.DTO.MessageDto> { new("user", singleNodePrompt) }
                 );
-                var rawNodeResponse = await _llmChatService.ChatAsync(nodeRequest, appSettings.GenerationProvider ?? appSettings.PreferredProvider, appSettings.GenerationModel ?? appSettings.OllamaModel);
-                Console.WriteLine($"  RAW -> {rawNodeResponse}");
+                var rawNodeResponse = await _llmChatService.ChatAsync(nodeRequest, genProvider, genModel);
+                Console.WriteLine($"  RAW ({genProvider}) -> {rawNodeResponse}");
 
                 var cleanedNode = CleanJson(rawNodeResponse);
                 try
@@ -347,30 +370,30 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
         }
 
         // --- AGENTIC FEEDBACK LOOP ---
-        await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Submitting draft to Critic Agent for evaluation...");
+        await LogStepAsync("Critic Evaluation", "Running", "Submitting draft to Critic Agent for evaluation...", JsonSerializer.Serialize(architecture, GetJsonOptions()));
         
         var evaluation = await _evaluationService.EvaluateArchitectureAsync(architecture, requirements, problemStatement);
         
         if (evaluation.RubricScore < 70)
         {
-            await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, $"Critic Score: {evaluation.RubricScore}/100. Critic rejected draft. Analyzing feedback for self-correction...");
+            await LogStepAsync("Critic Feedback", "Error", $"Critic Score: {evaluation.RubricScore}/100. Critic rejected draft. Analyzing feedback for self-correction...", evaluation.CriticReport);
             
             // Loop! Re-generate with the critic's report
             string correctionHint = $"The previous design was rejected with score {evaluation.RubricScore}. The Critic provided this feedback:\n{evaluation.CriticReport}\n\nFIX ALL ISSUES MENTIONED IN THE CRITIQUE.";
             
             if (genProvider.Contains("gemini"))
             {
-                await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Drafting corrected architecture...");
+                await LogStepAsync("Generation (Correction)", "Running", "Drafting corrected architecture...");
                 architecture = await GenerateBatchArchitectureAsync(contextSummary, settingsList, genProvider, genModel, ruleHint + " " + correctionHint);
             }
             // In iterative mode, we could regenerate each node, but for simplicity, we'll just log it.
             
             // Evaluate again (we could loop N times, but let's just do 1 correction pass)
-            await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, "Re-evaluating corrected architecture...");
+            await LogStepAsync("Critic Evaluation (Round 2)", "Running", "Re-evaluating corrected architecture...");
             evaluation = await _evaluationService.EvaluateArchitectureAsync(architecture, requirements, problemStatement);
         }
 
-        await _agenticFeedbackService.SendStatusAsync(connectionId ?? string.Empty, $"Final Rubric Score: {evaluation.RubricScore}/100. Generation complete.");
+        await LogStepAsync("Completion", "Success", $"Final Rubric Score: {evaluation.RubricScore}/100. Generation complete.", JsonSerializer.Serialize(evaluation, GetJsonOptions()));
         // --- END AGENTIC FEEDBACK LOOP ---
 
         // 3. Persist Session & Results
@@ -426,7 +449,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                         RubricScore = evaluation.RubricScore,
                         CriticReport = evaluation.CriticReport,
                         MatchedBlueprintId = evaluation.MatchedBlueprintId
-                    }
+                    },
+                    PipelineLogs = pipelineLogs
                 };
                 await _mongoDbContext.DesignHistory.InsertOneAsync(mongoDoc);
             }
@@ -540,7 +564,8 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                 r.Recommendation,
                 r.Justification
             }),
-            EvaluationScores = evaluation?.EvaluationScores
+            EvaluationScores = evaluation?.EvaluationScores,
+            PipelineLogs = evaluation?.PipelineLogs
         };
     }
 

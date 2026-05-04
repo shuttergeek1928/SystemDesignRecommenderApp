@@ -160,9 +160,10 @@ public class EvaluationService : IEvaluationService
         });
 
         var appSettings = _settingsService.GetSettings();
-        var modelName = appSettings.GenerationModel ?? appSettings.GeminiModel ?? "gemini-1.5-flash";
+        var provider = !string.IsNullOrEmpty(requirements.Provider) ? requirements.Provider : (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini");
+        var modelName = !string.IsNullOrEmpty(requirements.Model) ? requirements.Model : (appSettings.GenerationModel ?? appSettings.GeminiModel);
 
-        var response = await _llmService.ChatAsync(chatRequest, "gemini", modelName);
+        var response = await _llmService.ChatAsync(chatRequest, provider, modelName);
 
         int finalScore = 75; // Default
         var lines = response?.Split('\n') ?? Array.Empty<string>();

@@ -16,6 +16,15 @@ export interface NodeSetting {
   isOverride: boolean;
 }
 
+export interface PipelineTraceStep {
+  stepId: string;
+  stepName: string;
+  status: string;
+  summary: string;
+  details: string;
+  timestamp: string;
+}
+
 interface SystemDesignStore {
   formData: Partial<SystemDesignForm>;
   recommendation: {
@@ -48,6 +57,7 @@ interface SystemDesignStore {
   evaluationProvider: string;
   evaluationModel: string;
   agentStatus: string | null;
+  pipelineLogs: PipelineTraceStep[];
   connectionId: string | null;
   initSignalR: () => void;
   setFormData: (data: Partial<SystemDesignForm>) => void;
@@ -112,6 +122,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
       nodeDefinitions: [],
       nodeSettings: [],
       agentStatus: null,
+      pipelineLogs: [],
       connectionId: null,
 
       initSignalR: () => {
@@ -124,6 +135,19 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
 
         connection.on("ReceiveAgentStatus", (message: string) => {
             set({ agentStatus: message });
+        });
+
+        connection.on("ReceivePipelineUpdate", (step: PipelineTraceStep) => {
+            set((state) => {
+                // If step with same name exists, update it, else append
+                const existingIndex = state.pipelineLogs.findIndex(s => s.stepName === step.stepName);
+                if (existingIndex >= 0) {
+                    const newLogs = [...state.pipelineLogs];
+                    newLogs[existingIndex] = step;
+                    return { pipelineLogs: newLogs };
+                }
+                return { pipelineLogs: [...state.pipelineLogs, step] };
+            });
         });
 
         connection.start()
@@ -202,7 +226,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
         // Ensure SignalR is connected
         get().initSignalR();
         
-        set({ isLoading: true, formData: data, agentStatus: "Starting Agentic Loop...", recommendation: null });
+        set({ isLoading: true, formData: data, agentStatus: "Starting Agentic Loop...", pipelineLogs: [], recommendation: null });
         const { useRag, useHybrid, connectionId } = get();
 
         const prompt = `Design a system for an application named "${data.appName}" targeting ${data.targetUsers} (${data.userCount} users). 
@@ -321,6 +345,7 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
                 evaluationScores: result.evaluationScores,
               },
             },
+            pipelineLogs: result.pipelineLogs || [],
           });
           return true;
         } catch (error) {

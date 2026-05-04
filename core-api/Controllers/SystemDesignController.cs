@@ -29,69 +29,78 @@ public class SystemDesignController : ControllerBase
         }
 
         // Step 1: Extract/Refine Requirements
-        // We always extract from the problem statement to capture natural language context,
-        // then overlay the explicit form-based requirements if provided.
-        var extracted = await _systemDesignService.ExtractRequirementsAsync(request.ProblemStatement);
+        // If the request already contains structured requirements (e.g. from the baseline generator),
+        // skip the expensive LLM extraction step to improve reliability and speed.
+        Domain.Models.DesignRequirements requirements;
 
-        if (extracted == null && request.Requirements == null)
+        if (request.Requirements != null && !string.IsNullOrEmpty(request.Requirements.Title))
         {
-            return StatusCode(500, "Failed to extract structured requirements from the LLM.");
+            Console.WriteLine("Using provided structured requirements, skipping LLM extraction.");
+            requirements = request.Requirements;
         }
-
-        var requirements = extracted ?? new Domain.Models.DesignRequirements();
-
-        if (request.Requirements != null)
+        else
         {
-            Console.WriteLine("Merging explicit form requirements with LLM extraction...");
-
-            // Concatenate titles and descriptions to preserve all context
-            if (!string.IsNullOrEmpty(request.Requirements.Title))
-                requirements.Title = string.IsNullOrEmpty(requirements.Title) ? request.Requirements.Title : $"{requirements.Title} ({request.Requirements.Title})";
-
-            if (!string.IsNullOrEmpty(request.Requirements.Description))
-                requirements.Description = string.IsNullOrEmpty(requirements.Description) ? request.Requirements.Description : $"{requirements.Description}\n\nAdditional User Context: {request.Requirements.Description}";
-
-            // Merge Non-Functional Requirements
-            if (request.Requirements.NonFunctionalRequirements != null && request.Requirements.NonFunctionalRequirements.Any())
+            Console.WriteLine("No structured requirements provided. Extracting from problem statement...");
+            var extracted = await _systemDesignService.ExtractRequirementsAsync(request.ProblemStatement);
+            if (extracted == null && request.Requirements == null)
             {
-                requirements.NonFunctionalRequirements = requirements.NonFunctionalRequirements
-                    .Union(request.Requirements.NonFunctionalRequirements)
-                    .Distinct()
-                    .ToList();
+                return StatusCode(500, "Failed to extract structured requirements from the LLM.");
             }
+            requirements = extracted ?? new Domain.Models.DesignRequirements();
 
-            if (request.Requirements.Context != null)
+            // Merge explicit form requirements if provided as overlays
+            if (request.Requirements != null)
             {
-                var target = requirements.Context;
-                var source = request.Requirements.Context;
+                Console.WriteLine("Merging explicit form requirements with LLM extraction...");
 
-                // Technical Overrides
-                if (source.TeamSize.HasValue) target.TeamSize = source.TeamSize;
-                if (source.RequestRate.HasValue) target.RequestRate = source.RequestRate;
-                if (source.DataVolumeGb.HasValue) target.DataVolumeGb = source.DataVolumeGb;
-                if (source.LatencyRequirementMs.HasValue) target.LatencyRequirementMs = source.LatencyRequirementMs;
-                if (source.Users.HasValue) target.Users = source.Users;
+                if (!string.IsNullOrEmpty(request.Requirements.Title))
+                    requirements.Title = request.Requirements.Title;
 
-                if (!string.IsNullOrEmpty(source.ConsistencyModel)) target.ConsistencyModel = source.ConsistencyModel;
-                if (!string.IsNullOrEmpty(source.ExperienceLevel)) target.ExperienceLevel = source.ExperienceLevel;
-                if (!string.IsNullOrEmpty(source.SearchComplexity)) target.SearchComplexity = source.SearchComplexity;
-                if (!string.IsNullOrEmpty(source.DeploymentFrequency)) target.DeploymentFrequency = source.DeploymentFrequency;
-                if (!string.IsNullOrEmpty(source.TrafficPattern)) target.TrafficPattern = source.TrafficPattern;
+                if (!string.IsNullOrEmpty(request.Requirements.Description))
+                    requirements.Description = request.Requirements.Description;
 
-                // New Fields from "Additional Context" extraction
-                if (!string.IsNullOrEmpty(source.Budget)) target.Budget = source.Budget;
-                if (!string.IsNullOrEmpty(source.AvailabilitySlo)) target.AvailabilitySlo = source.AvailabilitySlo;
-                if (!string.IsNullOrEmpty(source.CloudProvider)) target.CloudProvider = source.CloudProvider;
-                if (!string.IsNullOrEmpty(source.RegionStrategy)) target.RegionStrategy = source.RegionStrategy;
-
-                // Deep Merge Compliance lists
-                if (source.Compliance != null && source.Compliance.Any())
+                if (request.Requirements.NonFunctionalRequirements != null && request.Requirements.NonFunctionalRequirements.Any())
                 {
-                    target.Compliance = target.Compliance
-                        .Union(source.Compliance)
+                    requirements.NonFunctionalRequirements = requirements.NonFunctionalRequirements
+                        .Union(request.Requirements.NonFunctionalRequirements)
                         .Distinct()
                         .ToList();
                 }
+
+                if (request.Requirements.Context != null)
+                {
+                    var target = requirements.Context;
+                    var source = request.Requirements.Context;
+
+                    if (source.TeamSize.HasValue) target.TeamSize = source.TeamSize;
+                    if (source.RequestRate.HasValue) target.RequestRate = source.RequestRate;
+                    if (source.DataVolumeGb.HasValue) target.DataVolumeGb = source.DataVolumeGb;
+                    if (source.LatencyRequirementMs.HasValue) target.LatencyRequirementMs = source.LatencyRequirementMs;
+                    if (source.Users.HasValue) target.Users = source.Users;
+
+                    if (!string.IsNullOrEmpty(source.ConsistencyModel)) target.ConsistencyModel = source.ConsistencyModel;
+                    if (!string.IsNullOrEmpty(source.ExperienceLevel)) target.ExperienceLevel = source.ExperienceLevel;
+                    if (!string.IsNullOrEmpty(source.SearchComplexity)) target.SearchComplexity = source.SearchComplexity;
+                    if (!string.IsNullOrEmpty(source.DeploymentFrequency)) target.DeploymentFrequency = source.DeploymentFrequency;
+                    if (!string.IsNullOrEmpty(source.TrafficPattern)) target.TrafficPattern = source.TrafficPattern;
+
+                    if (!string.IsNullOrEmpty(source.Budget)) target.Budget = source.Budget;
+                    if (!string.IsNullOrEmpty(source.AvailabilitySlo)) target.AvailabilitySlo = source.AvailabilitySlo;
+                    if (!string.IsNullOrEmpty(source.CloudProvider)) target.CloudProvider = source.CloudProvider;
+                    if (!string.IsNullOrEmpty(source.RegionStrategy)) target.RegionStrategy = source.RegionStrategy;
+
+                    if (source.Compliance != null && source.Compliance.Any())
+                    {
+                        target.Compliance = target.Compliance
+                            .Union(source.Compliance)
+                            .Distinct()
+                            .ToList();
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(request.Requirements.Model)) requirements.Model = request.Requirements.Model;
+                if (!string.IsNullOrEmpty(request.Requirements.Provider)) requirements.Provider = request.Requirements.Provider;
+                if (!string.IsNullOrEmpty(request.Requirements.ApiKey)) requirements.ApiKey = request.Requirements.ApiKey;
             }
         }
 

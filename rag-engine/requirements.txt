@@ -10,3 +10,5 @@ langchain-google-genai
 langchain-chroma
 chromadb
 python-dotenv
+tiktoken
+langchain-text-splitters

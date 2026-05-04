@@ -3,6 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace SystemDesignRecommenderApi.Domain.Data.Mongo.Entities;
 
+[BsonIgnoreExtraElements]
 public class ReferenceBlueprint
 {
     [BsonId]
@@ -34,6 +35,7 @@ public class ReferenceBlueprint
     public List<string> References { get; set; } = new();
 }
 
+[BsonIgnoreExtraElements]
 public class BlueprintContext
 {
     [BsonElement("users")]

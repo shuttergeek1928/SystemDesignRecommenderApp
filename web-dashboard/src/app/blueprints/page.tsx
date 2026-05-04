@@ -42,19 +42,21 @@ export default function BlueprintsExplorer() {
       });
   }, []);
 
-  // Normalize: get the ground truth architecture regardless of casing
-  const getGT = (bp: Blueprint) => bp.ground_truth_architecture || bp.groundTruthArchitecture || {};
-  const getScenarioId = (bp: Blueprint) => bp.scenario_id ?? bp.scenarioId ?? 0;
+  // Normalize: get the ground truth architecture regardless of casing (Pascal, camel, or snake)
+  const getGT = (bp: any) => bp.GroundTruthArchitecture || bp.ground_truth_architecture || bp.groundTruthArchitecture || {};
+  const getScenarioId = (bp: any) => bp.ScenarioId || bp.scenario_id || bp.scenarioId || 0;
 
   const getNodeKeys = (baseline: any): string[] => {
     if (!baseline) return [];
-    // Handle both { database: {choice: ...} } and { nodes: { database: {choice: ...} } }
-    if (baseline.nodes) return Object.keys(baseline.nodes);
+    // Handle both { nodes: { database: {choice: ...} } } and direct keys
+    const nodes = baseline.nodes || baseline.Nodes;
+    if (nodes) return Object.keys(nodes);
     return Object.keys(baseline).filter(k => k !== '_t'); // exclude BSON type discriminator
   };
 
   const getNodeChoice = (baseline: any, nodeKey: string): string | null => {
-    const node = baseline?.nodes?.[nodeKey] || baseline?.[nodeKey];
+    const nodes = baseline?.nodes || baseline?.Nodes;
+    const node = nodes?.[nodeKey] || baseline?.[nodeKey];
     if (!node) return null;
     return node.choice || node.Choice || null;
   };
@@ -62,13 +64,14 @@ export default function BlueprintsExplorer() {
   const baselineCount = (gt: any) => {
     let count = 0;
     if (gt?.baseline_A_expert || gt?.baselineAExpert) count++;
-    if (gt?.baseline_B_automated || gt?.baselineBAutomated) count++;
-    if (gt?.baseline_C_hybrid || gt?.baselineCHybrid) count++;
+    if (gt?.baseline_B_llm || gt?.baselineBllm) count++;
+    if (gt?.baseline_C_rag || gt?.baselineCrag) count++;
+    if (gt?.baseline_D_hybrid || gt?.baselineDhybrid) count++;
     return count;
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <main className="container mx-auto px-4 md:px-6 pt-28 pb-20">
         <header className="mb-12">
@@ -102,28 +105,34 @@ export default function BlueprintsExplorer() {
         ) : (
           <>
             {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-              <Card className="p-5 text-center">
-                <p className="text-3xl font-black text-primary">{blueprints.length}</p>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-1">Total Scenarios</p>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+              <Card className="p-4 text-center">
+                <p className="text-2xl font-black text-primary">{blueprints.length}</p>
+                <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider mt-1">Total Scenarios</p>
               </Card>
-              <Card className="p-5 text-center">
-                <p className="text-3xl font-black text-emerald-500">
-                  {blueprints.filter(b => baselineCount(getGT(b)) >= 1).length}
+              <Card className="p-4 text-center">
+                <p className="text-2xl font-black text-emerald-500">
+                  {blueprints.filter(b => (getGT(b).baseline_A_expert || getGT(b).baselineAExpert)).length}
                 </p>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-1">With Baseline A</p>
+                <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider mt-1">Expert (A)</p>
               </Card>
-              <Card className="p-5 text-center">
-                <p className="text-3xl font-black text-amber-500">
-                  {blueprints.filter(b => baselineCount(getGT(b)) >= 2).length}
+              <Card className="p-4 text-center">
+                <p className="text-2xl font-black text-amber-500">
+                  {blueprints.filter(b => (getGT(b).baseline_B_llm || getGT(b).baselineBllm)).length}
                 </p>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-1">With Baseline B</p>
+                <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider mt-1">LLM-Only (B)</p>
               </Card>
-              <Card className="p-5 text-center">
-                <p className="text-3xl font-black text-blue-500">
-                  {blueprints.filter(b => baselineCount(getGT(b)) >= 3).length}
+              <Card className="p-4 text-center">
+                <p className="text-2xl font-black text-blue-500">
+                  {blueprints.filter(b => (getGT(b).baseline_C_rag || getGT(b).baselineCrag)).length}
                 </p>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mt-1">With Baseline C</p>
+                <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider mt-1">RAG (C)</p>
+              </Card>
+              <Card className="p-4 text-center">
+                <p className="text-2xl font-black text-violet-500">
+                  {blueprints.filter(b => (getGT(b).baseline_D_hybrid || getGT(b).baselineDhybrid)).length}
+                </p>
+                <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider mt-1">Hybrid (D)</p>
               </Card>
             </div>
 
@@ -133,12 +142,13 @@ export default function BlueprintsExplorer() {
                 const gt = getGT(bp);
                 const scenarioId = getScenarioId(bp);
                 const baselineA = gt.baseline_A_expert || gt.baselineAExpert;
-                const baselineB = gt.baseline_B_automated || gt.baselineBAutomated;
-                const baselineC = gt.baseline_C_hybrid || gt.baselineCHybrid;
+                const baselineB = gt.baseline_B_llm || gt.baselineBllm;
+                const baselineC = gt.baseline_C_rag || gt.baselineCrag;
+                const baselineD = gt.baseline_D_hybrid || gt.baselineDhybrid;
                 const isExpanded = expandedId === scenarioId;
 
                 return (
-                  <Card key={scenarioId} className="overflow-hidden">
+                  <Card key={scenarioId} className="overflow-hidden border-border/50">
                     <div
                       className="p-6 cursor-pointer flex items-center justify-between hover:bg-accent/30 transition-colors"
                       onClick={() => setExpandedId(isExpanded ? null : scenarioId)}
@@ -149,17 +159,17 @@ export default function BlueprintsExplorer() {
                         </div>
                         <div>
                           <h3 className="font-bold text-lg flex items-center gap-2">
-                            <Target className="w-4 h-4 text-primary" /> {bp.title}
+                            <Target className="w-4 h-4 text-primary" /> {bp.Title || bp.title || "Unknown Scenario"}
                           </h3>
-                          <p className="text-xs text-muted-foreground mt-0.5">{bp.description}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{bp.Description || bp.description}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
-                        {/* Baseline badges */}
                         <span className={`text-[10px] px-2 py-1 rounded-full font-bold ${baselineA ? 'bg-emerald-500/20 text-emerald-600' : 'bg-secondary text-muted-foreground'}`}>A</span>
                         <span className={`text-[10px] px-2 py-1 rounded-full font-bold ${baselineB ? 'bg-amber-500/20 text-amber-600' : 'bg-secondary text-muted-foreground'}`}>B</span>
                         <span className={`text-[10px] px-2 py-1 rounded-full font-bold ${baselineC ? 'bg-blue-500/20 text-blue-600' : 'bg-secondary text-muted-foreground'}`}>C</span>
+                        <span className={`text-[10px] px-2 py-1 rounded-full font-bold ${baselineD ? 'bg-violet-500/20 text-violet-600' : 'bg-secondary text-muted-foreground'}`}>D</span>
                         {isExpanded ? <ChevronUp className="w-5 h-5 text-muted-foreground" /> : <ChevronDown className="w-5 h-5 text-muted-foreground" />}
                       </div>
                     </div>
@@ -173,87 +183,81 @@ export default function BlueprintsExplorer() {
                           className="border-t border-border"
                         >
                           <div className="p-6 space-y-6">
-                            {/* Context Tags */}
                             <div className="flex flex-wrap gap-2">
-                              {bp.context?.users && (
-                                <span className="text-[10px] border border-border px-2 py-1 rounded-lg font-medium">
-                                  👤 {typeof bp.context.users === 'number' ? bp.context.users.toLocaleString() : bp.context.users} users
-                                </span>
+                              {(bp.Context?.Users || bp.context?.users) && (
+                                <span className="text-[10px] border border-border px-2 py-1 rounded-lg font-medium">👤 {bp.Context?.Users || bp.context?.users} users</span>
                               )}
-                              {(bp.context?.traffic_pattern || bp.context?.trafficPattern) && (
-                                <span className="text-[10px] border border-border px-2 py-1 rounded-lg font-medium">
-                                  📊 {bp.context.traffic_pattern || bp.context.trafficPattern}
-                                </span>
+                              {(bp.Context?.TrafficPattern || bp.context?.traffic_pattern || bp.context?.trafficPattern) && (
+                                <span className="text-[10px] border border-border px-2 py-1 rounded-lg font-medium">📊 {bp.Context?.TrafficPattern || bp.context?.traffic_pattern || bp.context?.trafficPattern}</span>
                               )}
-                              {(bp.context?.consistency_model || bp.context?.consistencyModel) && (
-                                <span className="text-[10px] border border-primary/30 px-2 py-1 rounded-lg font-medium text-primary">
-                                  🔒 {bp.context.consistency_model || bp.context.consistencyModel}
-                                </span>
-                              )}
-                              {bp.context?.budget && (
-                                <span className="text-[10px] border border-border px-2 py-1 rounded-lg font-medium">
-                                  💰 {bp.context.budget}
-                                </span>
+                              {(bp.Context?.ConsistencyModel || bp.context?.consistency_model || bp.context?.consistencyModel) && (
+                                <span className="text-[10px] border border-primary/30 px-2 py-1 rounded-lg font-medium text-primary">🔒 {bp.Context?.ConsistencyModel || bp.context?.consistency_model || bp.context?.consistencyModel}</span>
                               )}
                             </div>
 
-                            {/* Baselines Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                               {/* Baseline A */}
                               <div className={`p-4 rounded-xl border ${baselineA ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-secondary/30 border-border'}`}>
                                 <p className="text-[10px] uppercase font-bold text-emerald-600 mb-3 flex items-center gap-2">
-                                  <CheckCircle2 className="w-3 h-3" /> Baseline A — Expert
+                                  <CheckCircle2 className="w-3 h-3" /> Expert (A)
                                 </p>
                                 {baselineA ? (
                                   <div className="space-y-2">
                                     {getNodeKeys(baselineA).map(nodeKey => (
-                                      <div key={nodeKey} className="text-xs">
-                                        <span className="font-bold capitalize text-foreground/70">{nodeKey}:</span>{" "}
-                                        <span className="text-foreground">{getNodeChoice(baselineA, nodeKey) || '—'}</span>
+                                      <div key={nodeKey} className="text-[11px]">
+                                        <span className="font-bold capitalize text-foreground/70">{nodeKey}:</span> <span className="text-foreground">{getNodeChoice(baselineA, nodeKey) || '—'}</span>
                                       </div>
                                     ))}
                                   </div>
-                                ) : (
-                                  <p className="text-xs text-muted-foreground italic">Not available</p>
-                                )}
+                                ) : <p className="text-xs text-muted-foreground italic">Missing</p>}
                               </div>
 
                               {/* Baseline B */}
                               <div className={`p-4 rounded-xl border ${baselineB ? 'bg-amber-500/5 border-amber-500/20' : 'bg-secondary/30 border-border'}`}>
                                 <p className="text-[10px] uppercase font-bold text-amber-600 mb-3 flex items-center gap-2">
-                                  <LayoutGrid className="w-3 h-3" /> Baseline B — RAG
+                                  <LayoutGrid className="w-3 h-3" /> LLM-Only (B)
                                 </p>
                                 {baselineB ? (
                                   <div className="space-y-2">
                                     {getNodeKeys(baselineB).map(nodeKey => (
-                                      <div key={nodeKey} className="text-xs">
-                                        <span className="font-bold capitalize text-foreground/70">{nodeKey}:</span>{" "}
-                                        <span className="text-foreground">{getNodeChoice(baselineB, nodeKey) || '—'}</span>
+                                      <div key={nodeKey} className="text-[11px]">
+                                        <span className="font-bold capitalize text-foreground/70">{nodeKey}:</span> <span className="text-foreground">{getNodeChoice(baselineB, nodeKey) || '—'}</span>
                                       </div>
                                     ))}
                                   </div>
-                                ) : (
-                                  <p className="text-xs text-muted-foreground italic">Run generator script</p>
-                                )}
+                                ) : <p className="text-xs text-muted-foreground italic">Pending</p>}
                               </div>
 
                               {/* Baseline C */}
                               <div className={`p-4 rounded-xl border ${baselineC ? 'bg-blue-500/5 border-blue-500/20' : 'bg-secondary/30 border-border'}`}>
                                 <p className="text-[10px] uppercase font-bold text-blue-600 mb-3 flex items-center gap-2">
-                                  <LayoutGrid className="w-3 h-3" /> Baseline C — Hybrid
+                                  <Database className="w-3 h-3" /> RAG (C)
                                 </p>
                                 {baselineC ? (
                                   <div className="space-y-2">
                                     {getNodeKeys(baselineC).map(nodeKey => (
-                                      <div key={nodeKey} className="text-xs">
-                                        <span className="font-bold capitalize text-foreground/70">{nodeKey}:</span>{" "}
-                                        <span className="text-foreground">{getNodeChoice(baselineC, nodeKey) || '—'}</span>
+                                      <div key={nodeKey} className="text-[11px]">
+                                        <span className="font-bold capitalize text-foreground/70">{nodeKey}:</span> <span className="text-foreground">{getNodeChoice(baselineC, nodeKey) || '—'}</span>
                                       </div>
                                     ))}
                                   </div>
-                                ) : (
-                                  <p className="text-xs text-muted-foreground italic">Run generator script</p>
-                                )}
+                                ) : <p className="text-xs text-muted-foreground italic">Pending</p>}
+                              </div>
+
+                              {/* Baseline D */}
+                              <div className={`p-4 rounded-xl border ${baselineD ? 'bg-violet-500/5 border-violet-500/20' : 'bg-secondary/30 border-border'}`}>
+                                <p className="text-[10px] uppercase font-bold text-violet-600 mb-3 flex items-center gap-2">
+                                  <Target className="w-3 h-3" /> Hybrid (D)
+                                </p>
+                                {baselineD ? (
+                                  <div className="space-y-2">
+                                    {getNodeKeys(baselineD).map(nodeKey => (
+                                      <div key={nodeKey} className="text-[11px]">
+                                        <span className="font-bold capitalize text-foreground/70">{nodeKey}:</span> <span className="text-foreground">{getNodeChoice(baselineD, nodeKey) || '—'}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : <p className="text-xs text-muted-foreground italic">Pending</p>}
                               </div>
                             </div>
                           </div>

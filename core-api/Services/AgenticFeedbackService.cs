@@ -7,6 +7,7 @@ public interface IAgenticFeedbackService
 {
     Task SendStatusAsync(string connectionId, string message);
     Task BroadcastStatusAsync(string message);
+    Task SendPipelineStepAsync(string connectionId, SystemDesignRecommenderApi.Domain.Models.PipelineTraceStep step);
 }
 
 public class AgenticFeedbackService : IAgenticFeedbackService
@@ -33,5 +34,17 @@ public class AgenticFeedbackService : IAgenticFeedbackService
     public async Task BroadcastStatusAsync(string message)
     {
         await _hubContext.Clients.All.SendAsync("ReceiveAgentStatus", message);
+    }
+
+    public async Task SendPipelineStepAsync(string connectionId, SystemDesignRecommenderApi.Domain.Models.PipelineTraceStep step)
+    {
+        if (!string.IsNullOrEmpty(connectionId))
+        {
+            await _hubContext.Clients.Client(connectionId).SendAsync("ReceivePipelineUpdate", step);
+        }
+        else
+        {
+            await _hubContext.Clients.All.SendAsync("ReceivePipelineUpdate", step);
+        }
     }
 }

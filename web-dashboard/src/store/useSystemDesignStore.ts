@@ -125,8 +125,8 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
       pipelineLogs: [],
       connectionId: null,
 
-      initSignalR: () => {
-        if (get().connectionId) return; // Already connected
+      initSignalR: async () => {
+        if (get().connectionId) return get().connectionId; // Already connected
         
         const connection = new signalR.HubConnectionBuilder()
             .withUrl("http://localhost:5220/hubs/agentStatus")
@@ -150,11 +150,14 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
             });
         });
 
-        connection.start()
-            .then(() => {
-                set({ connectionId: connection.connectionId });
-            })
-            .catch(err => console.error("Error connecting to SignalR: ", err));
+        try {
+            await connection.start();
+            set({ connectionId: connection.connectionId });
+            return connection.connectionId;
+        } catch (err) {
+            console.error("Error connecting to SignalR: ", err);
+            return null;
+        }
       },
 
       setFormData: (data) =>
@@ -223,11 +226,11 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
       generateRecommendation: async (data) => {
         if (get().isLoading) return false;
         
-        // Ensure SignalR is connected
-        get().initSignalR();
+        // Ensure SignalR is connected before proceeding
+        const connectionId = await get().initSignalR();
         
         set({ isLoading: true, formData: data, agentStatus: "Starting Agentic Loop...", pipelineLogs: [], recommendation: null });
-        const { useRag, useHybrid, connectionId } = get();
+        const { useRag, useHybrid } = get();
 
         const prompt = `Design a system for an application named "${data.appName}" targeting ${data.targetUsers} (${data.userCount} users). 
                 Key Requirements: 

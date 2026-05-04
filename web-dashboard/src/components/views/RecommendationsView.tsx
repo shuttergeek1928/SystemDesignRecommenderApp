@@ -41,15 +41,8 @@ export function RecommendationsView() {
 
   if (isLoading) {
     return (
-      <div className="py-10">
-        <div className="text-center mb-8">
-          <Cpu className="mx-auto w-12 h-12 text-primary mb-6 animate-spin" />
-          <h2 className="text-2xl font-bold">Synthesizing Architecture...</h2>
-          <p className="text-muted-foreground mt-2">
-            {agentStatus || "Initializing Agentic Loop..."}
-          </p>
-        </div>
-        <PipelineTraceViewer logs={pipelineLogs} />
+      <div className="py-10 min-h-[60vh] flex flex-col items-center justify-center">
+        <PipelineTraceViewer logs={pipelineLogs} isLoading={true} agentStatus={agentStatus} />
       </div>
     );
   }

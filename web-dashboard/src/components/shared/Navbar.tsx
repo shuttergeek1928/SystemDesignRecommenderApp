@@ -37,7 +37,7 @@ const privateNavItems = [
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { fetchSettings, reset } = useSystemDesignStore();
+  const { initialize, reset } = useSystemDesignStore();
   const { user, logout } = useAuthStore();
   const [isMounted, setIsMounted] = useState(false);
 
@@ -51,13 +51,13 @@ export function Navbar() {
       : publicNavItems;
 
   useEffect(() => {
-    fetchSettings();
+    initialize();
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [fetchSettings]);
+  }, [initialize]);
 
   return (
     <nav

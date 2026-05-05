@@ -18,10 +18,7 @@ import { cn } from "@/lib/utils";
 
 export default function SettingsPage() {
   const {
-    ollamaModel,
-    geminiModel,
     geminiApiKey,
-    preferredProvider,
     extractionProvider,
     extractionModel,
     generationProvider,
@@ -32,10 +29,8 @@ export default function SettingsPage() {
     updateSettings,
   } = useSystemDesignStore();
 
-  const [localOllamaModel, setLocalOllamaModel] = useState(ollamaModel);
-  const [localGeminiModel, setLocalGeminiModel] = useState(geminiModel);
   const [localGeminiApiKey, setLocalGeminiApiKey] = useState(geminiApiKey);
-  
+
   const [localExtProvider, setLocalExtProvider] = useState(extractionProvider);
   const [localExtModel, setLocalExtModel] = useState(extractionModel);
   const [localGenProvider, setLocalGenProvider] = useState(generationProvider);
@@ -67,8 +62,6 @@ export default function SettingsPage() {
   }, [localGeminiApiKey]);
 
   useEffect(() => {
-    setLocalOllamaModel(ollamaModel);
-    setLocalGeminiModel(geminiModel);
     setLocalGeminiApiKey(geminiApiKey);
     setLocalExtProvider(extractionProvider);
     setLocalExtModel(extractionModel);
@@ -76,7 +69,7 @@ export default function SettingsPage() {
     setLocalGenModel(generationModel);
     setLocalEvalProvider(evaluationProvider);
     setLocalEvalModel(evaluationModel);
-  }, [ollamaModel, geminiModel, geminiApiKey, extractionProvider, extractionModel, generationProvider, generationModel, evaluationProvider, evaluationModel]);
+  }, [geminiApiKey, extractionProvider, extractionModel, generationProvider, generationModel, evaluationProvider, evaluationModel]);
 
   const fetchAvailableModels = async () => {
     setIsLoadingModels(true);
@@ -114,8 +107,6 @@ export default function SettingsPage() {
     setMessage(null);
     try {
       await updateSettings({
-        ollamaModel: localOllamaModel,
-        geminiModel: localGeminiModel,
         geminiApiKey: localGeminiApiKey,
         extractionProvider: localExtProvider,
         extractionModel: localExtModel,
@@ -199,10 +190,13 @@ export default function SettingsPage() {
                           <p className="text-sm text-muted-foreground">
                             Choose the model that will parse your natural language statements.
                           </p>
-                          
+
                           <div className="grid grid-cols-2 gap-3">
                             <button
-                              onClick={() => setLocalExtProvider("ollama")}
+                              onClick={() => {
+                                setLocalExtProvider("ollama");
+                                setLocalExtModel("qwen2.5-coder:7b"); // Default
+                              }}
                               className={cn(
                                 "p-3 rounded-xl border-2 transition-all text-center",
                                 localExtProvider === "ollama"
@@ -219,6 +213,7 @@ export default function SettingsPage() {
                                   return;
                                 }
                                 setLocalExtProvider("gemini");
+                                setLocalExtModel("gemini-1.5-flash"); // Default
                               }}
                               className={cn(
                                 "p-3 rounded-xl border-2 transition-all text-center relative",
@@ -280,10 +275,13 @@ export default function SettingsPage() {
                           <p className="text-sm text-muted-foreground">
                             Choose the brain that will design your system components.
                           </p>
-                          
+
                           <div className="grid grid-cols-2 gap-3">
                             <button
-                              onClick={() => setLocalGenProvider("ollama")}
+                              onClick={() => {
+                                setLocalGenProvider("ollama");
+                                setLocalGenModel("qwen2.5-coder:7b"); // Default
+                              }}
                               className={cn(
                                 "p-3 rounded-xl border-2 transition-all text-center",
                                 localGenProvider === "ollama"
@@ -300,6 +298,7 @@ export default function SettingsPage() {
                                   return;
                                 }
                                 setLocalGenProvider("gemini");
+                                setLocalGenModel("gemini-3-flash-preview"); // Default
                               }}
                               className={cn(
                                 "p-3 rounded-xl border-2 transition-all text-center relative",
@@ -362,10 +361,13 @@ export default function SettingsPage() {
                           <p className="text-sm text-muted-foreground">
                             Choose the critic model that will audit the architecture and provide scores.
                           </p>
-                          
+
                           <div className="grid grid-cols-2 gap-3 max-w-md">
                             <button
-                              onClick={() => setLocalEvalProvider("ollama")}
+                              onClick={() => {
+                                setLocalEvalProvider("ollama");
+                                setLocalEvalModel("qwen2.5-coder:7b"); // Default
+                              }}
                               className={cn(
                                 "p-3 rounded-xl border-2 transition-all text-center",
                                 localEvalProvider === "ollama"
@@ -382,6 +384,7 @@ export default function SettingsPage() {
                                   return;
                                 }
                                 setLocalEvalProvider("gemini");
+                                setLocalEvalModel("gemini-1.5-pro"); // Default critic
                               }}
                               className={cn(
                                 "p-3 rounded-xl border-2 transition-all text-center relative",
@@ -452,7 +455,7 @@ export default function SettingsPage() {
                               "text-xs leading-relaxed",
                               !localGeminiApiKey ? "text-red-500 font-bold" : "text-muted-foreground"
                             )}>
-                              {!localGeminiApiKey 
+                              {!localGeminiApiKey
                                 ? "Critical: Gemini models are disabled because no API Key is provided. You are currently restricted to Local (Ollama) models only."
                                 : "Required for any cloud-based options. Your keys are stored locally in your browser and never shared with anyone else."}
                             </p>

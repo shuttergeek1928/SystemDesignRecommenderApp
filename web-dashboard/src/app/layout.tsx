@@ -23,9 +23,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <body
         className={`${poppins.variable} font-sans antialiased bg-background text-foreground flex flex-col min-h-screen`}
+        suppressHydrationWarning
       >
         <Navbar />
         <main className="flex-grow pt-24">{children}</main>

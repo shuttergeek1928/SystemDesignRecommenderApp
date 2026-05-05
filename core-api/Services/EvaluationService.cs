@@ -54,11 +54,11 @@ public class EvaluationService : IEvaluationService
 
     private async Task<(int Score, int? MatchedBlueprintId)> CalculateIndustryAlignmentAsync(ArchitectureDesign design, DesignRequirements requirements)
     {
-        var filter = Builders<Domain.Data.Mongo.Entities.ReferenceBlueprint>.Filter.Empty;
-        var blueprints = await _mongoDbContext.ReferenceBlueprints.Find(filter).ToListAsync();
+        var blueprints = await _mongoDbContext.ReferenceBlueprints.Find(Builders<Domain.Data.Mongo.Entities.ReferenceBlueprint>.Filter.Empty).ToListAsync();
+        if (!blueprints.Any()) return (0, null);
 
         Domain.Data.Mongo.Entities.ReferenceBlueprint? bestBlueprint = null;
-        int bestScore = 50;
+        int bestScore = -1;
 
         var aiJson = JsonSerializer.Serialize(design).ToLower();
         var aiWords = aiJson.Split(new[] { ' ', '"', ':', '{', '}', ',', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 3).ToHashSet();
@@ -66,18 +66,23 @@ public class EvaluationService : IEvaluationService
         foreach (var blueprint in blueprints)
         {
             int matchWeight = 0;
+            // High priority: Matching the scaling and constraints
             if (requirements.Context != null && blueprint.Context != null)
             {
-                if (requirements.Context.TrafficPattern == blueprint.Context.TrafficPattern) matchWeight += 2;
-                if (requirements.Context.ConsistencyModel == blueprint.Context.ConsistencyModel) matchWeight += 2;
-                if (requirements.Context.LatencyRequirementMs == blueprint.Context.LatencyRequirementMs) matchWeight += 1;
+                if (requirements.Context.TrafficPattern == blueprint.Context.TrafficPattern) matchWeight += 15;
+                if (requirements.Context.ConsistencyModel == blueprint.Context.ConsistencyModel) matchWeight += 15;
+                if (requirements.Context.AvailabilitySlo == blueprint.Context.AvailabilitySlo) matchWeight += 10;
+                
+                // Scale matching
+                var userDiff = Math.Abs((requirements.Context.Users ?? 0) - (blueprint.Context.Users ?? 0));
+                if (userDiff < 100000) matchWeight += 10;
             }
 
             var baselineJson = JsonSerializer.Serialize(blueprint.GroundTruthArchitecture).ToLower();
             var baselineWords = baselineJson.Split(new[] { ' ', '"', ':', '{', '}', ',', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 3).ToHashSet();
             
             var overlap = baselineWords.Intersect(aiWords).Count();
-            int currentScore = Math.Min(100, (int)((double)overlap / Math.Max(1, baselineWords.Count) * 100)) + matchWeight * 5;
+            int currentScore = (int)((double)overlap / Math.Max(1, baselineWords.Count) * 60) + matchWeight;
             currentScore = Math.Min(100, currentScore);
 
             if (currentScore > bestScore)
@@ -87,12 +92,7 @@ public class EvaluationService : IEvaluationService
             }
         }
 
-        if (bestBlueprint != null)
-        {
-            return (bestScore, bestBlueprint.ScenarioId);
-        }
-
-        return (50, null);
+        return (Math.Max(0, bestScore), bestBlueprint?.ScenarioId);
     }
 
     private async Task<int> CalculateConstraintFulfillmentAsync(ArchitectureDesign design, DesignRequirements requirements)
@@ -159,9 +159,11 @@ public class EvaluationService : IEvaluationService
             new MessageDto("user", prompt)
         });
 
-        var appSettings = _settingsService.GetSettings();
-        var provider = !string.IsNullOrEmpty(requirements.Provider) ? requirements.Provider : (appSettings.GenerationProvider ?? appSettings.PreferredProvider ?? "gemini");
-        var modelName = !string.IsNullOrEmpty(requirements.Model) ? requirements.Model : (appSettings.GenerationModel ?? appSettings.GeminiModel);
+        var (provider, modelName) = await _settingsService.ResolveModelAsync(PipelinePhase.Evaluation);
+        
+        // Request-level overrides
+        if (!string.IsNullOrEmpty(requirements.Provider)) provider = requirements.Provider;
+        if (!string.IsNullOrEmpty(requirements.Model)) modelName = requirements.Model;
 
         var response = await _llmService.ChatAsync(chatRequest, provider, modelName);
 

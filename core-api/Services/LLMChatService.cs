@@ -29,19 +29,25 @@ namespace SystemDesignRecommenderApi.Services
 
         public async Task<string> ChatAsync(ChatRequest request, CancellationToken cancellationToken = default)
         {
-            var settings = _settingsService.GetSettings();
-            var provider = settings.PreferredProvider ?? "ollama";
-            var model = provider.ToLower() == "gemini" ? settings.GeminiModel : settings.OllamaModel;
+            _logger.LogInformation("[ChatAsync] Generic request started.");
+            var settings = await _settingsService.GetSettingsAsync();
+            var provider = "ollama"; // Default for generic chat
+            var model = "qwen2.5-coder:7b";
 
             return await ChatAsync(request, provider, model, cancellationToken);
         }
 
         public async Task<string> ChatAsync(ChatRequest request, string provider, string model, CancellationToken cancellationToken = default)
         {
-            var settings = _settingsService.GetSettings();
+            _logger.LogInformation("[ChatAsync] Provider: {Provider}, Model: {Model} started.", provider, model);
+            var settings = await _settingsService.GetSettingsAsync();
 
-            if (provider?.ToLower() == "gemini")
+            if (provider?.ToLower() == "gemini" || model?.ToLower()?.StartsWith("gemini") == true)
             {
+                if (provider?.ToLower() != "gemini")
+                {
+                    _logger.LogInformation("[ChatAsync] Model '{Model}' detected as Gemini. Auto-routing from {OldProvider} to Gemini provider.", model, provider);
+                }
                 return await ChatWithGeminiAsync(request, model, settings, cancellationToken);
             }
 
@@ -50,10 +56,11 @@ namespace SystemDesignRecommenderApi.Services
 
         private async Task<string> ChatWithOllamaAsync(ChatRequest request, string model, AppSettings settings, CancellationToken cancellationToken)
         {
+            _logger.LogInformation("[ChatWithOllamaAsync] Model: {Model} started.", model);
             try
             {
                 var messages = request.Messages.Select(m => new Message { Role = m.Role, Content = m.Content }).ToList();
-                var modelName = string.IsNullOrWhiteSpace(model) ? settings.OllamaModel : model;
+                var modelName = string.IsNullOrWhiteSpace(model) ? "qwen2.5-coder:7b" : model;
 
                 _logger.LogInformation("Sending chat request to Ollama model: {Model}", modelName);
                 _ollamaApiClient.SelectedModel = modelName;
@@ -80,6 +87,7 @@ namespace SystemDesignRecommenderApi.Services
 
         private async Task<string> ChatWithGeminiAsync(ChatRequest request, string model, AppSettings settings, CancellationToken cancellationToken)
         {
+            _logger.LogInformation("[ChatWithGeminiAsync] Model: {Model} started.", model);
             int maxRetries = 3;
             int delayMs = 1000;
 
@@ -92,7 +100,7 @@ namespace SystemDesignRecommenderApi.Services
                         throw new InvalidOperationException("Gemini API Key is missing in settings.");
                     }
 
-                    var modelName = string.IsNullOrWhiteSpace(model) ? (string.IsNullOrWhiteSpace(settings.GeminiModel) ? "gemini-1.5-flash" : settings.GeminiModel.Trim()) : model.Trim();
+                    var modelName = string.IsNullOrWhiteSpace(model) ? "gemini-1.5-flash" : model.Trim();
 
                     // Initialize the Gemini client using the SDK
                     var client = new Client(apiKey: settings.GeminiApiKey);
@@ -105,7 +113,7 @@ namespace SystemDesignRecommenderApi.Services
                     }).ToList();
 
                     _logger.LogInformation("Sending chat request to Gemini model: {Model} using SDK (Attempt {Attempt})", modelName, i + 1);
-
+                    
                     var response = await client.Models.GenerateContentAsync(modelName, contents, cancellationToken: cancellationToken);
 
                     if (response?.Candidates == null || !response.Candidates.Any())
@@ -140,6 +148,7 @@ namespace SystemDesignRecommenderApi.Services
 
         public async Task<IEnumerable<string>> GetAvailableModelsAsync(CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("[GetAvailableModelsAsync] Listing Ollama models.");
             try
             {
                 var models = await _ollamaApiClient.ListLocalModelsAsync(cancellationToken);

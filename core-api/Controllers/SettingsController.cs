@@ -18,15 +18,15 @@ public class SettingsController : ControllerBase
     }
 
     [HttpGet]
-    public ActionResult<AppSettings> GetSettings()
+    public async Task<ActionResult<AppSettings>> GetSettings()
     {
-        return Ok(_settingsService.GetSettings());
+        return Ok(await _settingsService.GetSettingsAsync());
     }
 
     [HttpPost]
-    public ActionResult UpdateSettings([FromBody] AppSettings settings)
+    public async Task<ActionResult> UpdateSettings([FromBody] AppSettings settings)
     {
-        _settingsService.UpdateSettings(settings);
+        await _settingsService.UpdateSettingsAsync(settings);
         return Ok();
     }
 

@@ -20,6 +20,7 @@ public class DesignDbContext : DbContext
     public DbSet<DesignNodeDefinition> NodeDefinitions { get; set; } = null!;
     public DbSet<DesignNodeSetting> NodeSettings { get; set; } = null!;
     public DbSet<DesignRule> DesignRules { get; set; } = null!;
+    public DbSet<AppGlobalSetting> AppGlobalSettings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

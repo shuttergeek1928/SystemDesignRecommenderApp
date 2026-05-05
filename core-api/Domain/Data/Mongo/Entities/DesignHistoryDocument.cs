@@ -1,6 +1,7 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using SystemDesignRecommenderApi.Domain.Models;
+using SystemDesignRecommenderApi.Services;
 
 namespace SystemDesignRecommenderApi.Domain.Data.Mongo.Entities;
 
@@ -36,6 +37,9 @@ public class DesignHistoryDocument
 
     [BsonElement("pipeline_logs")]
     public List<PipelineTraceStep> PipelineLogs { get; set; } = new();
+
+    [BsonElement("triggered_rules")]
+    public List<RuleTriggerRecordDTO> TriggeredRules { get; set; } = new();
 }
 
 public class EvaluationScoreDocument

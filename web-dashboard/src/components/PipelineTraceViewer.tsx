@@ -15,9 +15,11 @@ export function PipelineTraceViewer({ logs, isLoading, agentStatus }: PipelineTr
 
   // Define the expected pipeline stages
   const defaultStages = [
+    { name: "Requirements Extraction", icon: <Activity className="w-5 h-5" /> },
     { name: "Initialization", icon: <Activity className="w-5 h-5" /> },
     { name: "Context Retrieval", icon: <Search className="w-5 h-5" /> },
     { name: "Agentic Generation", icon: <Bot className="w-5 h-5" /> },
+    { name: "Component Resolution", icon: <Activity className="w-5 h-5" /> },
     { name: "Critic Evaluation", icon: <Activity className="w-5 h-5" /> },
   ];
 
@@ -60,8 +62,11 @@ export function PipelineTraceViewer({ logs, isLoading, agentStatus }: PipelineTr
   }
 
   // Find the auto-active node (the running one, or the last success one)
-  const autoActiveIndex = finalNodes.findIndex(n => n.status.toLowerCase() === "running");
-  const actualActiveIndex = activeNodeIndex !== null ? activeNodeIndex : (autoActiveIndex !== -1 ? autoActiveIndex : (finalNodes.length - 1));
+  // Find the auto-active node (the last running one, or the last success/error one)
+  const lastRunningIndex = [...finalNodes].reverse().findIndex(n => n.status.toLowerCase() === "running");
+  const actualActiveIndex = activeNodeIndex !== null 
+    ? activeNodeIndex 
+    : (lastRunningIndex !== -1 ? (finalNodes.length - 1 - lastRunningIndex) : (finalNodes.length - 1));
 
   return (
       <div className="w-full max-w-5xl mx-auto my-8 font-sans">
@@ -90,6 +95,7 @@ export function PipelineTraceViewer({ logs, isLoading, agentStatus }: PipelineTr
 
           if (isSuccess) { borderClass = "border-emerald-500"; bgClass = "bg-emerald-500/10"; iconClass = "text-emerald-500"; }
           else if (isError) { borderClass = "border-destructive"; bgClass = "bg-destructive/10"; iconClass = "text-destructive"; }
+          else if (node.status.toLowerCase() === "rejected") { borderClass = "border-amber-500"; bgClass = "bg-amber-500/10"; iconClass = "text-amber-500"; }
           else if (isRunning) { borderClass = "border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]"; bgClass = "bg-blue-500/10"; iconClass = "text-blue-500"; }
           
           const isActive = actualActiveIndex === idx;
@@ -122,7 +128,7 @@ export function PipelineTraceViewer({ logs, isLoading, agentStatus }: PipelineTr
                     {node.stepName}
                 </p>
                 <p className={`text-[10px] uppercase tracking-wider font-bold mt-1
-                    ${isRunning ? 'text-blue-400' : isSuccess ? 'text-emerald-500' : isError ? 'text-destructive' : 'text-muted-foreground'}`}>
+                    ${isRunning ? 'text-blue-400' : isSuccess ? 'text-emerald-500' : (isError || node.status.toLowerCase() === 'rejected') ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {node.status}
                 </p>
               </div>

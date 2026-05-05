@@ -9,10 +9,12 @@ namespace SystemDesignRecommenderApi.Services;
 public class BenchmarkService : IBenchmarkService
 {
     private readonly MongoDbContext _mongoDbContext;
+    private readonly IEvaluationService _evaluationService;
 
-    public BenchmarkService(MongoDbContext mongoDbContext)
+    public BenchmarkService(MongoDbContext mongoDbContext, IEvaluationService evaluationService)
     {
         _mongoDbContext = mongoDbContext;
+        _evaluationService = evaluationService;
     }
 
     public async Task<BenchmarkComparisonDto?> CompareSessionWithBaselineAsync(Guid sessionId)
@@ -21,10 +23,20 @@ public class BenchmarkService : IBenchmarkService
             .Find(h => h.SqlSessionId == sessionId.ToString())
             .FirstOrDefaultAsync();
 
-        if (historyDoc == null || historyDoc.ArchitectureDesign == null || historyDoc.EvaluationScores?.MatchedBlueprintId == null)
+        if (historyDoc == null || historyDoc.ArchitectureDesign == null)
             return null;
 
-        var blueprintId = historyDoc.EvaluationScores.MatchedBlueprintId.Value;
+        int? blueprintId = historyDoc.EvaluationScores?.MatchedBlueprintId;
+
+        // Fallback: If no blueprint was matched during generation, find the best fit now
+        if (blueprintId == null && historyDoc.ExtractedRequirements != null)
+        {
+            var alignment = await _evaluationService.EvaluateArchitectureAsync(historyDoc.ArchitectureDesign, historyDoc.ExtractedRequirements, historyDoc.ProblemStatement);
+            blueprintId = alignment.MatchedBlueprintId;
+        }
+
+        if (blueprintId == null) return null;
+
         var blueprint = await _mongoDbContext.ReferenceBlueprints
             .Find(b => b.ScenarioId == blueprintId)
             .FirstOrDefaultAsync();

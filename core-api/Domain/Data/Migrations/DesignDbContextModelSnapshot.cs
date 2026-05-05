@@ -22,6 +22,46 @@ namespace SystemDesignRecommenderApi.Domain.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.AppGlobalSetting", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EvaluationModel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EvaluationProvider")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ExtractionModel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ExtractionProvider")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GeminiApiKey")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GenerationModel")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GenerationProvider")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppGlobalSettings");
+                });
+
             modelBuilder.Entity("SystemDesignRecommenderApi.Domain.Data.Entities.DesignNodeDefinition", b =>
                 {
                     b.Property<string>("Key")

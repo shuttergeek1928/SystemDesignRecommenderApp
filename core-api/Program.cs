@@ -6,8 +6,34 @@ using SystemDesignRecommenderApi.Domain.Data.Mongo;
 using SystemDesignRecommenderApi.Domain.Evaluation;
 using SystemDesignRecommenderApi.Hubs;
 using SystemDesignRecommenderApi.Services;
+using Serilog;
+using Serilog.Events;
+using Serilog.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.FromLogContext()
+    .Enrich.WithProcessId()
+    .Enrich.WithThreadId()
+    .Enrich.WithEnvironmentName()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .WriteTo.Logger(lc => lc
+        .Filter.ByExcluding(le => le.Properties.ContainsKey("LogSource") && le.Properties["LogSource"].ToString().Contains("UI"))
+        .WriteTo.File("logs/server-.log", 
+            rollingInterval: RollingInterval.Day,
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}"))
+    .WriteTo.Logger(lc => lc
+        .Filter.ByIncludingOnly(le => le.Properties.ContainsKey("LogSource") && le.Properties["LogSource"].ToString().Contains("UI"))
+        .WriteTo.File("logs/ui-.log", 
+            rollingInterval: RollingInterval.Day,
+            outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] [UI] {Message:lj}{NewLine}{Exception}"))
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 // Add services to the container.
 builder.Services.AddControllers()
@@ -51,25 +77,35 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowAll",
         policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.WithOrigins("http://localhost:3000") // Dashboard default
                   .AllowAnyMethod()
-                  .AllowAnyHeader();
+                  .AllowAnyHeader()
+                  .AllowCredentials()
+                  .SetIsOriginAllowed(_ => true); // Broadly allow for dev
         });
 });
 
 var app = builder.Build();
 
 // Automatically apply migrations at startup
-using (var scope = app.Services.CreateScope())
+try
 {
-    var dbContext = scope.ServiceProvider.GetRequiredService<DesignDbContext>();
-    dbContext.Database.Migrate();
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<DesignDbContext>();
+        dbContext.Database.Migrate();
 
-    // Seed MongoDB
-    DatabaseSeeder.SeedAsync(app.Services).GetAwaiter().GetResult();
+        // Seed MongoDB
+        DatabaseSeeder.SeedAsync(app.Services).GetAwaiter().GetResult();
+    }
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "An error occurred during migration or seeding.");
 }
 
 app.UseCors("AllowAll");
+app.UseWebSockets();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

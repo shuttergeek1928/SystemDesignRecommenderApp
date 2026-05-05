@@ -12,17 +12,22 @@ public class SystemDesignController : ControllerBase
     private readonly ISystemDesignService _systemDesignService;
     private readonly IRuleEngineService _ruleEngineService;
     private readonly IBenchmarkService _benchmarkService;
+    private readonly ILogger<SystemDesignController> _logger;
+    private readonly IAgenticFeedbackService _feedbackService;
 
-    public SystemDesignController(ISystemDesignService systemDesignService, IRuleEngineService ruleEngineService, IBenchmarkService benchmarkService)
+    public SystemDesignController(ISystemDesignService systemDesignService, IRuleEngineService ruleEngineService, IBenchmarkService benchmarkService, ILogger<SystemDesignController> logger, IAgenticFeedbackService feedbackService)
     {
         _systemDesignService = systemDesignService;
         _ruleEngineService = ruleEngineService;
         _benchmarkService = benchmarkService;
+        _logger = logger;
+        _feedbackService = feedbackService;
     }
 
     [HttpPost("generate")]
     public async Task<IActionResult> GenerateDesign([FromBody] SystemDesignRequestDto request)
     {
+        _logger.LogInformation("[GenerateDesign] Started. Problem: {Problem}, UseHybrid: {UseHybrid}", request.ProblemStatement, request.UseHybrid);
         if (string.IsNullOrWhiteSpace(request.ProblemStatement))
         {
             return BadRequest("Problem statement is required.");
@@ -35,13 +40,22 @@ public class SystemDesignController : ControllerBase
 
         if (request.Requirements != null && !string.IsNullOrEmpty(request.Requirements.Title))
         {
-            Console.WriteLine("Using provided structured requirements, skipping LLM extraction.");
+            _logger.LogInformation("[Pipeline] Requirements Extraction -> Success: Using provided requirements.");
             requirements = request.Requirements;
+            
+            // Send feedback to UI that extraction is "Complete" even if skipped
+            await _feedbackService.SendPipelineStepAsync(request.ConnectionId ?? string.Empty, new Domain.Models.PipelineTraceStep {
+                StepName = "Requirements Extraction",
+                Status = "Success",
+                Summary = $"Using provided requirements: {requirements.Title}",
+                Details = "Structured input provided by user. Skipped LLM extraction loop.",
+                Timestamp = DateTime.UtcNow
+            });
         }
         else
         {
             Console.WriteLine("No structured requirements provided. Extracting from problem statement...");
-            var extracted = await _systemDesignService.ExtractRequirementsAsync(request.ProblemStatement);
+            var extracted = await _systemDesignService.ExtractRequirementsAsync(request.ProblemStatement, request.ConnectionId);
             if (extracted == null && request.Requirements == null)
             {
                 return StatusCode(500, "Failed to extract structured requirements from the LLM.");
@@ -142,6 +156,7 @@ public class SystemDesignController : ControllerBase
     [HttpGet("history")]
     public async Task<IActionResult> GetHistory([FromQuery] Guid? userId, [FromQuery] Guid? teamId)
     {
+        _logger.LogInformation("[GetHistory] Fetching history for User: {UserId}, Team: {TeamId}", userId, teamId);
         var history = await _systemDesignService.GetSessionHistoryAsync(userId, teamId);
         return Ok(history);
     }
@@ -149,6 +164,7 @@ public class SystemDesignController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetSessionById(Guid id)
     {
+        _logger.LogInformation("[GetSessionById] Fetching session {SessionId}", id);
         var session = await _systemDesignService.GetSessionByIdAsync(id);
         if (session == null) return NotFound("Session not found.");
         return Ok(session);
@@ -157,6 +173,7 @@ public class SystemDesignController : ControllerBase
     [HttpGet("{id}/benchmark")]
     public async Task<IActionResult> GetBenchmarkComparison(Guid id)
     {
+        _logger.LogInformation("[GetBenchmarkComparison] Benchmarking session {SessionId}", id);
         var comparison = await _benchmarkService.CompareSessionWithBaselineAsync(id);
         if (comparison == null) return NotFound("Benchmark not found.");
         return Ok(comparison);
@@ -170,7 +187,10 @@ public class SystemDesignController : ControllerBase
             return BadRequest("Problem statement is required.");
         }
 
-        var requirements = await _systemDesignService.ExtractRequirementsAsync(request.ProblemStatement);
+        _logger.LogInformation("[ExtractRequirements] Received request for problem statement.");
+        // Give SignalR a moment to stabilize if it was just connected
+        await Task.Delay(200);
+        var requirements = await _systemDesignService.ExtractRequirementsAsync(request.ProblemStatement, request.ConnectionId);
 
         if (requirements == null)
         {

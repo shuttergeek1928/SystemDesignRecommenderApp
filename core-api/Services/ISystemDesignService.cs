@@ -5,7 +5,7 @@ namespace SystemDesignRecommenderApi.Services;
 
 public interface ISystemDesignService
 {
-    Task<DesignRequirements?> ExtractRequirementsAsync(string problemStatement);
+    Task<DesignRequirements?> ExtractRequirementsAsync(string problemStatement, string? connectionId = null);
     Task<ArchitectureDesign?> GenerateArchitectureAsync(string problemStatement, DesignRequirements requirements, Guid? userId = null, Guid? teamId = null);
     Task<ArchitectureDesign?> GenerateArchitectureWithRagAsync(DesignRequirements requirements, Guid? userId = null, Guid? teamId = null);
     Task<GenerationResult?> GenerateHybridArchitectureAsync(string problemStatement, DesignRequirements requirements, Guid? userId = null, Guid? teamId = null, string? connectionId = null);

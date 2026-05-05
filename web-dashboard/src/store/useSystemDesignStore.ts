@@ -46,10 +46,7 @@ interface SystemDesignStore {
   isLoading: boolean;
   useRag: boolean;
   useHybrid: boolean;
-  ollamaModel: string;
-  geminiModel: string;
   geminiApiKey: string;
-  preferredProvider: string;
   extractionProvider: string;
   extractionModel: string;
   generationProvider: string;
@@ -63,18 +60,12 @@ interface SystemDesignStore {
   setFormData: (data: Partial<SystemDesignForm>) => void;
   setUseRag: (value: boolean) => void;
   setUseHybrid: (value: boolean) => void;
-  setOllamaModel: (value: string) => void;
-  setGeminiModel: (value: string) => void;
   setGeminiApiKey: (value: string) => void;
-  setPreferredProvider: (value: string) => void;
   generateRecommendation: (data: SystemDesignForm) => Promise<boolean>;
   fetchRecommendationById: (id: string) => Promise<boolean>;
   fetchSettings: () => Promise<void>;
   updateSettings: (settings: {
-    ollamaModel?: string;
-    geminiModel?: string;
     geminiApiKey?: string;
-    preferredProvider?: string;
     extractionProvider?: string;
     extractionModel?: string;
     generationProvider?: string;
@@ -83,6 +74,7 @@ interface SystemDesignStore {
     evaluationModel?: string;
   }) => Promise<void>;
   reset: () => void;
+  initialize: () => Promise<void>;
 
   // Node Definitions & Settings
   nodeDefinitions: NodeDefinition[];
@@ -126,37 +118,48 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
       connectionId: null,
 
       initSignalR: async () => {
-        if (get().connectionId) return get().connectionId; // Already connected
-        
+        const currentId = get().connectionId;
+        const currentConn = (window as any).signalRConnection;
+
+        if (currentId && currentConn && currentConn.state === signalR.HubConnectionState.Connected) {
+          return currentId;
+        }
+
+        if (currentConn) {
+          await currentConn.stop();
+        }
+
         const connection = new signalR.HubConnectionBuilder()
-            .withUrl("http://localhost:5220/hubs/agentStatus")
-            .withAutomaticReconnect()
-            .build();
+          .withUrl("http://localhost:5220/hubs/agentStatus")
+          .withAutomaticReconnect()
+          .build();
 
         connection.on("ReceiveAgentStatus", (message: string) => {
-            set({ agentStatus: message });
+          set({ agentStatus: message });
         });
 
         connection.on("ReceivePipelineUpdate", (step: PipelineTraceStep) => {
-            set((state) => {
-                // If step with same name exists, update it, else append
-                const existingIndex = state.pipelineLogs.findIndex(s => s.stepName === step.stepName);
-                if (existingIndex >= 0) {
-                    const newLogs = [...state.pipelineLogs];
-                    newLogs[existingIndex] = step;
-                    return { pipelineLogs: newLogs };
-                }
-                return { pipelineLogs: [...state.pipelineLogs, step] };
-            });
+          set((state) => {
+            const existingIndex = state.pipelineLogs.findIndex(s => s.stepName === step.stepName);
+            if (existingIndex >= 0) {
+              const newLogs = [...state.pipelineLogs];
+              newLogs[existingIndex] = step;
+              return { pipelineLogs: newLogs };
+            }
+            return { pipelineLogs: [...state.pipelineLogs, step] };
+          });
         });
 
         try {
-            await connection.start();
-            set({ connectionId: connection.connectionId });
-            return connection.connectionId;
+          await connection.start();
+          (window as any).signalRConnection = connection;
+          const newId = connection.connectionId;
+          set({ connectionId: newId });
+          console.log("SignalR Connected. New ConnectionId:", newId);
+          return newId;
         } catch (err) {
-            console.error("Error connecting to SignalR: ", err);
-            return null;
+          console.error("Error connecting to SignalR: ", err);
+          return null;
         }
       },
 
@@ -166,10 +169,13 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
         set({ useRag: value, useHybrid: !value && get().useHybrid }),
       setUseHybrid: (value) =>
         set({ useHybrid: value, useRag: !value && get().useRag }),
-      setOllamaModel: (value) => set({ ollamaModel: value }),
-      setGeminiModel: (value) => set({ geminiModel: value }),
       setGeminiApiKey: (value) => set({ geminiApiKey: value }),
-      setPreferredProvider: (value) => set({ preferredProvider: value }),
+
+      initialize: async () => {
+        await get().fetchSettings();
+        await get().fetchNodeDefinitions();
+        // Set defaults if needed, but fetchSettings should cover it
+      },
 
       fetchSettings: async () => {
         try {
@@ -177,17 +183,15 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
           if (response.ok) {
             const settings = await response.json();
             set({
-              ollamaModel: settings.ollamaModel,
-              geminiModel: settings.geminiModel,
-              geminiApiKey: settings.geminiApiKey,
-              preferredProvider: settings.preferredProvider,
-              extractionProvider: settings.extractionProvider,
-              extractionModel: settings.extractionModel,
-              generationProvider: settings.generationProvider,
-              generationModel: settings.generationModel,
-              evaluationProvider: settings.evaluationProvider,
-              evaluationModel: settings.evaluationModel,
+              geminiApiKey: settings.geminiApiKey || get().geminiApiKey,
+              extractionProvider: settings.extractionProvider || get().extractionProvider,
+              extractionModel: settings.extractionModel || get().extractionModel,
+              generationProvider: settings.generationProvider || get().generationProvider,
+              generationModel: settings.generationModel || get().generationModel,
+              evaluationProvider: settings.evaluationProvider || get().evaluationProvider,
+              evaluationModel: settings.evaluationModel || get().evaluationModel,
             });
+            console.log("Settings synchronized from database.");
           }
         } catch (error) {
           console.error("Error fetching settings:", error);
@@ -196,27 +200,23 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
 
       updateSettings: async (settings) => {
         try {
-          const currentSettings = {
-            ollamaModel: get().ollamaModel,
-            geminiModel: get().geminiModel,
-            geminiApiKey: get().geminiApiKey,
-            preferredProvider: get().preferredProvider,
-            extractionProvider: get().extractionProvider,
-            extractionModel: get().extractionModel,
-            generationProvider: get().generationProvider,
-            generationModel: get().generationModel,
-            evaluationProvider: get().evaluationProvider,
-            evaluationModel: get().evaluationModel,
-            ...settings,
+          const payload = {
+            geminiApiKey: settings.geminiApiKey ?? get().geminiApiKey,
+            extractionProvider: settings.extractionProvider ?? get().extractionProvider,
+            extractionModel: settings.extractionModel ?? get().extractionModel,
+            generationProvider: settings.generationProvider ?? get().generationProvider,
+            generationModel: settings.generationModel ?? get().generationModel,
+            evaluationProvider: settings.evaluationProvider ?? get().evaluationProvider,
+            evaluationModel: settings.evaluationModel ?? get().evaluationModel,
           };
 
           const response = await fetch("http://localhost:5220/api/Settings", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(currentSettings),
+            body: JSON.stringify(payload),
           });
           if (response.ok) {
-            set(currentSettings);
+            set(payload);
           }
         } catch (error) {
           console.error("Error updating settings:", error);
@@ -225,10 +225,10 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
 
       generateRecommendation: async (data) => {
         if (get().isLoading) return false;
-        
+
         // Ensure SignalR is connected before proceeding
         const connectionId = await get().initSignalR();
-        
+
         set({ isLoading: true, formData: data, agentStatus: "Starting Agentic Loop...", pipelineLogs: [], recommendation: null });
         const { useRag, useHybrid } = get();
 
@@ -334,13 +334,36 @@ export const useSystemDesignStore = create<SystemDesignStore>()(
           if (!response.ok) throw new Error("Failed to fetch session");
 
           const result = await response.json();
+          const req = result.extractedRequirements || {};
+          const ctx = req.context || {};
+
           set({
             isLoading: false,
+            formData: {
+              appName: req.title,
+              additionalContext: req.description,
+              userCount: ctx.users,
+              trafficPattern: ctx.traffic_pattern,
+              latency: ctx.latency_requirement_ms <= 100 ? "low" : ctx.latency_requirement_ms <= 500 ? "medium" : "high",
+              availabilitySlo: (ctx.availability_slo?.toString() || "99.9") as any,
+              consistency: ctx.consistency_model,
+              budget: ctx.budget,
+              teamSize: ctx.team_size,
+              experienceLevel: ctx.experience_level,
+              requestRate: ctx.request_rate,
+              dataVolume: ctx.data_volume_gb,
+              searchComplexity: ctx.search_complexity,
+              deploymentFrequency: ctx.deployment_frequency,
+              readWriteRatio: ctx.read_write_ratio,
+              dataRetention: ctx.data_retention,
+              securitySensitivity: ctx.security_sensitivity || "public",
+              regionStrategy: ctx.region_strategy || "single-region",
+              compliance: ctx.compliance || [],
+            },
             recommendation: {
               id: result.id || id,
               generatedAt: result.createdAt || new Date().toISOString(),
               data: {
-                // Match the structure expected by the UI (combining the fields)
                 extractedRequirements: result.extractedRequirements,
                 architectureDesign: result.architectureDesign,
                 triggeredRules: result.triggeredRules,

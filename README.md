@@ -8,26 +8,31 @@ A sophisticated hybrid reasoning platform designed to assist software architects
 
 The application follows a modular architecture where the **.NET Core API** acts as the central orchestrator:
 
-1.  **Ingestion**: User enters a natural language problem statement and non-functional goals.
-2.  **Hybrid Extraction**:
-    *   **LLM** extracts technical dimensions.
-    *   **Deterministic Rule Engine** evaluates these against best practices.
-3.  **Agentic Evaluation**:
-    *   The **Critic Agent (Gemini)** performs a 4-way audit (Alignment, Compliance, Readiness, Rubric).
-    *   The system performs a **self-correction loop** if the initial design score is too low.
-4.  **Polyglot Persistence**: The session, requirements, rules, and AI audit report are stored across **SQL Server** and **MongoDB**.
-5.  **Visualization**: Results are displayed with an **Architectural Radar** and a detailed **Rule Engine Audit** showing matched vs. idle constraints.
+1.  **Ingestion**: User enters detailed technical requirements and non-functional goals through an expanded intake schema.
+2.  **Agentic Observability Pipeline**:
+    *   **SignalR Streaming**: Real-time visualization of the internal decision-making process.
+    *   **Trace Viewer**: A horizontal execution flow showing stages from "Initialization" through "Critic Evaluation."
+3.  **Hybrid Reasoning**:
+    *   **LLM (Gemini/Ollama)**: Extracts technical dimensions and architectural nodes.
+    *   **Deterministic Rule Engine**: Validates designs against 13+ best-practice constraint sets.
+4.  **Dissertation-Grade Evaluation**:
+    *   **Critic Agent**: Performs a 4-way audit (Alignment, Compliance, Readiness, Rubric).
+    *   **Benchmarking**: Automatic side-by-side comparison against 40+ industry expert baselines.
+5.  **Active Feedback Loop**: Users rate designs; negative feedback is injected back into future generations to drive continuous improvement.
+6.  **Polyglot Persistence**: Comprehensive storage in **SQL Server** (Users/Rules) and **MongoDB** (Audit Trails/Trace Logs/History/Baselines).
+7.  **Visualization**: Results displayed via **Architectural Radar**, **Rule Audit Table**, and **Benchmark Comparison View**.
 
 ---
 
 ## 🌟 Key Features
 
-- **Hybrid Reasoning Engine**: Combines LLM creativity with deterministic rule-based anchors.
-- **Agentic "Critic" Loop**: A Gemini-powered critic that audits designs and forces regenerations for sub-par results.
-- **Architectural Audit Dashboard**: Real-time visualization of system integrity using Radar Charts and Rule Audits.
-- **Polyglot Persistence**: Strategic use of SQL Server (Rules/Users) and MongoDB (History/Blueprints).
-- **RAG-Enhanced Analysis**: Technical context retrieved from local expert documentation.
-- **Advanced UX**: Premium dashboard with real-time SignalR status updates during generation.
+- **Agentic Observability Pipeline**: Real-time, horizontal trace viewer that visualizes every step of the recommendation logic via SignalR.
+- **Benchmark Comparison Engine**: Quantitative evaluation system comparing AI recommendations against 40+ expert-curated architectural baselines (Expert, RAG-naive, and Hybrid).
+- **Hybrid Reasoning Engine**: Combines the creativity of LLMs (Gemini 1.5 Flash/Pro) with the deterministic reliability of a C#-based rule engine.
+- **Active Feedback Loop**: Implements a continuous learning mechanism where user feedback is persisted and used as context for subsequent generations.
+- **Knowledge Base Explorer**: A dedicated UI for browsing the 40+ industry scenarios and their multi-dimensional baselines.
+- **Agentic "Critic" Loop**: A self-correcting loop where a critic agent audits the design and forces regeneration if the integrity score falls below a threshold.
+- **Advanced UX**: Premium dashboard featuring glassmorphism, animated transitions, and real-time generation status nodes.
 
 ---
 

@@ -41,19 +41,21 @@ A production-ready Next.js frontend for a decision support system that recommend
 The project follows a modular, atomic-inspired architecture with clear separation of concerns:
 
 - `src/app`: Next.js App Router pages and layouts.
+- `src/components/PipelineTraceViewer.tsx`: High-fidelity horizontal flow chart for real-time process visualization.
+- `src/components/views`: Complex, page-specific feature views (Recommendations, Benchmark, History).
 - `src/components/ui`: Base primitive components built with Tailwind 4.
 - `src/components/shared`: Reusable layout components (Navbar, Footer).
-- `src/components/views`: Complex, page-specific feature views.
-- `src/store`: Zustand stores for global state.
+- `src/store`: Zustand stores for global state (Persisted).
 - `src/types`: TypeScript interfaces and Zod schemas.
 - `src/lib`: Utility functions and API clients.
 
 ## ✨ Key Features
 
-- **High-Fidelity UI**: Modern SaaS aesthetic with glassmorphism and dark mode.
-- **Multi-Step Wizard**: Context-aware form gathering technical and team requirements.
-- **Interactive Dashboard**: Performance-driven recommendations with data visualization.
-- **Dev Productivity Roadmap**: Personalized learning paths based on team velocity.
+- **Agentic Observability**: Real-time visualization of the recommendation pipeline using animated nodes and SignalR streaming.
+- **Quantitative Benchmarking**: Side-by-side comparison of AI designs against expert baselines with Radar Chart overlays.
+- **Active Feedback Widget**: Interactive interface for rating and correcting architectural decisions.
+- **High-Fidelity Dashboard**: Modern SaaS aesthetic with glassmorphism, Framer Motion animations, and dark mode support.
+- **Knowledge Base Explorer**: Browsable gallery of 40+ industry scenarios and their multi-dimensional ground truths.
 
 ## 📄 License
 

@@ -1,41 +1,55 @@
-# Walkthrough: Polyglot Agentic Evaluation Framework
+# Agentic System Design Evaluation Framework
 
-I have successfully transformed the system design recommender into a professional-grade research framework. The system now features a multi-dimensional "Critic Agent" that audits designs, provides rubric-based feedback, and self-corrects through an agentic loop.
+This framework provides a multi-dimensional, agentic approach to evaluating software architecture recommendations. It combines deterministic rule checking, LLM-based critique, and quantitative benchmarking against industry standards.
 
-## Key Accomplishments
+## 🏗️ Core Architecture
 
-### 1. Polyglot Persistence Layer
-- **MongoDB**: Integrated as the document store for architectural blueprints and design history.
-- **MS SQL**: Retained for relational rule management.
-- **Seeding**: Automatically seeded 40 reference blueprints into MongoDB and 13 structured rules into SQL on startup.
+The evaluation pipeline is orchestrated by the `.NET Core API` and leverages a hybrid approach:
+1.  **Extraction**: Requirements are parsed into technical dimensions.
+2.  **Observability**: Every internal decision is streamed via SignalR to the **Pipeline Trace Viewer**.
+3.  **Deterministic Rules**: A C#-based engine validates the design against best practices.
+4.  **Agentic Critic**: A Gemini-powered "Critic Agent" audits the design across Cost, Security, and Operational Readiness.
+5.  **Benchmark Comparison**: The final recommendation is scored against expert-curated baselines.
 
-### 2. Agentic "Critic" Evaluation Engine
-- Created `IEvaluationConstraint` with concrete implementations:
-  - **CostConstraint**: Analyzes entry cost and operational efficiency.
-  - **SecurityConstraint**: Audits security posture and compliance.
-  - **OperationalConstraint**: Evaluates deployment complexity.
-- **LLM-as-a-Judge**: Uses Gemini 3.1 Pro as a critic to generate a detailed rubric score and a textual critique.
-- **Dynamic Constraint Fulfillment**: Replaced static placeholders with a keyword-based heuristic that verifies if the generated architecture actually implements the triggered rules.
+## 🌟 Key Features
 
-### 3. Real-Time Agentic Loop (SignalR)
-- **Agentic Loop**: If the Critic assigns a score below 70, the system automatically triggers a second generation pass, feeding the critique back into the prompt for self-correction.
-- **SignalR Hub**: Streams real-time status updates ("Analyzing cost...", "Critic rejected draft...") directly to the dashboard.
+### 1. Agentic Observability Pipeline
+- **Live Trace Viewer**: A horizontal execution flow that visualizes every step of the recommendation process in real-time.
+- **Granular Logs**: Internal state transitions (e.g., "Initializing Rule Engine", "Critic Audit in Progress") are streamed to the UI for full transparency.
 
-### 4. Architectural Audit Dashboard
-- **Integrity Score**: A dynamic confidence metric in the sidebar calculated as the average of Industry Alignment, Rule Compliance, Deployment Readiness, and the Agentic Rubric.
-- **Rule Engine Audit**: A new transparency layer that shows exactly which architectural rules were **Active** (matched requirements) and which remained **Idle**.
-- **Radar Charts**: Integrated `recharts` to visualize scores across 5 dimensions.
-- **Critic Report**: Displays the raw, unfiltered critique from the Agentic Critic.
+### 2. Multi-Baseline Benchmarking
+- **Industry Alignment**: Designs are compared against 40+ reference scenarios stored in MongoDB.
+- **Baseline A (Expert)**: Gold-standard architectures curated by senior architects.
+- **Baseline B (Naive RAG)**: Basic retrieval-augmented generation without advanced reasoning.
+- **Baseline C (Hybrid)**: The current system's output, used for continuous benchmarking.
+- **Accuracy Scoring**: Quantitative metrics based on node-level matching and semantic similarity.
 
-## How to Test
+### 3. Active Feedback Learning Loop
+- **User Corrections**: Architects can rate recommendations and provide specific corrections for each node (e.g., "Change Database from MySQL to PostgreSQL").
+- **Continuous Learning**: Negative feedback is persisted and injected into the LLM context for future generations to prevent recurring errors.
 
-1. **Start the System**: Run `dotnet run` in `core-api` and `npm run dev` in `web-dashboard`.
-2. **Generate a Design**: Go to the generation page. You will see the loading text update in real-time as the agent works.
-3. **View the Audit**: Once complete, the recommendation page will feature a new **Architectural Radar**, a **Rule Engine Audit**, and a **Critic Agent Report** section.
-4. **History**: Old sessions viewed from the history page will now also load their evaluation data from MongoDB.
+### 4. Rule Engine Audit
+- **Transparency**: Shows exactly which architectural rules were triggered by the user requirements.
+- **Fulfillment Status**: Validates if the generated design actually satisfies the active rules.
 
-## Screenshots & Visuals
-(Note: Real-time SignalR feedback can be seen during the generation process)
+## 🧪 How to Test
 
-> [!TIP]
-> The Agentic Loop ensures that even if the initial LLM response is weak, the system "double-checks" itself before showing you the result, significantly increasing reliability for your M.Tech audit.
+1.  **Launch Services**: Ensure the `.NET API`, `RAG Engine`, and `Web Dashboard` are running.
+2.  **Submit Requirements**: Use the expanded intake form to provide high-context requirements.
+3.  **Monitor Generation**: Watch the **Pipeline Trace Viewer** nodes animate as the system processes the request.
+4.  **Review Recommendation**:
+    -   Check the **Architectural Radar** for high-level scores.
+    -   Inspect the **Rule Audit** for compliance.
+    -   Switch to the **Benchmark Tab** to see the comparison against the expert baseline.
+5.  **Provide Feedback**: Rate the output and provide corrections to test the learning loop.
+
+## 📊 Technical Components
+
+- **Storage**: MS SQL (Relational Rules), MongoDB (History, Blueprints, Traces, Feedback).
+- **Intelligence**: Gemini 1.5 Flash (Primary/Critic), Ollama (Local Fallback).
+- **Communication**: SignalR (Real-time updates).
+
+---
+
+> [!IMPORTANT]
+> This framework is designed to satisfy the rigorous audit requirements of an M.Tech dissertation, providing both qualitative critique and quantitative metrics.

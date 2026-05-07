@@ -88,8 +88,8 @@ namespace SystemDesignRecommenderApi.Services
         private async Task<string> ChatWithGeminiAsync(ChatRequest request, string model, AppSettings settings, CancellationToken cancellationToken)
         {
             _logger.LogInformation("[ChatWithGeminiAsync] Model: {Model} started.", model);
-            int maxRetries = 3;
-            int delayMs = 1000;
+            int maxRetries = 5;
+            int delayMs = 15000; // 15s initial delay for strict free tier (5 RPM)
 
             for (int i = 0; i <= maxRetries; i++)
             {
@@ -125,21 +125,21 @@ namespace SystemDesignRecommenderApi.Services
                     var text = response.Candidates[0].Content?.Parts?[0]?.Text;
                     return text ?? string.Empty;
                 }
-                catch (Exception ex) when (ex.Message.Contains("high demand") || ex.Message.Contains("503") || ex.Message.Contains("429"))
+                catch (Exception ex) when (ex.Message.Contains("quota") || ex.Message.Contains("limit") || ex.Message.Contains("429") || ex.Message.Contains("503") || ex.Message.Contains("high demand"))
                 {
                     if (i == maxRetries)
                     {
-                        _logger.LogError(ex, "Gemini SDK chat failed after {Retries} retries due to high demand.", maxRetries);
+                        _logger.LogError(ex, "Gemini SDK chat failed after {Retries} retries due to quota or rate limits.", maxRetries);
                         throw;
                     }
 
-                    _logger.LogWarning("Gemini high demand detected. Retrying in {Delay}ms...", delayMs);
+                    _logger.LogWarning("Gemini Rate Limit/Quota reached. Retrying attempt {Attempt} in {Delay}ms... Error: {Error}", i + 1, delayMs, ex.Message);
                     await Task.Delay(delayMs, cancellationToken);
                     delayMs *= 2; // Exponential backoff
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Gemini SDK chat failed with a non-retryable error.");
+                    _logger.LogError(ex, "Gemini SDK chat failed with a non-retryable error: {Error}", ex.Message);
                     throw;
                 }
             }

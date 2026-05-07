@@ -3,6 +3,8 @@
     "scenario_id": 1,
     "title": "Ride Sharing Backend",
     "description": "Ride Sharing Backend system with scalable architecture requirements.",
+    "category": "Logistics",
+    "keywords": ["uber", "taxi", "ride", "drivers", "location", "matching"],
     "context": {
       "users": 100000,
       "traffic_pattern": "burst",
@@ -67,6 +69,8 @@
     "scenario_id": 2,
     "title": "E-commerce Platform",
     "description": "E-commerce Platform system with scalable architecture requirements.",
+    "category": "Transactional",
+    "keywords": ["shop", "buy", "cart", "orders", "payments", "retail"],
     "context": {
       "users": 200000,
       "traffic_pattern": "steady",

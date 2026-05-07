@@ -61,4 +61,10 @@ public class EvaluationScoreDocument
 
     [BsonElement("matched_blueprint_id")]
     public int? MatchedBlueprintId { get; set; }
+
+    [BsonElement("is_novel_scenario")]
+    public bool IsNovelScenario { get; set; }
+
+    [BsonElement("novelty_reason")]
+    public string NoveltyReason { get; set; } = string.Empty;
 }

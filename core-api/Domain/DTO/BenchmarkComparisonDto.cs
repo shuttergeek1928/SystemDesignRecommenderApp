@@ -5,6 +5,8 @@ public class BenchmarkComparisonDto
     public string SessionId { get; set; } = string.Empty;
     public string MatchedBlueprintTitle { get; set; } = string.Empty;
     public int MatchedBlueprintScenarioId { get; set; }
+    public bool IsNovelScenario { get; set; }
+    public string NoveltyReason { get; set; } = string.Empty;
     
     public List<NodeComparisonItem> NodeComparisons { get; set; } = new();
     

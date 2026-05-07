@@ -90,17 +90,23 @@ var app = builder.Build();
 // Automatically apply migrations at startup
 try
 {
+    Console.WriteLine("Starting startup tasks (Migrations & Seeding)...");
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<DesignDbContext>();
+        Console.WriteLine("Applying SQL Migrations...");
         dbContext.Database.Migrate();
+        Console.WriteLine("SQL Migrations completed.");
 
         // Seed MongoDB
+        Console.WriteLine("Starting Database Seeding...");
         DatabaseSeeder.SeedAsync(app.Services).GetAwaiter().GetResult();
+        Console.WriteLine("Database Seeding completed.");
     }
 }
 catch (Exception ex)
 {
+    Console.WriteLine($"FATAL ERROR during startup: {ex.Message}");
     Log.Fatal(ex, "An error occurred during migration or seeding.");
 }
 

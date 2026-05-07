@@ -337,7 +337,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
 
         await LogStepAsync("Context Retrieval", "Running", "Retrieving historical feedback and rules...");
 
-        var contextSummary = $"team={requirements.Context?.TeamSize}, latency={requirements.Context?.LatencyRequirementMs}ms, consistency={requirements.Context?.ConsistencyModel}, problem={problemStatement}";
+        var contextSummary = $"team={requirements?.Context?.TeamSize}, latency={requirements?.Context?.LatencyRequirementMs}ms, consistency={requirements?.Context?.ConsistencyModel}, problem={problemStatement}";
         var ruleHint = string.IsNullOrEmpty(ruleContextText) ? "" : $" Consider these architectural anchors: {ruleContextText}";
 
         // --- FEEDBACK LOOP INJECTION ---
@@ -516,7 +516,9 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                         DeploymentReadinessScore = evaluation.DeploymentReadinessScore,
                         RubricScore = evaluation.RubricScore,
                         CriticReport = evaluation.CriticReport,
-                        MatchedBlueprintId = evaluation.MatchedBlueprintId
+                        MatchedBlueprintId = evaluation.MatchedBlueprintId,
+                        IsNovelScenario = evaluation.IsNovelScenario,
+                        NoveltyReason = evaluation.NoveltyReason
                     },
                     PipelineLogs = pipelineLogs,
                     TriggeredRules = triggeredRules
@@ -596,7 +598,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                 Id = s.Id,
                 CreatedAt = s.CreatedAt,
                 AppName = !string.IsNullOrEmpty(requirements?.Title) ? requirements.Title : "System Architecture",
-                Description = requirements?.Description ?? (s.ProblemStatement.Length > 150 ? s.ProblemStatement.Substring(0, 147) + "..." : s.ProblemStatement),
+                Description = requirements?.Description ?? (s.ProblemStatement?.Length > 150 ? s.ProblemStatement.Substring(0, 147) + "..." : s.ProblemStatement ?? ""),
                 Highlights = highlights
             };
         });

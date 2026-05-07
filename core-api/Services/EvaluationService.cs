@@ -34,9 +34,11 @@ public class EvaluationService : IEvaluationService
         var result = new EvaluationResult();
 
         // 1. Industry Alignment Score
-        var alignment = await CalculateIndustryAlignmentAsync(design, requirements);
+        var alignment = await CalculateIndustryAlignmentAsync(design, requirements, problemStatement);
         result.IndustryAlignmentScore = alignment.Score;
         result.MatchedBlueprintId = alignment.MatchedBlueprintId;
+        result.IsNovelScenario = alignment.IsNovel;
+        result.NoveltyReason = alignment.NoveltyReason;
 
         // 2. Constraint Fulfillment Score
         result.ConstraintFulfillmentScore = await CalculateConstraintFulfillmentAsync(design, requirements);
@@ -52,47 +54,93 @@ public class EvaluationService : IEvaluationService
         return result;
     }
 
-    private async Task<(int Score, int? MatchedBlueprintId)> CalculateIndustryAlignmentAsync(ArchitectureDesign design, DesignRequirements requirements)
+    private async Task<(int Score, int? MatchedBlueprintId, bool IsNovel, string NoveltyReason)> CalculateIndustryAlignmentAsync(ArchitectureDesign design, DesignRequirements requirements, string problemStatement)
     {
+        Console.WriteLine($"[Alignment] Starting matching for: {problemStatement}");
         var blueprints = await _mongoDbContext.ReferenceBlueprints.Find(Builders<Domain.Data.Mongo.Entities.ReferenceBlueprint>.Filter.Empty).ToListAsync();
-        if (!blueprints.Any()) return (0, null);
+        if (!blueprints.Any()) return (0, null, true, "No blueprints in Knowledge Base.");
 
         Domain.Data.Mongo.Entities.ReferenceBlueprint? bestBlueprint = null;
         int bestScore = -1;
+        string highestReason = "";
 
         var aiJson = JsonSerializer.Serialize(design).ToLower();
         var aiWords = aiJson.Split(new[] { ' ', '"', ':', '{', '}', ',', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 3).ToHashSet();
+        
+        var problemWords = problemStatement.ToLower().Split(' ').Where(w => w.Length > 2).ToHashSet();
 
         foreach (var blueprint in blueprints)
         {
-            int matchWeight = 0;
-            // High priority: Matching the scaling and constraints
+            int currentMatchScore = 0;
+            
+            // 1. Title Similarity (High Weight: 40 points)
+            var bpTitleWords = blueprint.Title.ToLower().Split(' ').Where(w => w.Length > 2).ToHashSet();
+            var titleOverlap = problemWords.Intersect(bpTitleWords).Count();
+            int titleScore = (int)((double)titleOverlap / Math.Max(1, bpTitleWords.Count) * 30);
+            currentMatchScore += titleScore;
+
+            // 2. Category Match (20 points)
+            int catScore = 0;
+            if (!string.IsNullOrEmpty(blueprint.Category) && problemStatement.Contains(blueprint.Category, StringComparison.OrdinalIgnoreCase))
+            {
+                catScore = 20;
+            }
+            currentMatchScore += catScore;
+
+            // 3. Structural/Context Matching (25 points)
+            int contextScore = 0;
             if (requirements.Context != null && blueprint.Context != null)
             {
-                if (requirements.Context.TrafficPattern == blueprint.Context.TrafficPattern) matchWeight += 15;
-                if (requirements.Context.ConsistencyModel == blueprint.Context.ConsistencyModel) matchWeight += 15;
-                if (requirements.Context.AvailabilitySlo == blueprint.Context.AvailabilitySlo) matchWeight += 10;
-                
-                // Scale matching
+                if (requirements.Context.TrafficPattern == blueprint.Context.TrafficPattern) contextScore += 8;
+                if (requirements.Context.ConsistencyModel == blueprint.Context.ConsistencyModel) contextScore += 8;
+                if (requirements.Context.AvailabilitySlo == blueprint.Context.AvailabilitySlo) contextScore += 5;
                 var userDiff = Math.Abs((requirements.Context.Users ?? 0) - (blueprint.Context.Users ?? 0));
-                if (userDiff < 100000) matchWeight += 10;
+                if (userDiff < 100000) contextScore += 4;
             }
+            currentMatchScore += contextScore;
 
+            // 3. Architectural Overlap (Existing Weight: 30 points)
             var baselineJson = JsonSerializer.Serialize(blueprint.GroundTruthArchitecture).ToLower();
             var baselineWords = baselineJson.Split(new[] { ' ', '"', ':', '{', '}', ',', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Where(w => w.Length > 3).ToHashSet();
-            
             var overlap = baselineWords.Intersect(aiWords).Count();
-            int currentScore = (int)((double)overlap / Math.Max(1, baselineWords.Count) * 60) + matchWeight;
-            currentScore = Math.Min(100, currentScore);
+            int archScore = (int)((double)overlap / Math.Max(1, baselineWords.Count) * 25);
+            currentMatchScore += archScore;
 
-            if (currentScore > bestScore)
+            await LogAlignmentAuditAsync(blueprint.Title, currentMatchScore, titleScore, catScore, contextScore, archScore);
+            
+            if (currentMatchScore > bestScore)
             {
-                bestScore = currentScore;
+                bestScore = currentMatchScore;
                 bestBlueprint = blueprint;
+                highestReason = $"Matched via '{blueprint.Title}' (Similarity: {bestScore}%)";
             }
         }
 
-        return (Math.Max(0, bestScore), bestBlueprint?.ScenarioId);
+        bool isNovel = bestScore < 45;
+        if (isNovel)
+        {
+            var novelMsg = $"[DECISION] NOVEL SCENARIO DETECTED. Highest similarity: {bestScore}% against '{bestBlueprint?.Title}'";
+            Console.WriteLine($"[Alignment] {novelMsg}");
+            await LogDecisionAuditAsync(novelMsg);
+            return (bestScore, null, true, $"No close industry match found (Best similarity: {bestScore}% against {bestBlueprint?.Title})");
+        }
+
+        var matchMsg = $"[DECISION] MATCH FOUND: '{bestBlueprint?.Title}' with score {bestScore}";
+        Console.WriteLine($"[Alignment] {matchMsg}");
+        await LogDecisionAuditAsync(matchMsg);
+        return (bestScore, bestBlueprint?.ScenarioId, false, highestReason);
+    }
+
+    private async Task LogDecisionAuditAsync(string message)
+    {
+        try
+        {
+            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            var logFile = Path.Combine(logDir, "alignment_audit.log");
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+            await File.AppendAllTextAsync(logFile, $"[{timestamp}] {message}\n---\n");
+        }
+        catch { }
     }
 
     private async Task<int> CalculateConstraintFulfillmentAsync(ArchitectureDesign design, DesignRequirements requirements)
@@ -177,5 +225,24 @@ public class EvaluationService : IEvaluationService
         }
 
         return (finalScore, response ?? "No critique generated.");
+    }
+    private async Task LogAlignmentAuditAsync(string blueprintTitle, int total, int t, int c, int x, int a)
+    {
+        try
+        {
+            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            if (!Directory.Exists(logDir)) Directory.CreateDirectory(logDir);
+            
+            var logFile = Path.Combine(logDir, "alignment_audit.log");
+            var timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+            var logEntry = $"[{timestamp}] Blueprint: {blueprintTitle} | Total: {total} | T: {t}, C: {c}, X: {x}, A: {a}\n";
+            
+            await File.AppendAllTextAsync(logFile, logEntry);
+        }
+        catch (Exception ex)
+        {
+            // Fail silently for logging to avoid breaking the core flow, but write to console
+            Console.WriteLine($"[AuditLog Error] {ex.Message}");
+        }
     }
 }

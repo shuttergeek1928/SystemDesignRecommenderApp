@@ -171,10 +171,10 @@ public class SystemDesignController : ControllerBase
     }
 
     [HttpGet("{id}/benchmark")]
-    public async Task<IActionResult> GetBenchmarkComparison(Guid id)
+    public async Task<IActionResult> GetBenchmarkComparison(Guid id, [FromQuery] int? scenarioId = null)
     {
-        _logger.LogInformation("[GetBenchmarkComparison] Benchmarking session {SessionId}", id);
-        var comparison = await _benchmarkService.CompareSessionWithBaselineAsync(id);
+        _logger.LogInformation("[GetBenchmarkComparison] Benchmarking session {SessionId} with override scenario {ScenarioId}", id, scenarioId);
+        var comparison = await _benchmarkService.CompareSessionWithBaselineAsync(id, scenarioId);
         if (comparison == null) return NotFound("Benchmark not found.");
         return Ok(comparison);
     }

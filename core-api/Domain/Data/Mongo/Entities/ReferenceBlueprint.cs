@@ -19,20 +19,53 @@ public class ReferenceBlueprint
     [BsonElement("description")]
     public string Description { get; set; } = string.Empty;
 
+    [BsonElement("category")]
+    public string Category { get; set; } = string.Empty;
+
+    [BsonElement("keywords")]
+    public List<string> Keywords { get; set; } = new();
+
     [BsonElement("context")]
     public BlueprintContext Context { get; set; } = new();
 
     [BsonElement("non_functional_requirements")]
     public List<string> NonFunctionalRequirements { get; set; } = new();
 
-    [BsonElement("ground_truth_architecture")]
-    public Dictionary<string, BlueprintArchitecture> GroundTruthArchitecture { get; set; } = new();
-
     [BsonElement("acceptable_alternatives")]
     public Dictionary<string, List<string>> AcceptableAlternatives { get; set; } = new();
 
     [BsonElement("references")]
     public List<string> References { get; set; } = new();
+
+    [BsonExtraElements]
+    [System.Text.Json.Serialization.JsonIgnore]
+    public Dictionary<string, object> ExtraElements { get; set; } = new();
+
+    [BsonIgnore]
+    public Dictionary<string, BlueprintArchitecture> GroundTruthArchitecture
+    {
+        get
+        {
+            var architectures = new Dictionary<string, BlueprintArchitecture>();
+            foreach (var kvp in ExtraElements)
+            {
+                if (kvp.Key.StartsWith("baseline_"))
+                {
+                    try
+                    {
+                        var json = System.Text.Json.JsonSerializer.Serialize(kvp.Value);
+                        var arch = System.Text.Json.JsonSerializer.Deserialize<BlueprintArchitecture>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                        if (arch != null)
+                        {
+                            architectures[kvp.Key] = arch;
+                        }
+                    }
+                    catch { /* Ignore parse errors */ }
+                }
+            }
+            return architectures;
+        }
+    }
 }
 
 [BsonIgnoreExtraElements]
@@ -68,9 +101,7 @@ public class BlueprintContext
 
 public class BlueprintArchitecture
 {
-    // The dataset has structure like: "baseline_A_expert": { "database": { "choice": "...", "justification": "..." } }
-    // We'll map the inner components directly or as dynamic objects depending on how we want to query.
-    // For now, let's use a dictionary to hold the nodes (database, cache, etc.)
     [BsonExtraElements]
+    [System.Text.Json.Serialization.JsonExtensionData]
     public Dictionary<string, object> Nodes { get; set; } = new();
 }

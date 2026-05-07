@@ -13,24 +13,33 @@ public static class DatabaseSeeder
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
+        Console.WriteLine("Starting Database Seeding...");
         var mongoContext = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
         
         // Seed MongoDB Reference Blueprints
+        Console.WriteLine("Connecting to MongoDB...");
         var blueprintsCollection = mongoContext.ReferenceBlueprints;
         
         // FORCED RESET: If data is corrupted (e.g. missing architectures), drop and re-seed
+        Console.WriteLine("Checking for existing MongoDB blueprints...");
         var existingCount = await blueprintsCollection.CountDocumentsAsync(Builders<ReferenceBlueprint>.Filter.Empty);
         var firstItem = await blueprintsCollection.Find(Builders<ReferenceBlueprint>.Filter.Empty).FirstOrDefaultAsync();
+        Console.WriteLine($"Found {existingCount} existing blueprints.");
+        if (firstItem != null)
+        {
+            Console.WriteLine($"First blueprint: '{firstItem.Title}', Category: '{firstItem.Category}', Nodes: {firstItem.GroundTruthArchitecture?.Count ?? 0}");
+        }
         
-        if (existingCount == 0 || (firstItem != null && (firstItem.GroundTruthArchitecture == null || firstItem.GroundTruthArchitecture.Count == 0)))
+        if (existingCount == 0 || (firstItem != null && (string.IsNullOrEmpty(firstItem.Category) || firstItem.GroundTruthArchitecture == null || firstItem.GroundTruthArchitecture.Count == 0)))
         {
             if (existingCount > 0)
             {
-                Console.WriteLine("Data corruption detected (empty architectures). Re-seeding...");
+                Console.WriteLine("Data corruption detected (empty architectures or missing categories). Re-seeding...");
                 await mongoContext.Database.DropCollectionAsync("ReferenceBlueprints");
             }
 
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "data", "architecture_dataset_40.json");
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "..", "data", "consolidated_baselines.json");
+            Console.WriteLine($"Loading blueprints from {filePath}...");
             if (File.Exists(filePath))
             {
                 var json = await File.ReadAllTextAsync(filePath);

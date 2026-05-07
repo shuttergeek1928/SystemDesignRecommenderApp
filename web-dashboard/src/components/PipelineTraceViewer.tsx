@@ -61,12 +61,39 @@ export function PipelineTraceViewer({ logs, isLoading, agentStatus }: PipelineTr
     }
   }
 
-  // Find the auto-active node (the running one, or the last success one)
-  // Find the auto-active node (the last running one, or the last success/error one)
-  const lastRunningIndex = [...finalNodes].reverse().findIndex(n => n.status.toLowerCase() === "running");
+  // Post-process finalNodes to ensure chronological state
+  let highestActiveIdx = -1;
+  for (let i = finalNodes.length - 1; i >= 0; i--) {
+    const status = finalNodes[i].status.toLowerCase();
+    if (status === "running" || status === "success" || status === "error" || status === "rejected") {
+      highestActiveIdx = i;
+      break;
+    }
+  }
+
+  for (let i = 0; i < finalNodes.length; i++) {
+    if (i < highestActiveIdx) {
+      const status = finalNodes[i].status.toLowerCase();
+      if (status === "pending" || status === "running") {
+        finalNodes[i] = {
+          ...finalNodes[i],
+          status: "Success",
+          summary: status === "pending" ? "Completed (Implicitly)" : finalNodes[i].summary
+        };
+      }
+    }
+  }
+
+  const reversedStatuses = [...finalNodes].map(n => n.status.toLowerCase()).reverse();
+  const lastRunningIdxRev = reversedStatuses.findIndex(s => s === "running");
+  const lastCompletedIdxRev = reversedStatuses.findIndex(s => ["success", "error", "rejected"].includes(s));
+  
+  const lastRunningIndex = lastRunningIdxRev !== -1 ? finalNodes.length - 1 - lastRunningIdxRev : -1;
+  const lastCompletedIndex = lastCompletedIdxRev !== -1 ? finalNodes.length - 1 - lastCompletedIdxRev : -1;
+
   const actualActiveIndex = activeNodeIndex !== null 
     ? activeNodeIndex 
-    : (lastRunningIndex !== -1 ? (finalNodes.length - 1 - lastRunningIndex) : (finalNodes.length - 1));
+    : (lastRunningIndex !== -1 ? lastRunningIndex : (lastCompletedIndex !== -1 ? lastCompletedIndex : 0));
 
   return (
       <div className="w-full max-w-5xl mx-auto my-8 font-sans">

@@ -3,6 +3,8 @@
     "scenario_id": 1,
     "title": "Ride Sharing Backend",
     "description": "Ride Sharing Backend system with scalable architecture requirements.",
+    "category": "Logistics",
+    "keywords": ["ride", "taxi", "driver", "uber", "matching", "location"],
     "context": {
       "users": 100000,
       "traffic_pattern": "burst",
@@ -117,6 +119,8 @@
     "scenario_id": 2,
     "title": "E-commerce Platform",
     "description": "E-commerce Platform system with scalable architecture requirements.",
+    "category": "E-commerce",
+    "keywords": ["retail", "catalog", "inventory", "checkout", "shopping"],
     "context": {
       "users": 200000,
       "traffic_pattern": "steady",
@@ -229,6 +233,8 @@
     "scenario_id": 3,
     "title": "Banking System",
     "description": "Banking System system with scalable architecture requirements.",
+    "category": "Finance",
+    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
     "context": {
       "users": 300000,
       "traffic_pattern": "steady",
@@ -339,6 +345,8 @@
     "scenario_id": 4,
     "title": "Chat App",
     "description": "Chat App system with scalable architecture requirements.",
+    "category": "Communication",
+    "keywords": ["messaging", "real-time", "chat", "notifications", "presence"],
     "context": {
       "users": 400000,
       "traffic_pattern": "burst",
@@ -451,6 +459,8 @@
     "scenario_id": 5,
     "title": "IoT Platform",
     "description": "IoT Platform system with scalable architecture requirements.",
+    "category": "IoT",
+    "keywords": ["sensors", "telemetry", "devices", "edge", "mqtt"],
     "context": {
       "users": 500000,
       "traffic_pattern": "steady",
@@ -565,6 +575,8 @@
     "scenario_id": 6,
     "title": "Video Streaming",
     "description": "Video Streaming system with scalable architecture requirements.",
+    "category": "Media",
+    "keywords": ["streaming", "content-delivery", "video", "audio", "transcoding"],
     "context": {
       "users": 600000,
       "traffic_pattern": "steady",
@@ -673,6 +685,8 @@
     "scenario_id": 7,
     "title": "Food Delivery",
     "description": "Food Delivery system with scalable architecture requirements.",
+    "category": "Logistics",
+    "keywords": ["routing", "tracking", "delivery", "fleet", "supply-chain"],
     "context": {
       "users": 700000,
       "traffic_pattern": "burst",
@@ -783,6 +797,8 @@
     "scenario_id": 8,
     "title": "CRM SaaS",
     "description": "CRM SaaS system with scalable architecture requirements.",
+    "category": "Enterprise",
+    "keywords": ["saas", "b2b", "workflow", "crm", "collaboration"],
     "context": {
       "users": 800000,
       "traffic_pattern": "steady",
@@ -891,6 +907,8 @@
     "scenario_id": 9,
     "title": "Analytics Dashboard",
     "description": "Analytics Dashboard system with scalable architecture requirements.",
+    "category": "Data",
+    "keywords": ["analytics", "big-data", "pipeline", "warehouse", "ml"],
     "context": {
       "users": 900000,
       "traffic_pattern": "steady",
@@ -1005,6 +1023,8 @@
     "scenario_id": 10,
     "title": "Social Media Feed",
     "description": "Social Media Feed system with scalable architecture requirements.",
+    "category": "Social",
+    "keywords": ["feed", "profiles", "connections", "sharing", "community"],
     "context": {
       "users": 1000000,
       "traffic_pattern": "burst",
@@ -1113,6 +1133,8 @@
     "scenario_id": 11,
     "title": "Gaming Backend",
     "description": "Gaming Backend system with scalable architecture requirements.",
+    "category": "Gaming",
+    "keywords": ["multiplayer", "matchmaking", "leaderboards", "state-sync", "low-latency"],
     "context": {
       "users": 1100000,
       "traffic_pattern": "steady",
@@ -1223,6 +1245,8 @@
     "scenario_id": 12,
     "title": "Stock Trading",
     "description": "Stock Trading system with scalable architecture requirements.",
+    "category": "Finance",
+    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
     "context": {
       "users": 1200000,
       "traffic_pattern": "steady",
@@ -1331,6 +1355,8 @@
     "scenario_id": 13,
     "title": "Healthcare App",
     "description": "Healthcare App system with scalable architecture requirements.",
+    "category": "Healthcare",
+    "keywords": ["hippa", "compliance", "patient-data", "medical", "records"],
     "context": {
       "users": 1300000,
       "traffic_pattern": "burst",
@@ -1441,6 +1467,8 @@
     "scenario_id": 14,
     "title": "Logistics Platform",
     "description": "Logistics Platform system with scalable architecture requirements.",
+    "category": "Logistics",
+    "keywords": ["routing", "tracking", "delivery", "fleet", "supply-chain"],
     "context": {
       "users": 1400000,
       "traffic_pattern": "steady",
@@ -1549,6 +1577,8 @@
     "scenario_id": 15,
     "title": "Online Education",
     "description": "Online Education system with scalable architecture requirements.",
+    "category": "Education",
+    "keywords": ["learning", "courses", "students", "lms", "content"],
     "context": {
       "users": 1500000,
       "traffic_pattern": "steady",
@@ -1663,6 +1693,8 @@
     "scenario_id": 16,
     "title": "Ad Tech Platform",
     "description": "Ad Tech Platform system with scalable architecture requirements.",
+    "category": "Marketing",
+    "keywords": ["advertising", "bidding", "campaigns", "personalization", "tracking"],
     "context": {
       "users": 1600000,
       "traffic_pattern": "burst",
@@ -1775,6 +1807,8 @@
     "scenario_id": 17,
     "title": "Travel Booking",
     "description": "Travel Booking system with scalable architecture requirements.",
+    "category": "Travel",
+    "keywords": ["booking", "reservations", "itinerary", "ticketing", "travel"],
     "context": {
       "users": 1700000,
       "traffic_pattern": "steady",
@@ -1889,6 +1923,8 @@
     "scenario_id": 18,
     "title": "Insurance System",
     "description": "Insurance System system with scalable architecture requirements.",
+    "category": "Finance",
+    "keywords": ["claims", "policy", "premium", "coverage", "underwriting"],
     "context": {
       "users": 1800000,
       "traffic_pattern": "steady",
@@ -1997,6 +2033,8 @@
     "scenario_id": 19,
     "title": "Payment Gateway",
     "description": "Payment Gateway system with scalable architecture requirements.",
+    "category": "Finance",
+    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
     "context": {
       "users": 1900000,
       "traffic_pattern": "burst",
@@ -2111,6 +2149,8 @@
     "scenario_id": 20,
     "title": "Search Engine",
     "description": "Search Engine system with scalable architecture requirements.",
+    "category": "Technology",
+    "keywords": ["infrastructure", "api", "platform", "developers", "tools"],
     "context": {
       "users": 2000000,
       "traffic_pattern": "steady",
@@ -2223,6 +2263,8 @@
     "scenario_id": 21,
     "title": "Music Streaming",
     "description": "Music Streaming system with scalable architecture requirements.",
+    "category": "Media",
+    "keywords": ["streaming", "content-delivery", "video", "audio", "transcoding"],
     "context": {
       "users": 2100000,
       "traffic_pattern": "steady",
@@ -2337,6 +2379,8 @@
     "scenario_id": 22,
     "title": "News Aggregator",
     "description": "News Aggregator system with scalable architecture requirements.",
+    "category": "Media",
+    "keywords": ["streaming", "content-delivery", "video", "audio", "transcoding"],
     "context": {
       "users": 2200000,
       "traffic_pattern": "burst",
@@ -2449,6 +2493,8 @@
     "scenario_id": 23,
     "title": "Forum Platform",
     "description": "Forum Platform system with scalable architecture requirements.",
+    "category": "Social",
+    "keywords": ["feed", "profiles", "connections", "sharing", "community"],
     "context": {
       "users": 2300000,
       "traffic_pattern": "steady",
@@ -2559,6 +2605,8 @@
     "scenario_id": 24,
     "title": "Dating App",
     "description": "Dating App system with scalable architecture requirements.",
+    "category": "Social",
+    "keywords": ["feed", "profiles", "connections", "sharing", "community"],
     "context": {
       "users": 2400000,
       "traffic_pattern": "steady",
@@ -2667,6 +2715,8 @@
     "scenario_id": 25,
     "title": "Job Portal",
     "description": "Job Portal system with scalable architecture requirements.",
+    "category": "Enterprise",
+    "keywords": ["saas", "b2b", "workflow", "crm", "collaboration"],
     "context": {
       "users": 2500000,
       "traffic_pattern": "burst",
@@ -2777,6 +2827,8 @@
     "scenario_id": 26,
     "title": "Warehouse Mgmt",
     "description": "Warehouse Mgmt system with scalable architecture requirements.",
+    "category": "Logistics",
+    "keywords": ["routing", "tracking", "delivery", "fleet", "supply-chain"],
     "context": {
       "users": 2600000,
       "traffic_pattern": "steady",
@@ -2885,6 +2937,8 @@
     "scenario_id": 27,
     "title": "Fleet Tracking",
     "description": "Fleet Tracking system with scalable architecture requirements.",
+    "category": "Logistics",
+    "keywords": ["routing", "tracking", "delivery", "fleet", "supply-chain"],
     "context": {
       "users": 2700000,
       "traffic_pattern": "steady",
@@ -2995,6 +3049,8 @@
     "scenario_id": 28,
     "title": "Crypto Exchange",
     "description": "Crypto Exchange system with scalable architecture requirements.",
+    "category": "Finance",
+    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
     "context": {
       "users": 2800000,
       "traffic_pattern": "burst",
@@ -3107,6 +3163,8 @@
     "scenario_id": 29,
     "title": "Ticket Booking",
     "description": "Ticket Booking system with scalable architecture requirements.",
+    "category": "Travel",
+    "keywords": ["booking", "reservations", "itinerary", "ticketing", "travel"],
     "context": {
       "users": 2900000,
       "traffic_pattern": "steady",
@@ -3217,6 +3275,8 @@
     "scenario_id": 30,
     "title": "Fitness App",
     "description": "Fitness App system with scalable architecture requirements.",
+    "category": "Healthcare",
+    "keywords": ["hippa", "compliance", "patient-data", "medical", "records"],
     "context": {
       "users": 3000000,
       "traffic_pattern": "steady",
@@ -3325,6 +3385,8 @@
     "scenario_id": 31,
     "title": "Smart Home",
     "description": "Smart Home system with scalable architecture requirements.",
+    "category": "IoT",
+    "keywords": ["sensors", "telemetry", "devices", "edge", "mqtt"],
     "context": {
       "users": 3100000,
       "traffic_pattern": "burst",
@@ -3439,6 +3501,8 @@
     "scenario_id": 32,
     "title": "HR SaaS",
     "description": "HR SaaS system with scalable architecture requirements.",
+    "category": "Enterprise",
+    "keywords": ["saas", "b2b", "workflow", "crm", "collaboration"],
     "context": {
       "users": 3200000,
       "traffic_pattern": "steady",
@@ -3547,6 +3611,8 @@
     "scenario_id": 33,
     "title": "Survey Tool",
     "description": "Survey Tool system with scalable architecture requirements.",
+    "category": "Enterprise",
+    "keywords": ["saas", "b2b", "workflow", "crm", "collaboration"],
     "context": {
       "users": 3300000,
       "traffic_pattern": "steady",
@@ -3661,6 +3727,8 @@
     "scenario_id": 34,
     "title": "Crowdfunding",
     "description": "Crowdfunding system with scalable architecture requirements.",
+    "category": "Finance",
+    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
     "context": {
       "users": 3400000,
       "traffic_pattern": "burst",
@@ -3769,6 +3837,8 @@
     "scenario_id": 35,
     "title": "Event Mgmt",
     "description": "Event Mgmt system with scalable architecture requirements.",
+    "category": "Entertainment",
+    "keywords": ["events", "ticketing", "engagement", "venue", "management"],
     "context": {
       "users": 3500000,
       "traffic_pattern": "steady",
@@ -3879,6 +3949,8 @@
     "scenario_id": 36,
     "title": "Email Service",
     "description": "Email Service system with scalable architecture requirements.",
+    "category": "Communication",
+    "keywords": ["messaging", "real-time", "chat", "notifications", "presence"],
     "context": {
       "users": 3600000,
       "traffic_pattern": "steady",
@@ -3987,6 +4059,8 @@
     "scenario_id": 37,
     "title": "Notification Service",
     "description": "Notification Service system with scalable architecture requirements.",
+    "category": "Communication",
+    "keywords": ["messaging", "real-time", "chat", "notifications", "presence"],
     "context": {
       "users": 3700000,
       "traffic_pattern": "burst",
@@ -4101,6 +4175,8 @@
     "scenario_id": 38,
     "title": "API Gateway System",
     "description": "API Gateway System system with scalable architecture requirements.",
+    "category": "Technology",
+    "keywords": ["infrastructure", "api", "platform", "developers", "tools"],
     "context": {
       "users": 3800000,
       "traffic_pattern": "steady",
@@ -4209,6 +4285,8 @@
     "scenario_id": 39,
     "title": "ML Pipeline",
     "description": "ML Pipeline system with scalable architecture requirements.",
+    "category": "Data",
+    "keywords": ["analytics", "big-data", "pipeline", "warehouse", "ml"],
     "context": {
       "users": 3900000,
       "traffic_pattern": "steady",
@@ -4323,6 +4401,8 @@
     "scenario_id": 40,
     "title": "Data Warehouse",
     "description": "Data Warehouse system with scalable architecture requirements.",
+    "category": "Data",
+    "keywords": ["analytics", "big-data", "pipeline", "warehouse", "ml"],
     "context": {
       "users": 4000000,
       "traffic_pattern": "burst",

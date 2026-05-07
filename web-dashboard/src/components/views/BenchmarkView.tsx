@@ -21,6 +21,8 @@ interface BenchmarkComparisonDto {
   semanticSimilarity: number;
   aiScores: Record<string, number>;
   baselineScores: Record<string, number>;
+  isNovelScenario: boolean;
+  noveltyReason: string;
 }
 
 interface NodeComparisonItem {
@@ -37,12 +39,22 @@ export function BenchmarkView() {
   const [data, setData] = useState<BenchmarkComparisonDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [blueprints, setBlueprints] = useState<any[]>([]);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("http://localhost:5220/api/Blueprints")
+      .then(res => res.json())
+      .then(data => setBlueprints(data))
+      .catch(err => console.error("Failed to load blueprints", err));
+  }, []);
 
   useEffect(() => {
     if (!recommendation?.id) return;
     
     setLoading(true);
-    fetch(`http://localhost:5220/api/SystemDesign/${recommendation.id}/benchmark`)
+    const url = `http://localhost:5220/api/SystemDesign/${recommendation.id}/benchmark${selectedScenarioId ? `?scenarioId=${selectedScenarioId}` : ''}`;
+    fetch(url)
       .then(res => {
         if (!res.ok) throw new Error("Benchmark not available yet");
         return res.json();
@@ -53,7 +65,7 @@ export function BenchmarkView() {
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [recommendation?.id]);
+  }, [recommendation?.id, selectedScenarioId]);
 
   if (loading) {
     return (
@@ -88,11 +100,30 @@ export function BenchmarkView() {
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
           <BarChart3 className="w-5 h-5" />
         </div>
-        <div>
-          <h2 className="text-2xl font-bold">Expert Benchmark Comparison</h2>
-          <p className="text-sm text-muted-foreground">
-            Comparing AI output against the baseline: <span className="text-primary font-bold">{data.matchedBlueprintTitle}</span>
-          </p>
+        <div className="flex-1 flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Expert Benchmark Comparison</h2>
+            <p className="text-sm text-muted-foreground">
+              {data.isNovelScenario 
+                ? <span className="text-amber-500 font-bold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> NOVEL SCENARIO</span>
+                : <>Comparing AI output against the baseline: <span className="text-primary font-bold">{data.matchedBlueprintTitle}</span></>
+              }
+            </p>
+          </div>
+          {blueprints.length > 0 && (
+            <select 
+              className="bg-secondary/50 border border-border text-foreground text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 max-w-xs"
+              value={selectedScenarioId || data.matchedBlueprintScenarioId || ""}
+              onChange={(e) => setSelectedScenarioId(Number(e.target.value))}
+            >
+              <option value="" disabled>Change Baseline Scenario...</option>
+              {blueprints.map(bp => (
+                <option key={bp.scenarioId || bp.scenario_id} value={bp.scenarioId || bp.scenario_id}>
+                  {bp.scenarioId || bp.scenario_id} - {bp.title || bp.Title}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
@@ -122,38 +153,50 @@ export function BenchmarkView() {
         </Card>
 
         {/* Aggregate Metrics */}
-        <Card className="p-6 flex flex-col justify-center space-y-8">
+        <Card className="p-6 flex flex-col justify-center space-y-8 relative overflow-hidden">
+          {data.isNovelScenario && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-6 text-center">
+              <BarChart3 className="w-12 h-12 text-primary mb-4 opacity-50" />
+              <h4 className="font-bold text-lg mb-2">Novel Architecture Path</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {data.noveltyReason}
+                <br/><br/>
+                Since no direct industry match exists, this design is graded on <strong>Architectural Principles</strong> (Compliance & Rubric) rather than Template Accuracy.
+              </p>
+            </div>
+          )}
+          
           <h3 className="font-bold mb-2">Accuracy Metrics</h3>
           
           <div className="space-y-2">
             <div className="flex justify-between text-sm font-bold">
               <span className="text-muted-foreground">Overall Accuracy</span>
               <span className={data.accuracyScore >= 80 ? "text-emerald-500" : data.accuracyScore >= 50 ? "text-amber-500" : "text-rose-500"}>
-                {data.accuracyScore.toFixed(1)}%
+                {data.isNovelScenario ? "N/A" : `${data.accuracyScore.toFixed(1)}%`}
               </span>
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} animate={{ width: `${data.accuracyScore}%` }} className={cn("h-full", data.accuracyScore >= 80 ? "bg-emerald-500" : data.accuracyScore >= 50 ? "bg-amber-500" : "bg-rose-500")} />
+              <motion.div initial={{ width: 0 }} animate={{ width: `${data.isNovelScenario ? 0 : data.accuracyScore}%` }} className={cn("h-full", data.accuracyScore >= 80 ? "bg-emerald-500" : data.accuracyScore >= 50 ? "bg-amber-500" : "bg-rose-500")} />
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm font-bold">
               <span className="text-muted-foreground">Exact Precision Match</span>
-              <span className="text-primary">{data.precisionScore.toFixed(1)}%</span>
+              <span className="text-primary">{data.isNovelScenario ? "N/A" : `${data.precisionScore.toFixed(1)}%`}</span>
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} animate={{ width: `${data.precisionScore}%` }} className="h-full bg-primary" />
+              <motion.div initial={{ width: 0 }} animate={{ width: `${data.isNovelScenario ? 0 : data.precisionScore}%` }} className="h-full bg-primary" />
             </div>
           </div>
 
           <div className="space-y-2">
             <div className="flex justify-between text-sm font-bold">
               <span className="text-muted-foreground">Semantic Similarity</span>
-              <span className="text-indigo-500">{data.semanticSimilarity.toFixed(1)}%</span>
+              <span className="text-indigo-500">{data.isNovelScenario ? "N/A" : `${data.semanticSimilarity.toFixed(1)}%`}</span>
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
-              <motion.div initial={{ width: 0 }} animate={{ width: `${data.semanticSimilarity}%` }} className="h-full bg-indigo-500" />
+              <motion.div initial={{ width: 0 }} animate={{ width: `${data.isNovelScenario ? 0 : data.semanticSimilarity}%` }} className="h-full bg-indigo-500" />
             </div>
           </div>
         </Card>

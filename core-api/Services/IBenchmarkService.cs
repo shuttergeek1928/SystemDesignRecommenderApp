@@ -5,6 +5,6 @@ namespace SystemDesignRecommenderApi.Services;
 
 public interface IBenchmarkService
 {
-    Task<BenchmarkComparisonDto?> CompareSessionWithBaselineAsync(Guid sessionId);
+    Task<BenchmarkComparisonDto?> CompareSessionWithBaselineAsync(Guid sessionId, int? overrideScenarioId = null);
     Task<IEnumerable<object>> GetAvailableBlueprintsAsync();
 }

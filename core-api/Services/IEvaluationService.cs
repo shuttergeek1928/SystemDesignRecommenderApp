@@ -15,4 +15,6 @@ public class EvaluationResult
     public int RubricScore { get; set; }
     public string CriticReport { get; set; } = string.Empty;
     public int? MatchedBlueprintId { get; set; }
+    public bool IsNovelScenario { get; set; }
+    public string NoveltyReason { get; set; } = string.Empty;
 }

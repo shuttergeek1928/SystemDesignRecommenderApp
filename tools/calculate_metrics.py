@@ -101,6 +101,11 @@ def fuzzy_match(choice_a, choice_b):
     if a in b or b in a:
         return 0.8
 
+    # Check if they share a specific technology keyword anchor
+    for kw in SPECIFIC_SERVICE_KEYWORDS:
+        if kw in a and kw in b:
+            return 1.0
+
     # Token overlap (Jaccard)
     tokens_a = set(a.replace("-", " ").replace("(", " ").replace(")", " ").split())
     tokens_b = set(b.replace("-", " ").replace("(", " ").replace(")", " ").split())

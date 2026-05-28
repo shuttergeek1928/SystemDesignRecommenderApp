@@ -4,7 +4,14 @@
     "title": "Ride Sharing Backend",
     "description": "Ride Sharing Backend system with scalable architecture requirements.",
     "category": "Logistics",
-    "keywords": ["ride", "taxi", "driver", "uber", "matching", "location"],
+    "keywords": [
+      "ride",
+      "taxi",
+      "driver",
+      "uber",
+      "matching",
+      "location"
+    ],
     "context": {
       "users": 100000,
       "traffic_pattern": "burst",
@@ -90,6 +97,10 @@
       "security": {
         "choice": "AWS WAF + Amazon Cognito + VPC with Private Subnets and AWS KMS",
         "justification": "Addresses previous gaps by providing an OIDC/OAuth2 Identity Provider (Cognito) for mobile clients and perimeter defense (WAF). Network isolation is achieved via private subnets for compute and database layers, while KMS ensures encryption at rest for PII compliance."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache for Redis",
+        "justification": "ElastiCache for Redis is a fully managed in-memory data store that can improve the performance of your application by storing frequently accessed data. It's compatible with Redis commands and offers high availability, scalability, and low latency."
       }
     },
     "baseline_C_rag": {
@@ -112,6 +123,10 @@
       "security": {
         "choice": "AWS Identity and Access Management (IAM)",
         "justification": "IAM provides fine-grained access control for AWS resources, ensuring that only authorized users can perform specific actions. This is crucial for maintaining security in a multi-division company environment with GDPR, PCI-DSS, SOC2, and PII compliance requirements."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache for Redis",
+        "justification": "ElastiCache for Redis is a fully managed in-memory data store that can improve the performance of your application by storing frequently accessed data. It's compatible with Redis commands and offers high availability, scalability, and low latency."
       }
     }
   },
@@ -120,7 +135,13 @@
     "title": "E-commerce Platform",
     "description": "E-commerce Platform system with scalable architecture requirements.",
     "category": "E-commerce",
-    "keywords": ["retail", "catalog", "inventory", "checkout", "shopping"],
+    "keywords": [
+      "retail",
+      "catalog",
+      "inventory",
+      "checkout",
+      "shopping"
+    ],
     "context": {
       "users": 200000,
       "traffic_pattern": "steady",
@@ -204,6 +225,10 @@
       "security": {
         "choice": "Keycloak (OIDC/OAuth2)",
         "justification": "Implements a centralized identity layer that scales horizontally. Using OpenID Connect ensures secure communication between decoupled microservices while managing user sessions and permissions across the entire platform."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that improves the performance of web applications and databases by storing data in memory. It can be used to cache frequently accessed data from DynamoDB, reducing latency."
       }
     },
     "baseline_C_rag": {
@@ -226,6 +251,10 @@
       "security": {
         "choice": "AWS Identity and Access Management (IAM)",
         "justification": "IAM provides a robust security framework that enables fine-grained access control for our e-commerce platform. It helps us comply with PCI-DSS, GDPR, and SOC2 by allowing us to manage user permissions and ensure secure data handling."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that improves the performance of web applications and databases by storing data in memory. It can be used to cache frequently accessed data from DynamoDB, reducing latency."
       }
     }
   },
@@ -234,7 +263,13 @@
     "title": "Banking System",
     "description": "Banking System system with scalable architecture requirements.",
     "category": "Finance",
-    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
+    "keywords": [
+      "transactions",
+      "compliance",
+      "ledger",
+      "security",
+      "payments"
+    ],
     "context": {
       "users": 300000,
       "traffic_pattern": "steady",
@@ -316,6 +351,10 @@
       "security": {
         "choice": "AWS API Gateway + WAF + Amazon Cognito + HashiCorp Vault",
         "justification": "Addresses the security gaps by adding a dedicated Identity Provider (Cognito) for OIDC/session management and an API Gateway with WAF for DDoS protection and rate limiting. It retains HashiCorp Vault for field-level PII encryption (praised in critique) while ensuring all services reside in private subnets with robust network isolation and IAM-based service-to-service authentication."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_C_rag": {
@@ -338,6 +377,10 @@
       "security": {
         "choice": "AWS IAM and VPC",
         "justification": "Using AWS Identity and Access Management (IAM) ensures that only authorized users can access sensitive data and perform specific actions. Virtual Private Cloud (VPC) provides network isolation, enhancing security by limiting access to the system's resources."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -346,7 +389,13 @@
     "title": "Chat App",
     "description": "Chat App system with scalable architecture requirements.",
     "category": "Communication",
-    "keywords": ["messaging", "real-time", "chat", "notifications", "presence"],
+    "keywords": [
+      "messaging",
+      "real-time",
+      "chat",
+      "notifications",
+      "presence"
+    ],
     "context": {
       "users": 400000,
       "traffic_pattern": "burst",
@@ -430,6 +479,10 @@
       "security": {
         "choice": "Auth0",
         "justification": "Provides a robust, scalable identity layer that uses stateless JWTs, which are perfectly suited for serverless functions and eventual consistency models where centralized session lookups are avoided."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache (Redis)",
+        "justification": "ElastiCache provides an in-memory caching service that can significantly reduce latency by storing frequently accessed data. Redis is a popular choice due to its support for data structures like lists, sets, and hashes, which are useful for chat applications."
       }
     },
     "baseline_C_rag": {
@@ -452,6 +505,10 @@
       "security": {
         "choice": "AWS KMS, IAM, and VPC PrivateLink",
         "justification": "To meet GDPR, SOC2, and HIPAA compliance, KMS provides encryption at rest, while IAM and PrivateLink ensure that internal traffic remains secure and isolated within the AWS network, satisfying the 'internal' security requirement."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache (Redis)",
+        "justification": "ElastiCache provides an in-memory caching service that can significantly reduce latency by storing frequently accessed data. Redis is a popular choice due to its support for data structures like lists, sets, and hashes, which are useful for chat applications."
       }
     }
   },
@@ -460,7 +517,13 @@
     "title": "IoT Platform",
     "description": "IoT Platform system with scalable architecture requirements.",
     "category": "IoT",
-    "keywords": ["sensors", "telemetry", "devices", "edge", "mqtt"],
+    "keywords": [
+      "sensors",
+      "telemetry",
+      "devices",
+      "edge",
+      "mqtt"
+    ],
     "context": {
       "users": 500000,
       "traffic_pattern": "steady",
@@ -546,6 +609,10 @@
       "security": {
         "choice": "IAM Roles and AWS KMS",
         "justification": "Using IAM roles for access control and AWS KMS for encryption at rest ensures that data is secure and compliant with PII regulations. It also minimizes the risk of unauthorized access and data breaches."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache",
+        "justification": "ElastiCache is a managed in-memory data store service that improves the performance of applications by storing data in memory, reducing the number of times applications need to read and write data from disk. It can be used to cache frequently accessed data from DynamoDB."
       }
     },
     "baseline_D_hybrid": {
@@ -568,6 +635,10 @@
       "security": {
         "choice": "AWS Security Token Service (STS)",
         "justification": "STS provides temporary, limited-privilege credentials to users or services that need access to AWS resources without exposing long-term access keys."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache",
+        "justification": "ElastiCache is a managed in-memory data store service that improves the performance of applications by storing data in memory, reducing the number of times applications need to read and write data from disk. It can be used to cache frequently accessed data from DynamoDB."
       }
     }
   },
@@ -576,7 +647,13 @@
     "title": "Video Streaming",
     "description": "Video Streaming system with scalable architecture requirements.",
     "category": "Media",
-    "keywords": ["streaming", "content-delivery", "video", "audio", "transcoding"],
+    "keywords": [
+      "streaming",
+      "content-delivery",
+      "video",
+      "audio",
+      "transcoding"
+    ],
     "context": {
       "users": 600000,
       "traffic_pattern": "steady",
@@ -656,6 +733,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that services have the necessary permissions to access other AWS resources securely without exposing credentials."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -678,6 +759,10 @@
       "security": {
         "choice": "AWS WAF",
         "justification": "It provides a web application firewall that helps protect applications from common web exploits to ensure availability, integrity, and privacy of web applications."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -686,7 +771,13 @@
     "title": "Food Delivery",
     "description": "Food Delivery system with scalable architecture requirements.",
     "category": "Logistics",
-    "keywords": ["routing", "tracking", "delivery", "fleet", "supply-chain"],
+    "keywords": [
+      "routing",
+      "tracking",
+      "delivery",
+      "fleet",
+      "supply-chain"
+    ],
     "context": {
       "users": 700000,
       "traffic_pattern": "burst",
@@ -768,6 +859,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "Enhanced data protection through encryption at rest for PII compliance."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -790,6 +885,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS Key Management Service (KMS) provides secure and scalable key management for data encryption at rest and in transit, ensuring compliance with legal requirements for protecting sensitive user information."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -798,7 +897,13 @@
     "title": "CRM SaaS",
     "description": "CRM SaaS system with scalable architecture requirements.",
     "category": "Enterprise",
-    "keywords": ["saas", "b2b", "workflow", "crm", "collaboration"],
+    "keywords": [
+      "saas",
+      "b2b",
+      "workflow",
+      "crm",
+      "collaboration"
+    ],
     "context": {
       "users": 800000,
       "traffic_pattern": "steady",
@@ -878,6 +983,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that only authorized users and services can access resources, enhancing security without the need for user names or passwords."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -900,6 +1009,10 @@
       "security": {
         "choice": "OAuth2.0",
         "justification": "OAuth2.0 provides a secure way to authenticate users and access CRM SaaS resources without exposing credentials, ensuring scalability and maintaining the event-driven consistency model."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -908,7 +1021,13 @@
     "title": "Analytics Dashboard",
     "description": "Analytics Dashboard system with scalable architecture requirements.",
     "category": "Data",
-    "keywords": ["analytics", "big-data", "pipeline", "warehouse", "ml"],
+    "keywords": [
+      "analytics",
+      "big-data",
+      "pipeline",
+      "warehouse",
+      "ml"
+    ],
     "context": {
       "users": 900000,
       "traffic_pattern": "steady",
@@ -994,6 +1113,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "Using AWS Key Management Service (KMS) ensures that data is encrypted at rest using strong encryption keys managed by AWS. This provides a secure environment for handling PII data within the Analytics Dashboard system."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache for Redis",
+        "justification": "ElastiCache for Redis is an in-memory data store that provides fast read and write performance. It can be used to cache frequently accessed data, reducing the load on the database and improving application response time."
       }
     },
     "baseline_D_hybrid": {
@@ -1016,6 +1139,10 @@
       "security": {
         "choice": "AWS Secrets Manager",
         "justification": "AWS Secrets Manager provides secure management of secrets used to authenticate, authorize, or encrypt your applications. It is built into the AWS ecosystem, ensuring high availability and compliance with data protection regulations."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache for Redis",
+        "justification": "ElastiCache for Redis is an in-memory data store that provides fast read and write performance. It can be used to cache frequently accessed data, reducing the load on the database and improving application response time."
       }
     }
   },
@@ -1024,7 +1151,13 @@
     "title": "Social Media Feed",
     "description": "Social Media Feed system with scalable architecture requirements.",
     "category": "Social",
-    "keywords": ["feed", "profiles", "connections", "sharing", "community"],
+    "keywords": [
+      "feed",
+      "profiles",
+      "connections",
+      "sharing",
+      "community"
+    ],
     "context": {
       "users": 1000000,
       "traffic_pattern": "burst",
@@ -1104,6 +1237,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "Using AWS Key Management Service (KMS) ensures that data at rest is encrypted using strong encryption standards. This meets the internal security requirement while providing a high level of protection for sensitive user data."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -1126,6 +1263,10 @@
       "security": {
         "choice": "AWS Lambda",
         "justification": "AWS Lambda provides a secure, serverless execution environment that automatically scales to handle social media feed requests without the need for provisioning or managing servers."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -1134,7 +1275,13 @@
     "title": "Gaming Backend",
     "description": "Gaming Backend system with scalable architecture requirements.",
     "category": "Gaming",
-    "keywords": ["multiplayer", "matchmaking", "leaderboards", "state-sync", "low-latency"],
+    "keywords": [
+      "multiplayer",
+      "matchmaking",
+      "leaderboards",
+      "state-sync",
+      "low-latency"
+    ],
     "context": {
       "users": 1100000,
       "traffic_pattern": "steady",
@@ -1216,6 +1363,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS KMS allows for encryption at rest using customer-managed keys, providing a secure environment for storing sensitive data. This aligns with the user's requirement for internal security and compliance with PII regulations."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -1238,6 +1389,10 @@
       "security": {
         "choice": "AWS Identity and Access Management (IAM)",
         "justification": "For managing user permissions, access control, and identity verification, AWS IAM ensures that only authorized users can access sensitive data and resources."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -1246,7 +1401,13 @@
     "title": "Stock Trading",
     "description": "Stock Trading system with scalable architecture requirements.",
     "category": "Finance",
-    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
+    "keywords": [
+      "transactions",
+      "compliance",
+      "ledger",
+      "security",
+      "payments"
+    ],
     "context": {
       "users": 1200000,
       "traffic_pattern": "steady",
@@ -1326,6 +1487,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that services have only the necessary permissions to access resources, enhancing security without compromising operational flexibility."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -1348,6 +1513,10 @@
       "security": {
         "choice": "OAuth 2.0",
         "justification": "It provides a secure way to authenticate and authorize access to resources, ensuring that only authorized users can perform actions on the system."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -1356,7 +1525,13 @@
     "title": "Healthcare App",
     "description": "Healthcare App system with scalable architecture requirements.",
     "category": "Healthcare",
-    "keywords": ["hippa", "compliance", "patient-data", "medical", "records"],
+    "keywords": [
+      "hippa",
+      "compliance",
+      "patient-data",
+      "medical",
+      "records"
+    ],
     "context": {
       "users": 1300000,
       "traffic_pattern": "burst",
@@ -1438,6 +1613,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "Enhanced data protection through encryption at rest for compliance with PII regulations."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -1460,6 +1639,10 @@
       "security": {
         "choice": "AWS IAM & AWS Security Hub",
         "justification": "For managing access control and monitoring security across different AWS services."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -1468,7 +1651,13 @@
     "title": "Logistics Platform",
     "description": "Logistics Platform system with scalable architecture requirements.",
     "category": "Logistics",
-    "keywords": ["routing", "tracking", "delivery", "fleet", "supply-chain"],
+    "keywords": [
+      "routing",
+      "tracking",
+      "delivery",
+      "fleet",
+      "supply-chain"
+    ],
     "context": {
       "users": 1400000,
       "traffic_pattern": "steady",
@@ -1548,6 +1737,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that services have only the necessary permissions to access resources, enhancing security without compromising operational flexibility."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -1570,6 +1763,10 @@
       "security": {
         "choice": "AWS Lambda",
         "justification": "AWS Lambda provides serverless execution environment, which is ideal for handling security tasks in a cost-effective manner without managing servers."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -1578,7 +1775,13 @@
     "title": "Online Education",
     "description": "Online Education system with scalable architecture requirements.",
     "category": "Education",
-    "keywords": ["learning", "courses", "students", "lms", "content"],
+    "keywords": [
+      "learning",
+      "courses",
+      "students",
+      "lms",
+      "content"
+    ],
     "context": {
       "users": 1500000,
       "traffic_pattern": "steady",
@@ -1664,6 +1867,10 @@
       "security": {
         "choice": "AWS IAM",
         "justification": "IAM provides fine-grained access control to AWS resources. By using IAM roles and policies, the system can be secured without exposing user names or passwords, aligning with the internal security posture requirement."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache for Redis",
+        "justification": "ElastiCache for Redis is a fully managed in-memory data store that can significantly improve the performance of read-heavy workloads. It's highly scalable and provides low latency, making it suitable for an online education system with 100ms latency requirement. ElastiCache also supports multi-region replication for low-latency access to data across multiple regions."
       }
     },
     "baseline_D_hybrid": {
@@ -1686,6 +1893,10 @@
       "security": {
         "choice": "AWS Shield",
         "justification": "It provides DDoS protection and helps maintain availability during scale events."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache for Redis",
+        "justification": "ElastiCache for Redis is a fully managed in-memory data store that can significantly improve the performance of read-heavy workloads. It's highly scalable and provides low latency, making it suitable for an online education system with 100ms latency requirement. ElastiCache also supports multi-region replication for low-latency access to data across multiple regions."
       }
     }
   },
@@ -1694,7 +1905,13 @@
     "title": "Ad Tech Platform",
     "description": "Ad Tech Platform system with scalable architecture requirements.",
     "category": "Marketing",
-    "keywords": ["advertising", "bidding", "campaigns", "personalization", "tracking"],
+    "keywords": [
+      "advertising",
+      "bidding",
+      "campaigns",
+      "personalization",
+      "tracking"
+    ],
     "context": {
       "users": 1600000,
       "traffic_pattern": "burst",
@@ -1778,6 +1995,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that only authorized users and services have access to the necessary resources. This approach helps maintain a secure environment without compromising on performance or flexibility."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is an in-memory data store that can significantly reduce latency by caching frequently accessed data. It's compatible with both DynamoDB and Redis, providing flexibility to choose the best fit for the specific use case."
       }
     },
     "baseline_D_hybrid": {
@@ -1800,6 +2021,10 @@
       "security": {
         "choice": "AWS WAF",
         "justification": "Provides a managed service to protect web applications from common web exploits with minimal configuration."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is an in-memory data store that can significantly reduce latency by caching frequently accessed data. It's compatible with both DynamoDB and Redis, providing flexibility to choose the best fit for the specific use case."
       }
     }
   },
@@ -1808,7 +2033,13 @@
     "title": "Travel Booking",
     "description": "Travel Booking system with scalable architecture requirements.",
     "category": "Travel",
-    "keywords": ["booking", "reservations", "itinerary", "ticketing", "travel"],
+    "keywords": [
+      "booking",
+      "reservations",
+      "itinerary",
+      "ticketing",
+      "travel"
+    ],
     "context": {
       "users": 1700000,
       "traffic_pattern": "steady",
@@ -1894,6 +2125,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that services have only the necessary permissions to access resources, enhancing security and compliance with PII regulations."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is an in-memory caching service that improves the performance of applications by storing data in memory, reducing the number of times data needs to be retrieved from slower storage services like DynamoDB. It can scale horizontally and vertically to meet the requirements of the travel booking system."
       }
     },
     "baseline_D_hybrid": {
@@ -1916,6 +2151,10 @@
       "security": {
         "choice": "AWS Secrets Manager",
         "justification": "It provides secure storage and management of secrets, which is essential for data masking and encryption in a Travel Booking system."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is an in-memory caching service that improves the performance of applications by storing data in memory, reducing the number of times data needs to be retrieved from slower storage services like DynamoDB. It can scale horizontally and vertically to meet the requirements of the travel booking system."
       }
     }
   },
@@ -1924,7 +2163,13 @@
     "title": "Insurance System",
     "description": "Insurance System system with scalable architecture requirements.",
     "category": "Finance",
-    "keywords": ["claims", "policy", "premium", "coverage", "underwriting"],
+    "keywords": [
+      "claims",
+      "policy",
+      "premium",
+      "coverage",
+      "underwriting"
+    ],
     "context": {
       "users": 1800000,
       "traffic_pattern": "steady",
@@ -2004,6 +2249,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that services have only the necessary permissions to access resources, enhancing security without compromising operational flexibility."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -2026,6 +2275,10 @@
       "security": {
         "choice": "Kubernetes",
         "justification": "Kubernetes is an open-source platform that automates the deployment, scaling, and management of containerized applications. It provides a robust infrastructure for deploying and managing containers across multiple nodes, ensuring high availability and scalability."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -2034,7 +2287,13 @@
     "title": "Payment Gateway",
     "description": "Payment Gateway system with scalable architecture requirements.",
     "category": "Finance",
-    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
+    "keywords": [
+      "transactions",
+      "compliance",
+      "ledger",
+      "security",
+      "payments"
+    ],
     "context": {
       "users": 1900000,
       "traffic_pattern": "burst",
@@ -2120,6 +2379,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "Enhanced data protection through encryption at rest for PII compliance."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache for Redis",
+        "justification": "ElastiCache for Redis is a fast, in-memory data store that can be used to cache frequently accessed data. It provides low latency and high throughput which aligns with the given requirements."
       }
     },
     "baseline_D_hybrid": {
@@ -2142,6 +2405,10 @@
       "security": {
         "choice": "AWS Lambda with VPC",
         "justification": "It allows running code without provisioning or managing servers, providing a secure environment for processing payment data within a Virtual Private Cloud (VPC)."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache for Redis",
+        "justification": "ElastiCache for Redis is a fast, in-memory data store that can be used to cache frequently accessed data. It provides low latency and high throughput which aligns with the given requirements."
       }
     }
   },
@@ -2150,7 +2417,13 @@
     "title": "Search Engine",
     "description": "Search Engine system with scalable architecture requirements.",
     "category": "Technology",
-    "keywords": ["infrastructure", "api", "platform", "developers", "tools"],
+    "keywords": [
+      "infrastructure",
+      "api",
+      "platform",
+      "developers",
+      "tools"
+    ],
     "context": {
       "users": 2000000,
       "traffic_pattern": "steady",
@@ -2234,6 +2507,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that only authorized users and services can access AWS resources, providing a secure environment for the search engine system."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is an in-memory caching service that can be used to improve the performance of applications by reducing the latency of database operations. It's compatible with DynamoDB and can help reduce the load on the database, improving overall system performance."
       }
     },
     "baseline_D_hybrid": {
@@ -2256,6 +2533,10 @@
       "security": {
         "choice": "OAuth2",
         "justification": "OAuth2 is a widely adopted, industry-standard protocol for authorization that provides a secure way to allow users to grant third-party applications access to their resources without exposing their passwords."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is an in-memory caching service that can be used to improve the performance of applications by reducing the latency of database operations. It's compatible with DynamoDB and can help reduce the load on the database, improving overall system performance."
       }
     }
   },
@@ -2264,7 +2545,13 @@
     "title": "Music Streaming",
     "description": "Music Streaming system with scalable architecture requirements.",
     "category": "Media",
-    "keywords": ["streaming", "content-delivery", "video", "audio", "transcoding"],
+    "keywords": [
+      "streaming",
+      "content-delivery",
+      "video",
+      "audio",
+      "transcoding"
+    ],
     "context": {
       "users": 2100000,
       "traffic_pattern": "steady",
@@ -2350,6 +2637,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS KMS provides encryption at rest for DynamoDB tables using customer-managed keys, ensuring that data is secure and compliant with PII regulations."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that can improve the performance of applications by storing data closer to the application. It can be used to cache frequently accessed data from DynamoDB, reducing latency."
       }
     },
     "baseline_D_hybrid": {
@@ -2372,6 +2663,10 @@
       "security": {
         "choice": "AWS Shield",
         "justification": "It provides DDoS protection to ensure availability of the system."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that can improve the performance of applications by storing data closer to the application. It can be used to cache frequently accessed data from DynamoDB, reducing latency."
       }
     }
   },
@@ -2380,7 +2675,13 @@
     "title": "News Aggregator",
     "description": "News Aggregator system with scalable architecture requirements.",
     "category": "Media",
-    "keywords": ["streaming", "content-delivery", "video", "audio", "transcoding"],
+    "keywords": [
+      "streaming",
+      "content-delivery",
+      "video",
+      "audio",
+      "transcoding"
+    ],
     "context": {
       "users": 2200000,
       "traffic_pattern": "burst",
@@ -2464,6 +2765,10 @@
       "security": {
         "choice": "AWS IAM",
         "justification": "For managing access control and identity verification within the AWS environment, ensuring a secure deployment."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a managed in-memory caching service that can significantly reduce read latency and improve application performance. It's compatible with both DynamoDB and popular open-source databases, making it a good choice for the News Aggregator system."
       }
     },
     "baseline_D_hybrid": {
@@ -2486,6 +2791,10 @@
       "security": {
         "choice": "AWS Lambda",
         "justification": "It offers built-in security features such as IAM roles, encryption at rest, and in transit, making it suitable for a scalable and serverless architecture."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a managed in-memory caching service that can significantly reduce read latency and improve application performance. It's compatible with both DynamoDB and popular open-source databases, making it a good choice for the News Aggregator system."
       }
     }
   },
@@ -2494,7 +2803,13 @@
     "title": "Forum Platform",
     "description": "Forum Platform system with scalable architecture requirements.",
     "category": "Social",
-    "keywords": ["feed", "profiles", "connections", "sharing", "community"],
+    "keywords": [
+      "feed",
+      "profiles",
+      "connections",
+      "sharing",
+      "community"
+    ],
     "context": {
       "users": 2300000,
       "traffic_pattern": "steady",
@@ -2576,6 +2891,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "KMS provides encryption at rest for DynamoDB tables, ensuring that data is secure even in the event of hardware failure. It also supports compliance with PII regulations."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -2598,6 +2917,10 @@
       "security": {
         "choice": "AWS Identity and Access Management (IAM)",
         "justification": "IAM provides comprehensive identity management capabilities, including user and group management, access control policies, and multi-factor authentication, ensuring that the security layer is robust and compliant with organizational requirements."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -2606,7 +2929,13 @@
     "title": "Dating App",
     "description": "Dating App system with scalable architecture requirements.",
     "category": "Social",
-    "keywords": ["feed", "profiles", "connections", "sharing", "community"],
+    "keywords": [
+      "feed",
+      "profiles",
+      "connections",
+      "sharing",
+      "community"
+    ],
     "context": {
       "users": 2400000,
       "traffic_pattern": "steady",
@@ -2686,6 +3015,10 @@
       "security": {
         "choice": "IAM Roles for Service Accounts",
         "justification": "Using IAM roles for service accounts ensures that services have the necessary permissions to access AWS resources without exposing credentials. This approach enhances security by limiting access privileges and simplifies management of permissions."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -2708,6 +3041,10 @@
       "security": {
         "choice": "AWS Cognito",
         "justification": "AWS Cognito provides a secure authentication, authorization, and user management system that scales automatically with the application's needs."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -2716,7 +3053,13 @@
     "title": "Job Portal",
     "description": "Job Portal system with scalable architecture requirements.",
     "category": "Enterprise",
-    "keywords": ["saas", "b2b", "workflow", "crm", "collaboration"],
+    "keywords": [
+      "saas",
+      "b2b",
+      "workflow",
+      "crm",
+      "collaboration"
+    ],
     "context": {
       "users": 2500000,
       "traffic_pattern": "burst",
@@ -2798,6 +3141,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "For encryption at rest to protect sensitive data."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -2820,6 +3167,10 @@
       "security": {
         "choice": "AWS KMS (Key Management Service)",
         "justification": "Enables data masking, encryption at rest, and in transit, ensuring compliance and protecting sensitive user information."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -2828,7 +3179,13 @@
     "title": "Warehouse Mgmt",
     "description": "Warehouse Mgmt system with scalable architecture requirements.",
     "category": "Logistics",
-    "keywords": ["routing", "tracking", "delivery", "fleet", "supply-chain"],
+    "keywords": [
+      "routing",
+      "tracking",
+      "delivery",
+      "fleet",
+      "supply-chain"
+    ],
     "context": {
       "users": 2600000,
       "traffic_pattern": "steady",
@@ -2908,6 +3265,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that only authorized users and services can access resources, enhancing security without compromising on operational flexibility. This approach is suitable for internal compliance requirements."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -2930,6 +3291,10 @@
       "security": {
         "choice": "AWS WAF (Web Application Firewall)",
         "justification": "It provides a high level of security and visibility into web applications, helping to protect against common exploits and vulnerabilities."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -2938,7 +3303,13 @@
     "title": "Fleet Tracking",
     "description": "Fleet Tracking system with scalable architecture requirements.",
     "category": "Logistics",
-    "keywords": ["routing", "tracking", "delivery", "fleet", "supply-chain"],
+    "keywords": [
+      "routing",
+      "tracking",
+      "delivery",
+      "fleet",
+      "supply-chain"
+    ],
     "context": {
       "users": 2700000,
       "traffic_pattern": "steady",
@@ -3020,6 +3391,10 @@
       "security": {
         "choice": "IAM Roles and AWS KMS",
         "justification": "Using IAM roles for access control ensures that only authorized services can interact with DynamoDB. Encrypting data at rest using AWS KMS keys provides a strong security posture, meeting the PII compliance requirement."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -3042,6 +3417,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS Key Management Service (KMS) provides highly secure, dedicated encryption keys for protecting sensitive data at rest and in transit."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -3050,7 +3429,13 @@
     "title": "Crypto Exchange",
     "description": "Crypto Exchange system with scalable architecture requirements.",
     "category": "Finance",
-    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
+    "keywords": [
+      "transactions",
+      "compliance",
+      "ledger",
+      "security",
+      "payments"
+    ],
     "context": {
       "users": 2800000,
       "traffic_pattern": "burst",
@@ -3134,6 +3519,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "Enhanced data protection through encryption at rest for sensitive data."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that can significantly reduce read latency and offload reads from DynamoDB. It's highly scalable and can handle the burst traffic of the Crypto Exchange system."
       }
     },
     "baseline_D_hybrid": {
@@ -3156,6 +3545,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS KMS provides a managed service for encrypting data at rest and in transit, ensuring security with minimal operational overhead."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that can significantly reduce read latency and offload reads from DynamoDB. It's highly scalable and can handle the burst traffic of the Crypto Exchange system."
       }
     }
   },
@@ -3164,7 +3557,13 @@
     "title": "Ticket Booking",
     "description": "Ticket Booking system with scalable architecture requirements.",
     "category": "Travel",
-    "keywords": ["booking", "reservations", "itinerary", "ticketing", "travel"],
+    "keywords": [
+      "booking",
+      "reservations",
+      "itinerary",
+      "ticketing",
+      "travel"
+    ],
     "context": {
       "users": 2900000,
       "traffic_pattern": "steady",
@@ -3246,6 +3645,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS KMS provides encryption at rest for DynamoDB tables using AWS-managed keys or customer-managed keys, ensuring compliance with PII regulations. It also supports key rotation and access control."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -3268,6 +3671,10 @@
       "security": {
         "choice": "AWS Key Management Service (KMS)",
         "justification": "KMS provides secure key management for data encryption, ensuring that sensitive information is protected both at rest and in transit within the Ticket Booking system."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -3276,7 +3683,13 @@
     "title": "Fitness App",
     "description": "Fitness App system with scalable architecture requirements.",
     "category": "Healthcare",
-    "keywords": ["hippa", "compliance", "patient-data", "medical", "records"],
+    "keywords": [
+      "hippa",
+      "compliance",
+      "patient-data",
+      "medical",
+      "records"
+    ],
     "context": {
       "users": 3000000,
       "traffic_pattern": "steady",
@@ -3356,6 +3769,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that only authorized users and services can access DynamoDB and other AWS resources, providing a secure environment for the Fitness App system. It also supports encryption at rest using AWS KMS keys."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -3378,6 +3795,10 @@
       "security": {
         "choice": "OAuth 2.0",
         "justification": "It provides a robust framework for authentication and authorization, ensuring secure access to user data while allowing scalability."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -3386,7 +3807,13 @@
     "title": "Smart Home",
     "description": "Smart Home system with scalable architecture requirements.",
     "category": "IoT",
-    "keywords": ["sensors", "telemetry", "devices", "edge", "mqtt"],
+    "keywords": [
+      "sensors",
+      "telemetry",
+      "devices",
+      "edge",
+      "mqtt"
+    ],
     "context": {
       "users": 3100000,
       "traffic_pattern": "burst",
@@ -3472,6 +3899,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "Enhanced data protection through encryption at rest for PII compliance."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that can improve the performance of your applications by storing data in memory, reducing the number of times data needs to be retrieved from slower storage."
       }
     },
     "baseline_D_hybrid": {
@@ -3494,6 +3925,10 @@
       "security": {
         "choice": "AWS Lambda",
         "justification": "AWS Lambda provides a secure, serverless execution environment that automatically scales to zero during idle periods, aligning with the system's requirement for cost optimization and horizontal scalability."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that can improve the performance of your applications by storing data in memory, reducing the number of times data needs to be retrieved from slower storage."
       }
     }
   },
@@ -3502,7 +3937,13 @@
     "title": "HR SaaS",
     "description": "HR SaaS system with scalable architecture requirements.",
     "category": "Enterprise",
-    "keywords": ["saas", "b2b", "workflow", "crm", "collaboration"],
+    "keywords": [
+      "saas",
+      "b2b",
+      "workflow",
+      "crm",
+      "collaboration"
+    ],
     "context": {
       "users": 3200000,
       "traffic_pattern": "steady",
@@ -3582,6 +4023,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Enables fine-grained access control and minimizes the risk of security breaches by limiting permissions to only what is necessary."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -3604,6 +4049,10 @@
       "security": {
         "choice": "AWS IAM (Identity and Access Management)",
         "justification": "It provides robust, flexible, and secure ways to manage access to AWS resources, aligning with the need for a scalable security layer."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -3612,7 +4061,13 @@
     "title": "Survey Tool",
     "description": "Survey Tool system with scalable architecture requirements.",
     "category": "Enterprise",
-    "keywords": ["saas", "b2b", "workflow", "crm", "collaboration"],
+    "keywords": [
+      "saas",
+      "b2b",
+      "workflow",
+      "crm",
+      "collaboration"
+    ],
     "context": {
       "users": 3300000,
       "traffic_pattern": "steady",
@@ -3698,6 +4153,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS KMS provides encryption at rest for sensitive data, ensuring compliance with PII regulations while maintaining a secure environment."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is an in-memory caching service that can be used to reduce the latency of database operations. It offers high performance and scalability, making it suitable for a system with 3.3 million users."
       }
     },
     "baseline_D_hybrid": {
@@ -3720,6 +4179,10 @@
       "security": {
         "choice": "AWS KMS (Key Management Service)",
         "justification": "AWS KMS provides secure key management capabilities for data masking, encryption at rest, and in transit, ensuring compliance with legal requirements."
+      },
+      "cache": {
+        "choice": "AWS ElastiCache",
+        "justification": "ElastiCache is an in-memory caching service that can be used to reduce the latency of database operations. It offers high performance and scalability, making it suitable for a system with 3.3 million users."
       }
     }
   },
@@ -3728,7 +4191,13 @@
     "title": "Crowdfunding",
     "description": "Crowdfunding system with scalable architecture requirements.",
     "category": "Finance",
-    "keywords": ["transactions", "compliance", "ledger", "security", "payments"],
+    "keywords": [
+      "transactions",
+      "compliance",
+      "ledger",
+      "security",
+      "payments"
+    ],
     "context": {
       "users": 3400000,
       "traffic_pattern": "burst",
@@ -3808,6 +4277,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "For enhanced data protection, AWS KMS provides encryption at rest, ensuring that sensitive data in DynamoDB remains secure without manual management of keys."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -3830,6 +4303,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS Key Management Service (KMS) provides a robust, fully managed service for encrypting data at rest and in transit. It offers a high level of security with built-in encryption algorithms and easy key management capabilities."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -3838,7 +4315,13 @@
     "title": "Event Mgmt",
     "description": "Event Mgmt system with scalable architecture requirements.",
     "category": "Entertainment",
-    "keywords": ["events", "ticketing", "engagement", "venue", "management"],
+    "keywords": [
+      "events",
+      "ticketing",
+      "engagement",
+      "venue",
+      "management"
+    ],
     "context": {
       "users": 3500000,
       "traffic_pattern": "steady",
@@ -3920,6 +4403,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "For internal security, IAM roles and policies provide fine-grained control over access to resources, ensuring that only authorized users can perform specific actions."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -3942,6 +4429,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS Key Management Service (KMS) provides secure key management for data encryption at rest and in transit, ensuring compliance with legal requirements for protecting sensitive user information."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -3950,7 +4441,13 @@
     "title": "Email Service",
     "description": "Email Service system with scalable architecture requirements.",
     "category": "Communication",
-    "keywords": ["messaging", "real-time", "chat", "notifications", "presence"],
+    "keywords": [
+      "messaging",
+      "real-time",
+      "chat",
+      "notifications",
+      "presence"
+    ],
     "context": {
       "users": 3600000,
       "traffic_pattern": "steady",
@@ -4030,6 +4527,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS KMS provides encryption at rest for sensitive data stored in DynamoDB. This ensures compliance with internal security requirements without compromising on performance or scalability."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -4052,6 +4553,10 @@
       "security": {
         "choice": "OAuth2.0",
         "justification": "OAuth2.0 provides a secure and scalable way to authenticate users, ensuring that only authorized users can send emails while adhering to the eventual consistency model."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -4060,7 +4565,13 @@
     "title": "Notification Service",
     "description": "Notification Service system with scalable architecture requirements.",
     "category": "Communication",
-    "keywords": ["messaging", "real-time", "chat", "notifications", "presence"],
+    "keywords": [
+      "messaging",
+      "real-time",
+      "chat",
+      "notifications",
+      "presence"
+    ],
     "context": {
       "users": 3700000,
       "traffic_pattern": "burst",
@@ -4146,6 +4657,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "Enhanced data protection through encryption at rest for PII compliance."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that can significantly reduce read latency and improve application performance. It's compatible with both DynamoDB and popular open-source databases, making it a good choice for caching data."
       }
     },
     "baseline_D_hybrid": {
@@ -4168,6 +4683,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "It provides centralized management of encryption keys with granular access control, ensuring that data masking and encryption are robust and compliant."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that can significantly reduce read latency and improve application performance. It's compatible with both DynamoDB and popular open-source databases, making it a good choice for caching data."
       }
     }
   },
@@ -4176,7 +4695,13 @@
     "title": "API Gateway System",
     "description": "API Gateway System system with scalable architecture requirements.",
     "category": "Technology",
-    "keywords": ["infrastructure", "api", "platform", "developers", "tools"],
+    "keywords": [
+      "infrastructure",
+      "api",
+      "platform",
+      "developers",
+      "tools"
+    ],
     "context": {
       "users": 3800000,
       "traffic_pattern": "steady",
@@ -4256,6 +4781,10 @@
       "security": {
         "choice": "IAM Roles and Policies",
         "justification": "Using IAM roles and policies ensures that only authorized users and services can access resources, providing a secure environment for the API Gateway System."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -4278,6 +4807,10 @@
       "security": {
         "choice": "OAuth2",
         "justification": "OAuth2 is a widely adopted standard that provides a secure means for APIs to authenticate and authorize requests, ensuring that only authorized users can access the system."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   },
@@ -4286,7 +4819,13 @@
     "title": "ML Pipeline",
     "description": "ML Pipeline system with scalable architecture requirements.",
     "category": "Data",
-    "keywords": ["analytics", "big-data", "pipeline", "warehouse", "ml"],
+    "keywords": [
+      "analytics",
+      "big-data",
+      "pipeline",
+      "warehouse",
+      "ml"
+    ],
     "context": {
       "users": 3900000,
       "traffic_pattern": "steady",
@@ -4372,6 +4911,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "AWS KMS provides encryption at rest for sensitive data, ensuring compliance with PII regulations while maintaining a secure environment."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that improves the performance of web applications and databases. It can be used to cache frequently accessed data, reducing latency."
       }
     },
     "baseline_D_hybrid": {
@@ -4394,6 +4937,10 @@
       "security": {
         "choice": "AWS IAM with AWS KMS",
         "justification": "AWS IAM provides comprehensive identity and access management, while AWS KMS offers encryption for data at rest and in transit, ensuring compliance with data masking and encryption requirements."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache",
+        "justification": "ElastiCache is a fully managed in-memory caching service that improves the performance of web applications and databases. It can be used to cache frequently accessed data, reducing latency."
       }
     }
   },
@@ -4402,7 +4949,13 @@
     "title": "Data Warehouse",
     "description": "Data Warehouse system with scalable architecture requirements.",
     "category": "Data",
-    "keywords": ["analytics", "big-data", "pipeline", "warehouse", "ml"],
+    "keywords": [
+      "analytics",
+      "big-data",
+      "pipeline",
+      "warehouse",
+      "ml"
+    ],
     "context": {
       "users": 4000000,
       "traffic_pattern": "burst",
@@ -4482,6 +5035,10 @@
       "security": {
         "choice": "AWS KMS",
         "justification": "For encrypting data at rest to enhance security posture."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     },
     "baseline_D_hybrid": {
@@ -4504,6 +5061,10 @@
       "security": {
         "choice": "AWS IAM",
         "justification": "AWS Identity and Access Management (IAM) provides robust security for AWS services, including serverless functions, enabling fine-grained access control and authentication."
+      },
+      "cache": {
+        "choice": "Amazon ElastiCache (Redis)",
+        "justification": "Improves latency and reduces DB load."
       }
     }
   }

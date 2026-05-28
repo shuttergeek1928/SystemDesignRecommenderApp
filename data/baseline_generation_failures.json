@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "scenario_id": 1,
+    "baseline": "B",
+    "status": "failed"
+  },
+  {
+    "scenario_id": 1,
+    "baseline": "C",
+    "status": "failed"
+  },
+  {
+    "scenario_id": 1,
+    "baseline": "D",
+    "status": "failed"
+  },
+  {
+    "scenario_id": 2,
+    "baseline": "B",
+    "status": "failed"
+  },
+  {
+    "scenario_id": 2,
+    "baseline": "C",
+    "status": "failed"
+  },
+  {
+    "scenario_id": 2,
+    "baseline": "D",
+    "status": "failed"
+  }
+]

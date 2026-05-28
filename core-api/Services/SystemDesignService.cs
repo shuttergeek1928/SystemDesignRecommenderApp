@@ -508,7 +508,7 @@ Output ONLY the JSON text. No Markdown formatting. DO NOT include comments like 
                     TeamId = teamId?.ToString(),
                     ProblemStatement = problemStatement,
                     ExtractedRequirements = requirements,
-                    ArchitectureDesign = architecture,
+                    ArchitectureDesign = architecture != null ? new Dictionary<string, ArchComponent>(architecture) : null,
                     EvaluationScores = new SystemDesignRecommenderApi.Domain.Data.Mongo.Entities.EvaluationScoreDocument
                     {
                         IndustryAlignmentScore = evaluation.IndustryAlignmentScore,

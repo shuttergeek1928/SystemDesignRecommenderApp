@@ -53,7 +53,10 @@ public class ReferenceBlueprint
                 {
                     try
                     {
-                        var json = System.Text.Json.JsonSerializer.Serialize(kvp.Value);
+                        var json = kvp.Value is MongoDB.Bson.BsonDocument bsonDoc 
+                            ? bsonDoc.ToJson() 
+                            : System.Text.Json.JsonSerializer.Serialize(kvp.Value);
+                            
                         var arch = System.Text.Json.JsonSerializer.Deserialize<BlueprintArchitecture>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
                         if (arch != null)
                         {

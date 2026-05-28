@@ -27,7 +27,7 @@ public class DesignHistoryDocument
     public DesignRequirements? ExtractedRequirements { get; set; }
 
     [BsonElement("architecture_design")]
-    public ArchitectureDesign? ArchitectureDesign { get; set; }
+    public Dictionary<string, ArchComponent>? ArchitectureDesign { get; set; }
 
     [BsonElement("evaluation_scores")]
     public EvaluationScoreDocument? EvaluationScores { get; set; }

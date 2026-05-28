@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MongoDB.Driver;
+using MongoDB.Bson;
 using SystemDesignRecommenderApi.Domain.Data.Mongo;
 using SystemDesignRecommenderApi.Domain.DTO;
 using SystemDesignRecommenderApi.Domain.Models;
@@ -36,10 +37,11 @@ public class BenchmarkService : IBenchmarkService
 
         int? blueprintId = overrideScenarioId ?? historyDoc.EvaluationScores?.MatchedBlueprintId;
 
-        // Fallback: If no blueprint was matched during generation, find the best fit now
         if (blueprintId == null && historyDoc.ExtractedRequirements != null)
         {
-            var alignment = await _evaluationService.EvaluateArchitectureAsync(historyDoc.ArchitectureDesign, historyDoc.ExtractedRequirements, historyDoc.ProblemStatement);
+            var archDesign = new ArchitectureDesign();
+            foreach (var kvp in historyDoc.ArchitectureDesign) archDesign[kvp.Key] = kvp.Value;
+            var alignment = await _evaluationService.EvaluateArchitectureAsync(archDesign, historyDoc.ExtractedRequirements, historyDoc.ProblemStatement);
             blueprintId = alignment.MatchedBlueprintId;
         }
 
@@ -121,8 +123,9 @@ public class BenchmarkService : IBenchmarkService
 
             if (baselineNodeObj != null)
             {
-                // Try to extract 'choice' from the baseline node
-                var baselineNodeJson = JsonSerializer.Serialize(baselineNodeObj);
+                var baselineNodeJson = baselineNodeObj is MongoDB.Bson.BsonDocument doc 
+                    ? doc.ToJson()
+                    : JsonSerializer.Serialize(baselineNodeObj);
                 Console.WriteLine($"[Benchmark] Serialized baseline node for '{nodeKey}': {baselineNodeJson}");
                 try
                 {
